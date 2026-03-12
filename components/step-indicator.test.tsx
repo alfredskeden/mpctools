@@ -87,6 +87,22 @@ describe("StepIndicator", () => {
     expect(separators).toHaveLength(0);
   });
 
+  it("applies default className when no className prop is given", () => {
+    render(<StepIndicator steps={steps} />);
+
+    const nav = screen.getByRole("navigation", { name: "Build steps" });
+    expect(nav.className).toContain("absolute");
+    expect(nav.className).toContain("bottom-12");
+  });
+
+  it("merges custom className with defaults", () => {
+    render(<StepIndicator steps={steps} className="relative bottom-0" />);
+
+    const nav = screen.getByRole("navigation", { name: "Build steps" });
+    expect(nav.className).toContain("relative");
+    expect(nav.className).not.toContain("absolute");
+  });
+
   it("supports multiple active steps", () => {
     const multiActive = [
       { label: "Prep", active: true },

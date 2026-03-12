@@ -10,15 +10,18 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "jsdom",
+    setupFiles: ["./vitest.setup.ts"],
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary", "lcov"],
-      include: ["app/**", "components/**", "lib/**"],
+      include: ["app/**", "components/**", "hooks/**", "lib/**"],
       exclude: [
         "**/*.d.ts",
         "**/*.config.*",
         "**/layout.tsx",
         "node_modules/**",
+        "**/*.ico",
+        "**/*.css",
       ],
       thresholds: {
         statements: 100,

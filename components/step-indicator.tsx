@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 type Step = {
   label: string;
   active: boolean;
@@ -5,13 +7,17 @@ type Step = {
 
 type StepIndicatorProps = {
   steps: Step[];
+  className?: string;
 };
 
-export function StepIndicator({ steps }: StepIndicatorProps) {
+export function StepIndicator({ steps, className }: StepIndicatorProps) {
   return (
     <nav
       aria-label="Build steps"
-      className="absolute bottom-12 left-1/2 flex -translate-x-1/2 items-center"
+      className={cn(
+        "absolute bottom-12 left-1/2 flex -translate-x-1/2 items-center",
+        className,
+      )}
     >
       <ol className="flex items-center gap-8 list-none m-0 p-0">
         {steps.map((step, i) => (
