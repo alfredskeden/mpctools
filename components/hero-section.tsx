@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export function HeroSection() {
   return (
-    <div className="relative flex flex-col items-center gap-12 px-6">
+    <div className="relative flex flex-col items-center gap-12 px-6 rounded-2xl py-10 backdrop-blur-md bg-white/5 border border-white/10 sm:backdrop-blur-none sm:bg-transparent sm:border-transparent sm:py-0 sm:rounded-none mx-4 sm:mx-0">
       <div className="flex max-w-xl flex-col items-center gap-4">
         <Badge
           variant="secondary"
