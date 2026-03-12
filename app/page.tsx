@@ -1,65 +1,75 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+const steps = [
+  { label: "Prep", active: true },
+  { label: "Outpaint", active: false },
+  { label: "Merge", active: false },
+];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-background">
+      {/* Ghost card — left */}
+      <div className="absolute -left-10 top-1/2 -translate-y-1/2 opacity-5">
+        <div className="h-80 w-56 rounded-xl bg-white" />
+      </div>
+
+      {/* Ghost card — right */}
+      <div className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-5">
+        <div className="h-80 w-56 rounded-xl bg-white" />
+      </div>
+
+      {/* Hero */}
+      <div className="relative flex flex-col items-center gap-12 px-6">
+        <div className="flex max-w-xl flex-col items-center gap-4">
+          <span className="text-label font-medium uppercase tracking-extra-wide text-brand">
+            Welcome to
+          </span>
+          <h1 className="text-center text-display font-black tracking-display text-foreground sm:text-display-lg">
+            All-in-One MTG Playtest Card Builder
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="text-center text-base font-light leading-6 text-muted-foreground">
+            Prepare, outpaint, and merge high-quality card art for print-ready
+            playtest proxies.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
+        <Button asChild size="lg" className="h-13 gap-2.5 rounded-lg bg-brand px-9 text-base font-semibold text-brand-foreground hover:bg-brand-hover">
+          <Link href="/prep">
+            Begin Step 1
+            <ArrowRight className="size-4.5" />
+          </Link>
+        </Button>
+      </div>
+
+      {/* Step indicators */}
+      <div className="absolute bottom-12 left-1/2 flex -translate-x-1/2 items-center gap-8">
+        {steps.map((step, i) => (
+          <div key={step.label} className="flex items-center gap-8">
+            <div className="flex items-center gap-2">
+              <div
+                className={`size-2 rounded-full ${
+                  step.active ? "bg-brand" : "bg-secondary"
+                }`}
+              />
+              <span
+                className={`text-xs leading-4 ${
+                  step.active
+                    ? "font-medium text-brand"
+                    : "font-normal text-muted-foreground"
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+            {i < steps.length - 1 && (
+              <div className="h-px w-8 bg-secondary" />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
