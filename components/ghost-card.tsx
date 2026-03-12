@@ -43,7 +43,7 @@ export function GhostCard({
       aria-hidden="true"
       className={`absolute ${positionClasses} top-1/2 -translate-y-1/2 opacity-100`}
     >
-      <Card className="relative h-80 w-56 overflow-hidden rounded-xl bg-white">
+      <Card className="relative h-80 w-56 overflow-hidden rounded-xl bg-background">
         <Image src={images[0]} alt="" fill className="object-cover" />
         <Image
           src={images[1]}
