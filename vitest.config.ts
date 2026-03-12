@@ -9,7 +9,7 @@ export default defineConfig({
   },
   test: {
     globals: true,
-    environment: "node",
+    environment: "jsdom",
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary", "lcov"],
