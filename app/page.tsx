@@ -36,7 +36,11 @@ export default function Home() {
           </p>
         </div>
 
-        <Button asChild size="lg" className="h-13 gap-2.5 rounded-lg bg-brand px-9 text-base font-semibold text-brand-foreground hover:bg-brand-hover">
+        <Button
+          asChild
+          size="lg"
+          className="h-13 gap-2.5 rounded-lg bg-brand px-9 text-base font-semibold text-brand-foreground hover:bg-brand-hover"
+        >
           <Link href="/prep">
             Begin Step 1
             <ArrowRight className="size-4.5" />
@@ -64,9 +68,7 @@ export default function Home() {
                 {step.label}
               </span>
             </div>
-            {i < steps.length - 1 && (
-              <div className="h-px w-8 bg-secondary" />
-            )}
+            {i < steps.length - 1 && <div className="h-px w-8 bg-secondary" />}
           </div>
         ))}
       </div>
