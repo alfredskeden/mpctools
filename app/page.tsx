@@ -14,15 +14,15 @@ export default function Home() {
       <GhostCard
         side="left"
         images={[
-          "/outpaint-animation/raphael_tough_turtle_prepper.png",
-          "/outpaint-animation/raphael_tough_turtle_outpaint.png",
+          "/outpaint-animation/raphael_tough_turtle_prepper.webp",
+          "/outpaint-animation/raphael_tough_turtle_outpaint.webp",
         ]}
       />
       <GhostCard
         side="right"
         images={[
-          "/outpaint-animation/underworld_breach_prepper.png",
-          "/outpaint-animation/underworld_breach_outpaint.png",
+          "/outpaint-animation/underworld_breach_prepper.webp",
+          "/outpaint-animation/underworld_breach_outpaint.webp",
         ]}
       />
       <HeroSection />
