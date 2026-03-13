@@ -16,6 +16,7 @@ export default function Home() {
         images={[
           "/outpaint-animation/raphael_tough_turtle_prepper.webp",
           "/outpaint-animation/raphael_tough_turtle_outpaint.webp",
+          "/outpaint-animation/raphael_tough_turtle_full_card.webp",
         ]}
       />
       <GhostCard
@@ -23,6 +24,7 @@ export default function Home() {
         images={[
           "/outpaint-animation/underworld_breach_prepper.webp",
           "/outpaint-animation/underworld_breach_outpaint.webp",
+          "/outpaint-animation/underworld_breach_full_card.webp",
         ]}
       />
       <HeroSection />

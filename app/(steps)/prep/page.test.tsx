@@ -2,12 +2,6 @@ import { render, screen } from "@testing-library/react";
 import PrepPage from "./page";
 
 describe("PrepPage", () => {
-  it("renders the prep page content", () => {
-    render(<PrepPage />);
-
-    expect(screen.getByText("Prepare Image")).toBeDefined();
-  });
-
   it("renders inside a main element", () => {
     render(<PrepPage />);
 

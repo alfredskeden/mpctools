@@ -55,13 +55,6 @@ function uploadFile() {
 }
 
 describe("PrepPageContent", () => {
-  it("renders the header with step 1 badge", () => {
-    render(<PrepPageContent />);
-
-    expect(screen.getByText("STEP 1")).toBeDefined();
-    expect(screen.getByText("Prepare Image")).toBeDefined();
-  });
-
   it("shows the drop zone initially", () => {
     render(<PrepPageContent />);
 

@@ -5,11 +5,11 @@ import type { StepStatus } from "@/hooks/use-prep-workflow";
 
 const STEP_LABELS = ["Prep", "Outpaint", "Merge"];
 
-type PrepHeaderProps = {
+type HeaderProps = {
   stepStatuses: StepStatus[];
 };
 
-export function PrepHeader({ stepStatuses }: PrepHeaderProps) {
+export function Header({ stepStatuses }: HeaderProps) {
   const steps = STEP_LABELS.map((label, i) => ({
     label,
     active: stepStatuses[i] === "active" || stepStatuses[i] === "completed",
