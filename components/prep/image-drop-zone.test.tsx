@@ -51,7 +51,7 @@ describe("ImageDropZone", () => {
   it("renders instructional text", () => {
     render(<ImageDropZone onImageLoad={vi.fn()} />);
 
-    expect(screen.getByText("Drop your card art here")).toBeDefined();
+    expect(screen.getByText("Drop image here")).toBeDefined();
     expect(screen.getByText("or click to browse")).toBeDefined();
   });
 
@@ -102,22 +102,24 @@ describe("ImageDropZone", () => {
   });
 
   it("applies dragging styles on dragOver", () => {
-    render(<ImageDropZone onImageLoad={vi.fn()} />);
+    const { container } = render(<ImageDropZone onImageLoad={vi.fn()} />);
 
     const dropZone = screen.getByRole("button", { name: "Upload image" });
     fireEvent.dragOver(dropZone, { dataTransfer: { files: [] } });
 
-    expect(dropZone.className).toContain("border-brand");
+    const innerZone = container.querySelector(".border-dashed");
+    expect(innerZone?.className).toContain("border-accent-blue");
   });
 
   it("removes dragging styles on dragLeave", () => {
-    render(<ImageDropZone onImageLoad={vi.fn()} />);
+    const { container } = render(<ImageDropZone onImageLoad={vi.fn()} />);
 
     const dropZone = screen.getByRole("button", { name: "Upload image" });
     fireEvent.dragOver(dropZone, { dataTransfer: { files: [] } });
     fireEvent.dragLeave(dropZone, { dataTransfer: { files: [] } });
 
-    expect(dropZone.className).not.toContain("border-brand");
+    const innerZone = container.querySelector(".border-dashed");
+    expect(innerZone?.className).not.toContain("border-accent-blue");
   });
 
   it("processes dropped image file", () => {
@@ -202,5 +204,13 @@ describe("ImageDropZone", () => {
     expect(onImageLoad).toHaveBeenCalledWith(dataUrl, expect.anything());
 
     mocks.restore();
+  });
+
+  it("renders with gray background and card aspect ratio", () => {
+    render(<ImageDropZone onImageLoad={vi.fn()} />);
+
+    const dropZone = screen.getByRole("button", { name: "Upload image" });
+    expect(dropZone.className).toContain("bg-canvas-bg");
+    expect(dropZone.className).toContain("aspect-[440/600]");
   });
 });

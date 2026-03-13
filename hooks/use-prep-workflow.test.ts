@@ -11,8 +11,8 @@ const initialState: PrepState = {
   position: { x: 0, y: 0 },
   scale: 1,
   isPositioned: false,
-  canvasDataUrl: null,
   selectedOverlay: null,
+  canvasDataUrl: null,
 };
 
 describe("prepReducer", () => {
@@ -41,7 +41,6 @@ describe("prepReducer", () => {
       position: { x: 50, y: 50 },
       scale: 2,
       isPositioned: true,
-      canvasDataUrl: "data:old",
     };
 
     const result = prepReducer(state, {
@@ -50,9 +49,18 @@ describe("prepReducer", () => {
     });
 
     expect(result.position).toEqual({ x: 0, y: 0 });
-    expect(result.scale).toBe(1);
+    expect(result.scale).toBe(1); // 100x100 fits in 816x1110, so scale stays 1
     expect(result.isPositioned).toBe(false);
-    expect(result.canvasDataUrl).toBeNull();
+  });
+
+  it("auto-scales a large image to fit the canvas with padding", () => {
+    const largeImage = { width: 4000, height: 3000 } as HTMLImageElement;
+    const result = prepReducer(initialState, {
+      type: "UPLOAD_IMAGE",
+      payload: { dataUrl: "data:large", element: largeImage },
+    });
+
+    expect(result.scale).toBe((744 * 0.8) / 4000);
   });
 
   it("handles UPDATE_POSITION", () => {
@@ -79,15 +87,6 @@ describe("prepReducer", () => {
 
     expect(result.currentStep).toBe(3);
     expect(result.isPositioned).toBe(true);
-  });
-
-  it("handles SET_CANVAS_DATA_URL", () => {
-    const result = prepReducer(initialState, {
-      type: "SET_CANVAS_DATA_URL",
-      payload: "data:image/png;base64,xyz",
-    });
-
-    expect(result.canvasDataUrl).toBe("data:image/png;base64,xyz");
   });
 
   it("handles SELECT_OVERLAY", () => {
@@ -119,6 +118,15 @@ describe("prepReducer", () => {
     expect(result.selectedOverlay).toBeNull();
   });
 
+  it("handles SET_CANVAS_DATA_URL", () => {
+    const result = prepReducer(initialState, {
+      type: "SET_CANVAS_DATA_URL",
+      payload: "data:image/png;base64,xyz",
+    });
+
+    expect(result.canvasDataUrl).toBe("data:image/png;base64,xyz");
+  });
+
   it("handles RESET", () => {
     const state: PrepState = {
       currentStep: 3,
@@ -127,7 +135,7 @@ describe("prepReducer", () => {
       position: { x: 50, y: 50 },
       scale: 2,
       isPositioned: true,
-      canvasDataUrl: "data:canvas",
+      canvasDataUrl: null,
     };
 
     const result = prepReducer(state, { type: "RESET" });
@@ -215,7 +223,7 @@ describe("usePrepWorkflow", () => {
     expect(result.current.state.isPositioned).toBe(true);
   });
 
-  it("enables download when positioned and data url is set", () => {
+  it("enables download when positioned", () => {
     const { result } = renderHook(() => usePrepWorkflow());
 
     act(() => {
@@ -223,9 +231,6 @@ describe("usePrepWorkflow", () => {
     });
     act(() => {
       result.current.markPositioned();
-    });
-    act(() => {
-      result.current.setCanvasDataUrl("data:canvas");
     });
 
     expect(result.current.canDownload).toBe(true);
@@ -273,6 +278,16 @@ describe("usePrepWorkflow", () => {
     });
 
     expect(result.current.state.selectedOverlay).toBeNull();
+  });
+
+  it("sets canvas data URL", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.setCanvasDataUrl("data:image/png;base64,xyz");
+    });
+
+    expect(result.current.state.canvasDataUrl).toBe("data:image/png;base64,xyz");
   });
 
   it("resets to initial state", () => {

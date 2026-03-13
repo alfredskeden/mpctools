@@ -65,6 +65,23 @@ export function calculateDrawParams(
   };
 }
 
+export const CANVAS_WIDTH = 744;
+export const CANVAS_HEIGHT = 1039;
+
+/**
+ * Calculate initial scale to fit an image within a canvas with 80% padding.
+ * Returns 1 if the image already fits.
+ */
+export function calculateInitialScale(
+  image: Dimensions,
+  canvas: Dimensions,
+): number {
+  const scaleX = (canvas.width * 0.8) / image.width;
+  const scaleY = (canvas.height * 0.8) / image.height;
+  const fitScale = Math.min(scaleX, scaleY);
+  return fitScale >= 1 ? 1 : fitScale;
+}
+
 export const MIN_VISIBLE = 50;
 
 /**

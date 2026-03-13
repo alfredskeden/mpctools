@@ -1,6 +1,7 @@
 "use client";
 
 import { useReducer, useCallback } from "react";
+import { calculateInitialScale, CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
 
 export const OVERLAY_OPTIONS = [
   { id: "normal", label: "Normal", filename: "normal.png" },
@@ -21,8 +22,8 @@ export type PrepState = {
   position: { x: number; y: number };
   scale: number;
   isPositioned: boolean;
-  canvasDataUrl: string | null;
   selectedOverlay: string | null;
+  canvasDataUrl: string | null;
 };
 
 type PrepAction =
@@ -30,8 +31,8 @@ type PrepAction =
   | { type: "UPDATE_POSITION"; payload: { x: number; y: number } }
   | { type: "UPDATE_SCALE"; payload: number }
   | { type: "MARK_POSITIONED" }
-  | { type: "SET_CANVAS_DATA_URL"; payload: string }
   | { type: "SELECT_OVERLAY"; payload: string | null }
+  | { type: "SET_CANVAS_DATA_URL"; payload: string }
   | { type: "RESET" };
 
 const initialState: PrepState = {
@@ -41,8 +42,8 @@ const initialState: PrepState = {
   position: { x: 0, y: 0 },
   scale: 1,
   isPositioned: false,
-  canvasDataUrl: null,
   selectedOverlay: null,
+  canvasDataUrl: null,
 };
 
 export function prepReducer(state: PrepState, action: PrepAction): PrepState {
@@ -54,9 +55,11 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         uploadedImage: action.payload.dataUrl,
         imageElement: action.payload.element,
         position: { x: 0, y: 0 },
-        scale: 1,
+        scale: calculateInitialScale(
+          action.payload.element,
+          { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
+        ),
         isPositioned: false,
-        canvasDataUrl: null,
         selectedOverlay: null,
       };
     case "UPDATE_POSITION":
@@ -75,15 +78,15 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         currentStep: 3,
         isPositioned: true,
       };
-    case "SET_CANVAS_DATA_URL":
-      return {
-        ...state,
-        canvasDataUrl: action.payload,
-      };
     case "SELECT_OVERLAY":
       return {
         ...state,
         selectedOverlay: action.payload,
+      };
+    case "SET_CANVAS_DATA_URL":
+      return {
+        ...state,
+        canvasDataUrl: action.payload,
       };
     case "RESET":
       return initialState;
@@ -122,19 +125,19 @@ export function usePrepWorkflow() {
     dispatch({ type: "MARK_POSITIONED" });
   }, []);
 
-  const setCanvasDataUrl = useCallback((dataUrl: string) => {
-    dispatch({ type: "SET_CANVAS_DATA_URL", payload: dataUrl });
-  }, []);
-
   const selectOverlay = useCallback((overlay: string | null) => {
     dispatch({ type: "SELECT_OVERLAY", payload: overlay });
+  }, []);
+
+  const setCanvasDataUrl = useCallback((dataUrl: string) => {
+    dispatch({ type: "SET_CANVAS_DATA_URL", payload: dataUrl });
   }, []);
 
   const reset = useCallback(() => {
     dispatch({ type: "RESET" });
   }, []);
 
-  const canDownload = state.isPositioned && state.canvasDataUrl !== null;
+  const canDownload = state.isPositioned;
   const canContinue = canDownload;
   const stepStatuses = getStepStatuses(state.currentStep);
 
@@ -144,8 +147,8 @@ export function usePrepWorkflow() {
     updatePosition,
     updateScale,
     markPositioned,
-    setCanvasDataUrl,
     selectOverlay,
+    setCanvasDataUrl,
     reset,
     canDownload,
     canContinue,

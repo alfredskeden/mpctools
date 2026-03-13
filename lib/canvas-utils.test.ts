@@ -1,8 +1,11 @@
 import {
   calculateFitDimensions,
   calculateDrawParams,
+  calculateInitialScale,
   clampPosition,
   MIN_VISIBLE,
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
 } from "./canvas-utils";
 
 describe("calculateFitDimensions", () => {
@@ -97,6 +100,42 @@ describe("calculateDrawParams", () => {
     expect(result.dh).toBe(200);
     expect(result.dx).toBe(0);
     expect(result.dy).toBe(100);
+  });
+});
+
+describe("CANVAS_WIDTH and CANVAS_HEIGHT", () => {
+  it("exports canvas dimensions", () => {
+    expect(CANVAS_WIDTH).toBe(744);
+    expect(CANVAS_HEIGHT).toBe(1039);
+  });
+});
+
+describe("calculateInitialScale", () => {
+  it("returns 1 for a small image that fits within the canvas", () => {
+    const result = calculateInitialScale(
+      { width: 100, height: 100 },
+      { width: 744, height: 1039 },
+    );
+
+    expect(result).toBe(1);
+  });
+
+  it("scales down a large image to fit with 80% padding", () => {
+    const result = calculateInitialScale(
+      { width: 4000, height: 3000 },
+      { width: 816, height: 1110 },
+    );
+
+    expect(result).toBe((816 * 0.8) / 4000);
+  });
+
+  it("scales based on height when image is taller relative to canvas", () => {
+    const result = calculateInitialScale(
+      { width: 100, height: 5000 },
+      { width: 744, height: 1039 },
+    );
+
+    expect(result).toBe((1039 * 0.8) / 5000);
   });
 });
 

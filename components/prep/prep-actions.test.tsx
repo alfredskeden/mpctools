@@ -48,7 +48,7 @@ describe("PrepActions", () => {
     );
 
     const link = screen.getByText("Continue to Outpaint");
-    expect(link.closest("a")?.getAttribute("aria-disabled")).toBe("true");
+    expect(link.getAttribute("aria-disabled")).toBe("true");
   });
 
   it("sets continue link href to /outpaint", () => {
@@ -57,6 +57,24 @@ describe("PrepActions", () => {
     );
 
     const link = screen.getByText("Continue to Outpaint");
-    expect(link.closest("a")?.getAttribute("href")).toBe("/outpaint");
+    expect(link.getAttribute("href")).toBe("/outpaint");
+  });
+
+  it("applies disabled opacity to download button when disabled", () => {
+    render(
+      <PrepActions canDownload={false} canContinue={false} onDownload={vi.fn()} />,
+    );
+
+    const btn = screen.getByRole("button", { name: /download png/i });
+    expect(btn.className).toContain("opacity-40");
+  });
+
+  it("applies disabled opacity to continue link when disabled", () => {
+    render(
+      <PrepActions canDownload={false} canContinue={false} onDownload={vi.fn()} />,
+    );
+
+    const link = screen.getByText("Continue to Outpaint");
+    expect(link.className).toContain("opacity-40");
   });
 });

@@ -61,40 +61,46 @@ export function ImageDropZone({ onImageLoad }: ImageDropZoneProps) {
   );
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label="Upload image"
-      className={cn(
-        "flex min-h-[400px] cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
-        isDragging
-          ? "border-brand bg-brand/5"
-          : "border-muted-foreground/25 hover:border-muted-foreground/50",
-      )}
-      onClick={handleClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          handleClick();
-        }
-      }}
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-    >
-      <Upload className="size-10 text-muted-foreground" />
-      <p className="mt-4 text-sm font-medium">Drop your card art here</p>
-      <p className="mt-1 text-xs text-muted-foreground">
-        or click to browse
-      </p>
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleChange}
-        data-testid="file-input"
-      />
+    <div className="flex items-center justify-center">
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="Upload image"
+        className="aspect-[440/600] w-full max-w-canvas rounded-lg bg-canvas-bg p-4"
+        onClick={handleClick}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleClick();
+          }
+        }}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
+        <div
+          className={cn(
+            "flex h-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
+            isDragging
+              ? "border-accent-blue bg-accent-blue/10"
+              : "border-white/25 hover:border-white/50",
+          )}
+        >
+          <Upload className="size-10 text-white/50" />
+          <p className="mt-4 text-sm font-medium text-white/50">
+            Drop image here
+          </p>
+          <p className="mt-1 text-xs text-white/30">or click to browse</p>
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleChange}
+          data-testid="file-input"
+        />
+      </div>
     </div>
   );
 }

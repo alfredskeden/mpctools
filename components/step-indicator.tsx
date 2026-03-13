@@ -25,17 +25,19 @@ export function StepIndicator({ steps, className }: StepIndicatorProps) {
             <div className="flex items-center gap-2">
               <div
                 aria-hidden="true"
-                className={`size-2 rounded-full ${
-                  step.active ? "bg-brand" : "bg-secondary"
-                }`}
+                className={cn(
+                  "size-2 rounded-full",
+                  step.active ? "bg-accent-blue" : "bg-surface-subtle",
+                )}
               />
               <span
                 aria-current={step.active ? "step" : undefined}
-                className={`text-xs leading-4 ${
+                className={cn(
+                  "text-xs leading-4 hidden sm:inline",
                   step.active
-                    ? "font-medium text-brand"
-                    : "font-normal text-muted-foreground"
-                }`}
+                    ? "font-medium text-accent-blue"
+                    : "font-normal text-text-tertiary",
+                )}
               >
                 {step.label}
               </span>
@@ -44,7 +46,7 @@ export function StepIndicator({ steps, className }: StepIndicatorProps) {
               <div
                 role="separator"
                 aria-hidden="true"
-                className="h-px w-8 bg-secondary"
+                className="h-px w-8 bg-surface-subtle"
               />
             )}
           </li>

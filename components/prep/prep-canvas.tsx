@@ -182,7 +182,7 @@ export function PrepCanvas({
       height={CANVAS_HEIGHT}
       role="img"
       aria-label="Card art canvas"
-      className="max-h-[600px] w-full cursor-grab rounded-lg border object-contain active:cursor-grabbing"
+      className="max-h-canvas w-full max-w-canvas cursor-grab rounded-lg object-contain active:cursor-grabbing"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}

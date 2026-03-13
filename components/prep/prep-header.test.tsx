@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { PrepHeader } from "./prep-header";
 
 describe("PrepHeader", () => {
-  it("renders the STEP 1 badge", () => {
+  it("renders the STEP 1 text", () => {
     render(<PrepHeader stepStatuses={["active", "upcoming", "upcoming"]} />);
 
     expect(screen.getByText("STEP 1")).toBeDefined();
@@ -30,6 +30,23 @@ describe("PrepHeader", () => {
       "step",
     );
     expect(screen.getByText("Merge").getAttribute("aria-current")).toBeNull();
+  });
+
+  it("renders as a dark top bar with correct height", () => {
+    render(<PrepHeader stepStatuses={["active", "upcoming", "upcoming"]} />);
+
+    const header = screen.getByRole("banner");
+    expect(header.className).toContain("h-11");
+    expect(header.className).toContain("bg-surface-raised");
+    expect(header.className).toContain("border-surface-border");
+  });
+
+  it("renders STEP 1 with blue color", () => {
+    render(<PrepHeader stepStatuses={["active", "upcoming", "upcoming"]} />);
+
+    const stepLabel = screen.getByText("STEP 1");
+    expect(stepLabel.className).toContain("text-accent-blue");
+    expect(stepLabel.className).toContain("font-semibold");
   });
 
   it("overrides default absolute positioning on StepIndicator", () => {

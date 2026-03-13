@@ -16,7 +16,7 @@ describe("StepIndicator", () => {
     ).toBeDefined();
   });
 
-  it("renders all step labels", () => {
+  it("renders all step labels (hidden on mobile)", () => {
     render(<StepIndicator steps={steps} />);
 
     expect(screen.getByText("Prep")).toBeDefined();
@@ -37,17 +37,22 @@ describe("StepIndicator", () => {
   it("applies active styling classes to the active step label", () => {
     render(<StepIndicator steps={steps} />);
 
-    expect(screen.getByText("Prep").className).toContain("text-brand");
+    expect(screen.getByText("Prep").className).toContain("text-accent-blue");
     expect(screen.getByText("Prep").className).toContain("font-medium");
   });
 
   it("applies inactive styling classes to inactive step labels", () => {
     render(<StepIndicator steps={steps} />);
 
-    expect(screen.getByText("Outpaint").className).toContain(
-      "text-muted-foreground",
-    );
+    expect(screen.getByText("Outpaint").className).toContain("text-text-tertiary");
     expect(screen.getByText("Outpaint").className).toContain("font-normal");
+  });
+
+  it("hides labels on mobile with hidden sm:inline", () => {
+    render(<StepIndicator steps={steps} />);
+
+    expect(screen.getByText("Prep").className).toContain("hidden");
+    expect(screen.getByText("Prep").className).toContain("sm:inline");
   });
 
   it("renders separators between steps but not after the last", () => {
@@ -64,9 +69,9 @@ describe("StepIndicator", () => {
       "[aria-hidden='true'].rounded-full",
     );
     expect(dots).toHaveLength(3);
-    expect(dots[0].className).toContain("bg-brand");
-    expect(dots[1].className).toContain("bg-secondary");
-    expect(dots[2].className).toContain("bg-secondary");
+    expect(dots[0].className).toContain("bg-accent-blue");
+    expect(dots[1].className).toContain("bg-surface-subtle");
+    expect(dots[2].className).toContain("bg-surface-subtle");
   });
 
   it("renders an ordered list of steps", () => {

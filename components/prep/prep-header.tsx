@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { StepIndicator } from "@/components/step-indicator";
 import type { StepStatus } from "@/hooks/use-prep-workflow";
 
@@ -17,10 +16,14 @@ export function PrepHeader({ stepStatuses }: PrepHeaderProps) {
   }));
 
   return (
-    <header className="flex flex-col items-center gap-4 sm:flex-row sm:justify-between">
-      <div className="flex items-center gap-3">
-        <Badge variant="secondary">STEP 1</Badge>
-        <h1 className="text-xl font-semibold tracking-tight">Prepare Image</h1>
+    <header className="flex h-11 shrink-0 items-center justify-between border-b border-surface-border bg-surface-raised px-4">
+      <div className="flex items-center gap-2">
+        <span className="text-[13px] font-semibold text-accent-blue">
+          STEP 1
+        </span>
+        <span className="text-[13px] font-medium text-text-primary">
+          Prepare Image
+        </span>
       </div>
       <StepIndicator
         steps={steps}

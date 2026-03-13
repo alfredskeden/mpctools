@@ -35,11 +35,12 @@ export function PrepPageContent() {
   }, [state.canvasDataUrl]);
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 p-6">
+    <div className="flex h-svh flex-col">
       <PrepHeader stepStatuses={stepStatuses} />
 
-      <div className="grid gap-8 md:grid-cols-[1fr_300px]">
-        <div className="min-h-[400px]">
+      <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+        {/* Canvas area */}
+        <div className="flex flex-1 items-center justify-center bg-surface-ground p-6">
           {state.imageElement ? (
             <PrepCanvas
               imageElement={state.imageElement}
@@ -56,22 +57,29 @@ export function PrepPageContent() {
           )}
         </div>
 
-        <div className="flex flex-col gap-4">
-          <InstructionSteps stepStatuses={stepStatuses} />
-          {state.imageElement && (
-            <OverlaySelector
-              selectedOverlay={state.selectedOverlay}
-              onSelectOverlay={selectOverlay}
+        {/* Right panel */}
+        <div className="flex w-full shrink-0 flex-col border-t border-surface-border bg-surface-raised p-5 md:w-80 md:border-l md:border-t-0">
+          <div className="flex-1">
+            <InstructionSteps stepStatuses={stepStatuses} />
+            {state.imageElement && (
+              <div className="mt-6">
+                <OverlaySelector
+                  selectedOverlay={state.selectedOverlay}
+                  onSelectOverlay={selectOverlay}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6">
+            <PrepActions
+              canDownload={canDownload}
+              canContinue={canContinue}
+              onDownload={handleDownload}
             />
-          )}
+          </div>
         </div>
       </div>
-
-      <PrepActions
-        canDownload={canDownload}
-        canContinue={canContinue}
-        onDownload={handleDownload}
-      />
     </div>
   );
 }
