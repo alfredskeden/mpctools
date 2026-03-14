@@ -7,6 +7,7 @@ import { PrepCanvas } from "./prep-canvas";
 import { InstructionSteps } from "./instruction-steps";
 import { PrepActions } from "./prep-actions";
 import { OverlaySelector } from "./overlay-selector";
+import { KonvaCanvas } from "./KonvaCanvas";
 
 export function PrepPageContent() {
   const {
@@ -37,20 +38,7 @@ export function PrepPageContent() {
     <div className="flex min-h-0 flex-1 flex-col md:flex-row">
       {/* Canvas area */}
       <div className="flex flex-1 items-center justify-center bg-surface-ground p-6">
-        {state.imageElement ? (
-          <PrepCanvas
-            imageElement={state.imageElement}
-            position={state.position}
-            scale={state.scale}
-            onPositionChange={updatePosition}
-            onScaleChange={updateScale}
-            onMarkPositioned={markPositioned}
-            onCanvasDataUrl={setCanvasDataUrl}
-            selectedOverlay={state.selectedOverlay}
-          />
-        ) : (
-          <ImageDropZone onImageLoad={uploadImage} />
-        )}
+        {state.imageElement && <KonvaCanvas image={state.imageElement} />}
       </div>
 
       {/* Right panel */}

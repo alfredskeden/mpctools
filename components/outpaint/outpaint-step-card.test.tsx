@@ -48,7 +48,7 @@ describe("OutpaintStepCard", () => {
   it("hides Copy button when inactive", () => {
     render(<OutpaintStepCard {...defaultProps} isActive={false} />);
 
-    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Copy" })).toBeNull();
   });
 
   it("applies opacity when inactive", () => {
@@ -115,5 +115,103 @@ describe("OutpaintStepCard", () => {
 
     const code = screen.getByText("Some prompt text");
     expect(code.className).toContain("text-text-tertiary");
+  });
+
+  it("shows 'Show more' button by default", () => {
+    render(<OutpaintStepCard {...defaultProps} />);
+
+    expect(
+      screen.getByRole("button", { name: /show more/i }),
+    ).toBeDefined();
+  });
+
+  it("text is collapsed by default with max height constraint", () => {
+    render(<OutpaintStepCard {...defaultProps} />);
+
+    const codeText = screen.getByText("Some prompt text");
+    const textContainer = codeText.parentElement!;
+    expect(textContainer.className).toContain("max-h-[5.5rem]");
+    expect(textContainer.className).toContain("overflow-hidden");
+  });
+
+  it("shows gradient overlay when collapsed", () => {
+    const { container } = render(<OutpaintStepCard {...defaultProps} />);
+
+    const gradient = container.querySelector(".bg-gradient-to-t");
+    expect(gradient).not.toBeNull();
+  });
+
+  it("expands text when 'Show more' is clicked", async () => {
+    render(<OutpaintStepCard {...defaultProps} />);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /show more/i }),
+    );
+
+    const codeText = screen.getByText("Some prompt text");
+    const textContainer = codeText.parentElement!;
+    expect(textContainer.className).not.toContain("max-h-[5.5rem]");
+    expect(textContainer.className).not.toContain("overflow-hidden");
+  });
+
+  it("shows 'Show less' after expanding", async () => {
+    render(<OutpaintStepCard {...defaultProps} />);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /show more/i }),
+    );
+
+    expect(
+      screen.getByRole("button", { name: /show less/i }),
+    ).toBeDefined();
+  });
+
+  it("hides gradient overlay when expanded", async () => {
+    const { container } = render(<OutpaintStepCard {...defaultProps} />);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /show more/i }),
+    );
+
+    const gradient = container.querySelector(".bg-gradient-to-t");
+    expect(gradient).toBeNull();
+  });
+
+  it("collapses text when 'Show less' is clicked", async () => {
+    render(<OutpaintStepCard {...defaultProps} />);
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /show more/i }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /show less/i }),
+    );
+
+    const codeText = screen.getByText("Some prompt text");
+    const textContainer = codeText.parentElement!;
+    expect(textContainer.className).toContain("max-h-[5.5rem]");
+  });
+
+  it("preserves newlines in code text", () => {
+    render(
+      <OutpaintStepCard {...defaultProps} codeText={"Line one\nLine two"} />,
+    );
+
+    const codeText = screen.getByText(/Line one/);
+    expect(codeText.className).toContain("whitespace-pre-line");
+  });
+
+  it("rotates chevron icon when expanded", async () => {
+    const { container } = render(<OutpaintStepCard {...defaultProps} />);
+
+    const showMoreBtn = screen.getByRole("button", { name: /show more/i });
+    const svgBefore = showMoreBtn.querySelector("svg")!;
+    expect(svgBefore.className.baseVal).not.toContain("rotate-180");
+
+    await userEvent.click(showMoreBtn);
+
+    const showLessBtn = screen.getByRole("button", { name: /show less/i });
+    const svgAfter = showLessBtn.querySelector("svg")!;
+    expect(svgAfter.className.baseVal).toContain("rotate-180");
   });
 });

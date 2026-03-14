@@ -18,7 +18,8 @@ const INSTRUCTIONS: InstructionStep[] = [
   {
     number: 2,
     title: "Position on canvas",
-    description: "Drag to reposition and scroll to zoom your image on the canvas.",
+    description:
+      "Drag to reposition and scroll to zoom your image on the canvas.",
   },
   {
     number: 3,

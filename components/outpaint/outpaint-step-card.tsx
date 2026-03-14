@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 type OutpaintStepCardProps = {
@@ -21,6 +22,8 @@ export function OutpaintStepCard({
   onCopy,
   copied,
 }: OutpaintStepCardProps) {
+  const [expanded, setExpanded] = useState(false);
+
   return (
     <div
       className={cn(
@@ -65,14 +68,19 @@ export function OutpaintStepCard({
         )}
       </div>
       <div className="flex flex-col rounded-md py-3.5 px-4 bg-surface-ground">
-        <span
-          className={cn(
-            "text-caption leading-4.5 font-mono",
-            isActive ? "text-text-code" : "text-text-tertiary",
+        <div className={cn("relative", !expanded && "max-h-[5.5rem] overflow-hidden")}>
+          <span
+            className={cn(
+              "text-caption leading-4.5 font-mono whitespace-pre-line",
+              isActive ? "text-text-code" : "text-text-tertiary",
+            )}
+          >
+            {codeText}
+          </span>
+          {!expanded && (
+            <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-surface-ground to-transparent" />
           )}
-        >
-          {codeText}
-        </span>
+        </div>
       </div>
       {isActive && hintText && (
         <div className="flex items-center rounded-md py-2 px-3 gap-2 bg-accent-blue/8">
@@ -82,6 +90,27 @@ export function OutpaintStepCard({
           </span>
         </div>
       )}
+      <button
+        type="button"
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center justify-center gap-1 py-1"
+      >
+        <span className="text-caption text-text-tertiary font-medium">
+          {expanded ? "Show less" : "Show more"}
+        </span>
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className={cn("text-text-tertiary", expanded && "rotate-180")}
+          aria-hidden="true"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
     </div>
   );
 }
