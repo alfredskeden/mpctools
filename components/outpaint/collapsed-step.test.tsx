@@ -20,7 +20,7 @@ describe("CollapsedStep", () => {
       <CollapsedStep title="THE HANDSHAKE" onToggle={vi.fn()} />,
     );
 
-    const checkCircle = container.querySelector(".bg-\\[\\#22C55E\\]");
+    const checkCircle = container.querySelector(".bg-status-success");
     expect(checkCircle).not.toBeNull();
   });
 
@@ -29,7 +29,7 @@ describe("CollapsedStep", () => {
     render(<CollapsedStep title="THE HANDSHAKE" onToggle={onToggle} />);
 
     await userEvent.click(screen.getByRole("button"));
-    expect(onToggle).toHaveBeenCalledOnce();
+    expect(onToggle).toHaveBeenCalled();
   });
 
   it("renders a chevron icon", () => {

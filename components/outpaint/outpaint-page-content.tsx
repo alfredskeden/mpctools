@@ -18,7 +18,7 @@ export function OutpaintPageContent() {
 
   return (
     <div className="flex flex-1 items-center justify-center bg-surface-ground p-6">
-      <div className="flex flex-col gap-4 w-full max-w-[640px]">
+      <div className="flex flex-col gap-4 w-full max-w-content">
         {state.handshakeSent && state.handshakeCollapsed ? (
           <CollapsedStep
             title="THE HANDSHAKE"
@@ -29,7 +29,7 @@ export function OutpaintPageContent() {
             stepNumber={1}
             title="THE HANDSHAKE"
             codeText={HANDSHAKE_PROMPT}
-            hintText='Copy this prompt, send it to Gemini, and wait for "understood"'
+            hintText='Copy this prompt, send it to Gemini, and wait for "Universal Neutral Extension Mode Locked. Ready for any input."'
             isActive={!state.handshakeSent}
             onCopy={() => handshakeClipboard.copy(HANDSHAKE_PROMPT)}
             copied={handshakeClipboard.copied}

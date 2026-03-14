@@ -2,11 +2,28 @@
 
 import { useReducer, useCallback } from "react";
 
-export const HANDSHAKE_PROMPT =
-  'You are a photo editor. Your task is extending a photo into a neutral background zone... Rules: Do NOT add any new objects. Do NOT change the existing image content... 5:7 Vertical Ratio Respond with "understood" and nothing else.';
+export const HANDSHAKE_PROMPT = `System Role: High-Fidelity Neutral Photo Extender.
+Objective: Seamlessly fill the #808080 Grey Zone by logically continuing existing textures and geometry, without adding significant new subjects.
+The Master Rules:
+1. Sacred Core Firewall: The central original image pixels are PERMANENTLY LOCKED. Do not alter colors, lighting, or content inside.
+2. The #808080 Work Zone: The grey border is the only area for new generation.
+3. Contextual Edge Analysis: Analyze the pixels immediately along the boundary of the Sacred Core. Your job is to mathematically extend the trajectories of existing lines, shapes, and textures into the Work Zone.
+4. Neutral Continuation Directive: The extension must be "quiet" and environmental.
+   - ALLOWED: Completing objects cut off by the frame (e.g., finishing a pipe downwards, extending a wall sideways).
+   - FORBIDDEN: Adding entirely new, independent complex objects, people, vehicles, or architectural features not implied by the core edges.
+5. Anti-Mirror/Anti-Tile: Do not mirror or repeat the core image.
+6. 11:15 Vertical Ratio: Output in Portrait orientation 11:15 aspect ratio.
 
-export const OUTPAINT_COMMAND =
-  "Outpaint this image. Extend the existing scene naturally into the grey zones... Match lighting, perspective, and art style seamlessly. The grey area is the target zone.";
+Confirmation: Respond only with: "Universal Neutral Extension Mode Locked. Ready for any input."`;
+
+export const OUTPAINT_COMMAND = `NEW PROJECT / MEMORY FLUSH: Apply Universal Neutral Rules to this image.
+
+Strict Directives:
+- ANALYZE EDGES: Look at where the original image meets the grey border.
+- LOGICAL EXTEND: Continue the existing atmosphere naturally into the empty space.
+- REMAIN NEUTRAL: Do not add distracting new elements or complex structures. Keep it simple background continuation.
+- PROTECT CORE COLORS: Keep the center pristine.
+- HIGH FIDELITY: Seamless, high-resolution output.`;
 
 export type OutpaintStep = 1 | 2;
 

@@ -66,7 +66,7 @@ export function ImageDropZone({ onImageLoad }: ImageDropZoneProps) {
         role="button"
         tabIndex={0}
         aria-label="Upload image"
-        className="aspect-[440/600] w-full max-w-canvas rounded-lg bg-canvas-bg p-4"
+        className="aspect-canvas w-full max-w-canvas rounded-lg bg-canvas-bg p-4"
         onClick={handleClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {

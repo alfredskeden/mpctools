@@ -31,12 +31,16 @@ describe("outpaintReducer", () => {
       ...initialState,
       handshakeCollapsed: true,
     };
-    const result = outpaintReducer(state, { type: "TOGGLE_HANDSHAKE_COLLAPSE" });
+    const result = outpaintReducer(state, {
+      type: "TOGGLE_HANDSHAKE_COLLAPSE",
+    });
     expect(result.handshakeCollapsed).toBe(false);
   });
 
   it("handles TOGGLE_HANDSHAKE_COLLAPSE from false to true", () => {
-    const result = outpaintReducer(initialState, { type: "TOGGLE_HANDSHAKE_COLLAPSE" });
+    const result = outpaintReducer(initialState, {
+      type: "TOGGLE_HANDSHAKE_COLLAPSE",
+    });
     expect(result.handshakeCollapsed).toBe(true);
   });
 
@@ -53,11 +57,11 @@ describe("outpaintReducer", () => {
 
 describe("prompt constants", () => {
   it("exports HANDSHAKE_PROMPT", () => {
-    expect(HANDSHAKE_PROMPT).toContain("photo editor");
+    expect(HANDSHAKE_PROMPT).toContain("High-Fidelity Neutral Photo Extender");
   });
 
   it("exports OUTPAINT_COMMAND", () => {
-    expect(OUTPAINT_COMMAND).toContain("Outpaint this image");
+    expect(OUTPAINT_COMMAND).toContain("NEW PROJECT / MEMORY FLUSH");
   });
 });
 

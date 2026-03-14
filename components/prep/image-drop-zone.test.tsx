@@ -211,6 +211,6 @@ describe("ImageDropZone", () => {
 
     const dropZone = screen.getByRole("button", { name: "Upload image" });
     expect(dropZone.className).toContain("bg-canvas-bg");
-    expect(dropZone.className).toContain("aspect-[440/600]");
+    expect(dropZone.className).toContain("aspect-canvas");
   });
 });

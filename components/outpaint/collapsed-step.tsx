@@ -10,10 +10,10 @@ export function CollapsedStep({ title, onToggle }: CollapsedStepProps) {
     <button
       type="button"
       onClick={onToggle}
-      className="flex items-center justify-between rounded-[10px] py-4 px-5 bg-surface-raised border border-surface-border w-full"
+      className="flex items-center justify-between rounded-lg py-4 px-5 bg-surface-raised border border-surface-border w-full"
     >
       <div className="flex items-center gap-2.5">
-        <div className="flex items-center justify-center w-[22px] h-[22px] shrink-0 rounded-full bg-[#22C55E]">
+        <div className="flex items-center justify-center w-5.5 h-5.5 shrink-0 rounded-full bg-status-success">
           <svg
             width="12"
             height="12"
@@ -26,10 +26,10 @@ export function CollapsedStep({ title, onToggle }: CollapsedStepProps) {
             <path d="M20 6L9 17l-5-5" />
           </svg>
         </div>
-        <span className="text-[13px] tracking-[0.03em] leading-4 text-text-secondary font-semibold">
+        <span className="text-label tracking-wide text-text-secondary font-semibold">
           {title}
         </span>
-        <span className="text-[11px] leading-3.5 text-[#22C55E] font-medium">
+        <span className="text-caption text-status-success font-medium">
           Sent
         </span>
       </div>

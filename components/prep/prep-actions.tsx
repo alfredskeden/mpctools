@@ -31,7 +31,7 @@ export function PrepActions({
         href="/outpaint"
         aria-disabled={!canContinue}
         className={cn(
-          "flex h-[38px] w-full items-center justify-center rounded-lg border border-surface-border text-sm font-medium text-text-primary transition-colors hover:bg-surface-raised",
+          "flex h-9.5 w-full items-center justify-center rounded-lg border border-surface-border text-sm font-medium text-text-primary transition-colors hover:bg-surface-raised",
           !canContinue && "opacity-40 pointer-events-none",
         )}
       >

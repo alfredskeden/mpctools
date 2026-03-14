@@ -97,7 +97,7 @@ describe("OutpaintPageContent", () => {
     await userEvent.click(screen.getByRole("button", { name: /copy/i }));
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      expect.stringContaining("photo editor"),
+      expect.stringContaining("High-Fidelity Neutral Photo Extender"),
     );
   });
 
@@ -112,7 +112,7 @@ describe("OutpaintPageContent", () => {
     await userEvent.click(screen.getByRole("button", { name: /copy/i }));
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
-      expect.stringContaining("Outpaint this image"),
+      expect.stringContaining("NEW PROJECT / MEMORY FLUSH"),
     );
   });
 });

@@ -18,7 +18,7 @@ export function OutpaintActions({
         <button
           type="button"
           onClick={onSendHandshake}
-          className="flex items-center justify-center h-[42px] rounded-lg gap-2 border-[1.5px] border-accent-blue"
+          className="flex items-center justify-center h-10.5 rounded-lg gap-2 border-1.5 border-accent-blue"
         >
           <svg
             width="16"
@@ -32,7 +32,7 @@ export function OutpaintActions({
           >
             <path d="M20 6L9 17l-5-5" />
           </svg>
-          <span className="text-[13px] leading-4 text-accent-blue font-semibold">
+          <span className="text-label text-accent-blue font-semibold">
             I've sent the handshake
           </span>
         </button>
@@ -41,7 +41,7 @@ export function OutpaintActions({
         href="/merger"
         aria-disabled={!handshakeSent}
         className={cn(
-          "flex items-center justify-center h-[42px] rounded-lg text-[13px] leading-4 font-semibold",
+          "flex items-center justify-center h-10.5 rounded-lg text-label font-semibold",
           handshakeSent
             ? "bg-accent-blue text-white"
             : "opacity-40 bg-surface-overlay text-text-tertiary pointer-events-none",

@@ -25,10 +25,10 @@ export function Header({ currentStep, stepStatuses }: HeaderProps) {
   return (
     <header className="flex h-11 shrink-0 items-center justify-between border-b border-surface-border bg-surface-raised px-4">
       <div className="flex items-center gap-2">
-        <span className="text-[13px] font-semibold text-accent-blue">
+        <span className="text-label font-semibold text-accent-blue">
           STEP {currentStep}
         </span>
-        <span className="text-[13px] font-medium text-text-primary">
+        <span className="text-label font-medium text-text-primary">
           {STEP_TITLES[currentStep]}
         </span>
       </div>
