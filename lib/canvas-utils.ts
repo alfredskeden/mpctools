@@ -140,7 +140,11 @@ export function applyUnsharpMask(
     amount,
     radius,
   );
-  const result = new ImageData(sharpened, canvas.width, canvas.height);
+  const result = new ImageData(
+    new Uint8ClampedArray(sharpened.buffer as ArrayBuffer),
+    canvas.width,
+    canvas.height,
+  );
   ctx.putImageData(result, 0, 0);
 }
 
