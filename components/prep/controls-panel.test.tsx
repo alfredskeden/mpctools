@@ -61,7 +61,9 @@ describe("ControlsPanel", () => {
 
   it("calls onSelectOverlay with null when None is clicked", () => {
     const onSelectOverlay = vi.fn();
-    render(<ControlsPanel {...defaultProps} onSelectOverlay={onSelectOverlay} />);
+    render(
+      <ControlsPanel {...defaultProps} onSelectOverlay={onSelectOverlay} />,
+    );
 
     fireEvent.click(screen.getByText("None"));
     expect(onSelectOverlay).toHaveBeenCalledWith(null);
@@ -69,7 +71,9 @@ describe("ControlsPanel", () => {
 
   it("calls onSelectOverlay with option id when overlay button is clicked", () => {
     const onSelectOverlay = vi.fn();
-    render(<ControlsPanel {...defaultProps} onSelectOverlay={onSelectOverlay} />);
+    render(
+      <ControlsPanel {...defaultProps} onSelectOverlay={onSelectOverlay} />,
+    );
 
     fireEvent.click(screen.getByText("Normal"));
     expect(onSelectOverlay).toHaveBeenCalledWith("normal");
@@ -88,17 +92,5 @@ describe("ControlsPanel", () => {
 
     const noneBtn = screen.getByText("None");
     expect(noneBtn.className).toContain("border-accent-blue");
-  });
-
-  it("renders Position section", () => {
-    render(<ControlsPanel {...defaultProps} />);
-
-    expect(screen.getByText("Position")).toBeDefined();
-  });
-
-  it("renders Rotation section", () => {
-    render(<ControlsPanel {...defaultProps} />);
-
-    expect(screen.getByText("Rotation")).toBeDefined();
   });
 });

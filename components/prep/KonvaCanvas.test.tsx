@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, act } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { KonvaCanvas } from "./KonvaCanvas";
 import { transformerVisibilityCalls } from "../../__mocks__/react-konva";
 
@@ -55,7 +55,9 @@ describe("KonvaCanvas", () => {
 
   it("calls onExport when image is provided", () => {
     const onExport = vi.fn();
-    render(<KonvaCanvas {...defaultProps} image={makeImage()} onExport={onExport} />);
+    render(
+      <KonvaCanvas {...defaultProps} image={makeImage()} onExport={onExport} />,
+    );
 
     expect(onExport).toHaveBeenCalledWith("data:image/png;base64,mock");
   });
@@ -148,7 +150,11 @@ describe("KonvaCanvas", () => {
     });
 
     render(
-      <KonvaCanvas {...defaultProps} image={makeImage()} selectedOverlay="tall_normal" />,
+      <KonvaCanvas
+        {...defaultProps}
+        image={makeImage()}
+        selectedOverlay="tall_normal"
+      />,
     );
 
     expect(screen.getByTestId("konva-overlay")).toBeDefined();
@@ -179,13 +185,21 @@ describe("KonvaCanvas", () => {
     });
 
     const { rerender } = render(
-      <KonvaCanvas {...defaultProps} image={makeImage()} selectedOverlay="tall_normal" />,
+      <KonvaCanvas
+        {...defaultProps}
+        image={makeImage()}
+        selectedOverlay="tall_normal"
+      />,
     );
 
     expect(screen.getByTestId("konva-overlay")).toBeDefined();
 
     rerender(
-      <KonvaCanvas {...defaultProps} image={makeImage()} selectedOverlay={null} />,
+      <KonvaCanvas
+        {...defaultProps}
+        image={makeImage()}
+        selectedOverlay={null}
+      />,
     );
 
     expect(screen.queryByTestId("konva-overlay")).toBeNull();
@@ -195,7 +209,11 @@ describe("KonvaCanvas", () => {
 
   it("clears overlay for unknown overlay id", () => {
     render(
-      <KonvaCanvas {...defaultProps} image={makeImage()} selectedOverlay="unknown_id" />,
+      <KonvaCanvas
+        {...defaultProps}
+        image={makeImage()}
+        selectedOverlay="unknown_id"
+      />,
     );
 
     expect(screen.queryByTestId("konva-overlay")).toBeNull();
@@ -248,7 +266,9 @@ describe("KonvaCanvas", () => {
     const { container } = render(<KonvaCanvas {...defaultProps} />);
 
     // The inner display wrapper should have non-zero dimensions
-    const displayWrapper = container.querySelector("[style*='box-shadow']") as HTMLElement;
+    const displayWrapper = container.querySelector(
+      "[style*='box-shadow']",
+    ) as HTMLElement;
     expect(displayWrapper).toBeDefined();
     // Width-constrained: displayWidth = 700, displayHeight = 700 / (3520/4800) ≈ 954.5
     expect(parseFloat(displayWrapper.style.width)).toBeCloseTo(700, 0);
@@ -276,7 +296,9 @@ describe("KonvaCanvas", () => {
 
     const { container } = render(<KonvaCanvas {...defaultProps} />);
 
-    const displayWrapper = container.querySelector("[style*='box-shadow']") as HTMLElement;
+    const displayWrapper = container.querySelector(
+      "[style*='box-shadow']",
+    ) as HTMLElement;
     // Height-constrained: displayHeight = 500, displayWidth = 500 * (3520/4800) ≈ 366.7
     expect(parseFloat(displayWrapper.style.height)).toBeCloseTo(500, 0);
     expect(parseFloat(displayWrapper.style.width)).toBeLessThan(500);
@@ -319,7 +341,9 @@ describe("KonvaCanvas", () => {
     // Then — the transformer should have been hidden before toDataURL and restored after
     expect(onExport).toHaveBeenCalled();
     expect(transformerVisibilityCalls).toContain(false);
-    expect(transformerVisibilityCalls[transformerVisibilityCalls.length - 1]).toBe(true);
+    expect(
+      transformerVisibilityCalls[transformerVisibilityCalls.length - 1],
+    ).toBe(true);
   });
 
   it("calls onScaleChange and onRotationChange on transform end", () => {

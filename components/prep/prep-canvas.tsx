@@ -1,7 +1,11 @@
 "use client";
 
 import { useRef, useEffect, useCallback } from "react";
-import { calculateDrawParams, clampPosition } from "@/lib/canvas-utils";
+import {
+  calculateDrawParams,
+  clampPosition,
+  BG_COLOR,
+} from "@/lib/canvas-utils";
 import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 
 const CANVAS_WIDTH = 744;
@@ -48,7 +52,7 @@ export function PrepCanvas({
     if (!ctx) return;
     /* v8 ignore stop */
 
-    ctx.fillStyle = "#808080";
+    ctx.fillStyle = BG_COLOR;
     ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
     const params = calculateDrawParams(
@@ -73,7 +77,7 @@ export function PrepCanvas({
     if (overlayImageRef.current) {
       ctx.drawImage(overlayImageRef.current, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     }
-  }, [imageElement, position, scale, selectedOverlay]);
+  }, [imageElement, position, scale]);
 
   useEffect(() => {
     if (!selectedOverlay) {

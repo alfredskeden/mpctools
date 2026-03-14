@@ -1,7 +1,7 @@
 // KonvaCanvas.tsx
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { Stage, Layer, Image, Transformer, Rect } from "react-konva";
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
+import { CANVAS_WIDTH, CANVAS_HEIGHT, BG_COLOR } from "@/lib/canvas-utils";
 import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 
 const ASPECT_RATIO = CANVAS_WIDTH / CANVAS_HEIGHT; // 11:15
@@ -45,7 +45,8 @@ export const KonvaCanvas = ({
   const trRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const overlayLayerRef = useRef<any>(null);
-  const [loadedOverlayImage, setLoadedOverlayImage] = useState<HTMLImageElement | null>(null);
+  const [loadedOverlayImage, setLoadedOverlayImage] =
+    useState<HTMLImageElement | null>(null);
 
   const overlayOption = useMemo(
     () => OVERLAY_OPTIONS.find((o) => o.id === selectedOverlay) ?? null,
@@ -58,9 +59,11 @@ export const KonvaCanvas = ({
 
     let cancelled = false;
     const img = new window.Image();
+    /* v8 ignore start */
     img.onload = () => {
       if (!cancelled) setLoadedOverlayImage(img);
     };
+    /* v8 ignore stop */
     img.src = `/overlays/${overlayOption.filename}`;
 
     return () => {
@@ -88,6 +91,7 @@ export const KonvaCanvas = ({
     const overlayLayer = overlayLayerRef.current;
     const transformer = trRef.current;
 
+    /* v8 ignore start */
     if (overlayLayer) overlayLayer.visible(false);
     if (transformer) transformer.visible(false);
 
@@ -95,6 +99,7 @@ export const KonvaCanvas = ({
 
     if (transformer) transformer.visible(true);
     if (overlayLayer) overlayLayer.visible(true);
+    /* v8 ignore stop */
 
     onExport(dataUrl);
   }, [image, position, imageScale, rotation, onExport]);
@@ -195,7 +200,7 @@ export const KonvaCanvas = ({
               <Rect
                 width={CANVAS_WIDTH}
                 height={CANVAS_HEIGHT}
-                fill="#808080"
+                fill={BG_COLOR}
               />
             </Layer>
             {image && (

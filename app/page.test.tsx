@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import Home from "./page";
 
 vi.mock("next/image", () => ({
+  // eslint-disable-next-line jsx-a11y/alt-text, @next/next/no-img-element
   default: (props: Record<string, unknown>) => <img {...props} />,
 }));
 

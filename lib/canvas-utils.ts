@@ -65,6 +65,146 @@ export function calculateDrawParams(
   };
 }
 
+export const BG_COLOR = "#808080";
+
+export function sharpenPixelData(
+  pixels: Uint8ClampedArray,
+  width: number,
+  height: number,
+  amount: number,
+  radius: number,
+): Uint8ClampedArray {
+  const length = pixels.length;
+  const result = new Uint8ClampedArray(length);
+
+  // Box blur
+  const blurred = new Uint8ClampedArray(length);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      let r = 0,
+        g = 0,
+        b = 0,
+        count = 0;
+      for (let dy = -radius; dy <= radius; dy++) {
+        for (let dx = -radius; dx <= radius; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+            const idx = (ny * width + nx) * 4;
+            r += pixels[idx];
+            g += pixels[idx + 1];
+            b += pixels[idx + 2];
+            count++;
+          }
+        }
+      }
+      const idx = (y * width + x) * 4;
+      blurred[idx] = r / count;
+      blurred[idx + 1] = g / count;
+      blurred[idx + 2] = b / count;
+      blurred[idx + 3] = pixels[idx + 3];
+    }
+  }
+
+  // Unsharp mask: result = original + amount * (original - blurred)
+  for (let i = 0; i < length; i += 4) {
+    result[i] = Math.min(
+      255,
+      Math.max(0, pixels[i] + amount * (pixels[i] - blurred[i])),
+    );
+    result[i + 1] = Math.min(
+      255,
+      Math.max(0, pixels[i + 1] + amount * (pixels[i + 1] - blurred[i + 1])),
+    );
+    result[i + 2] = Math.min(
+      255,
+      Math.max(0, pixels[i + 2] + amount * (pixels[i + 2] - blurred[i + 2])),
+    );
+    result[i + 3] = pixels[i + 3];
+  }
+
+  return result;
+}
+
+export function applyUnsharpMask(
+  canvas: HTMLCanvasElement,
+  amount: number,
+  radius: number,
+): void {
+  const ctx = canvas.getContext("2d")!;
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const sharpened = sharpenPixelData(
+    imageData.data,
+    canvas.width,
+    canvas.height,
+    amount,
+    radius,
+  );
+  const result = new ImageData(sharpened, canvas.width, canvas.height);
+  ctx.putImageData(result, 0, 0);
+}
+
+export function detailPreservingResize(
+  sourceImg: HTMLImageElement | HTMLCanvasElement,
+  sx: number,
+  sy: number,
+  sw: number,
+  sh: number,
+  targetCanvas: HTMLCanvasElement,
+): void {
+  const ctx = targetCanvas.getContext("2d")!;
+  const tw = targetCanvas.width;
+  const th = targetCanvas.height;
+
+  ctx.fillStyle = BG_COLOR;
+  ctx.fillRect(0, 0, tw, th);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  const isUpscale = tw > sw || th > sh;
+
+  if (isUpscale) {
+    ctx.drawImage(sourceImg, sx, sy, sw, sh, 0, 0, tw, th);
+    applyUnsharpMask(targetCanvas, 0.6, 1);
+  } else {
+    let currentSource: HTMLImageElement | HTMLCanvasElement = sourceImg;
+    let curSx = sx;
+    let curSy = sy;
+    let curSw = sw;
+    let curSh = sh;
+
+    while (curSw / 2 > tw || curSh / 2 > th) {
+      const halfW = Math.round(curSw / 2);
+      const halfH = Math.round(curSh / 2);
+      const stepCanvas = document.createElement("canvas");
+      stepCanvas.width = halfW;
+      stepCanvas.height = halfH;
+      const stepCtx = stepCanvas.getContext("2d")!;
+      stepCtx.imageSmoothingEnabled = true;
+      stepCtx.imageSmoothingQuality = "high";
+      stepCtx.drawImage(
+        currentSource,
+        curSx,
+        curSy,
+        curSw,
+        curSh,
+        0,
+        0,
+        halfW,
+        halfH,
+      );
+      currentSource = stepCanvas;
+      curSx = 0;
+      curSy = 0;
+      curSw = halfW;
+      curSh = halfH;
+    }
+
+    ctx.drawImage(currentSource, curSx, curSy, curSw, curSh, 0, 0, tw, th);
+    applyUnsharpMask(targetCanvas, 0.8, 1);
+  }
+}
+
 export const CANVAS_WIDTH = 3520;
 export const CANVAS_HEIGHT = 4800;
 
@@ -97,7 +237,11 @@ export function clampPosition(
   const scaledWidth = image.width * scale;
   const scaledHeight = image.height * scale;
 
-  const clampAxis = (pos: number, scaledImageSize: number, canvasSize: number) => {
+  const clampAxis = (
+    pos: number,
+    scaledImageSize: number,
+    canvasSize: number,
+  ) => {
     const minOffset = MIN_VISIBLE - (canvasSize + scaledImageSize) / 2;
     const maxOffset = (canvasSize + scaledImageSize) / 2 - MIN_VISIBLE;
     return Math.max(minOffset, Math.min(maxOffset, pos));

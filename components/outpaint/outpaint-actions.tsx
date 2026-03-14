@@ -33,7 +33,7 @@ export function OutpaintActions({
             <path d="M20 6L9 17l-5-5" />
           </svg>
           <span className="text-label text-accent-blue font-semibold">
-            I've sent the handshake
+            I&apos;ve sent the handshake
           </span>
         </button>
       )}

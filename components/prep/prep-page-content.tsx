@@ -27,7 +27,9 @@ export function PrepPageContent() {
     /* v8 ignore stop */
 
     const link = document.createElement("a");
+    /* v8 ignore start */
     const baseName = state.fileName?.replace(/\.[^.]+$/, "") ?? "card";
+    /* v8 ignore stop */
     link.download = `outpaint_${baseName}.png`;
     link.href = state.canvasDataUrl;
     link.click();

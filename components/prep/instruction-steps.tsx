@@ -7,16 +7,26 @@ import type { StepStatus, PrepState } from "@/hooks/use-prep-workflow";
 import { ControlsPanel } from "./controls-panel";
 
 type InstructionStepsProps = {
-  stepStatuses: StepStatus[];
+  stepStatuses: readonly StepStatus[];
   state: PrepState;
-  onUploadImage: (dataUrl: string, element: HTMLImageElement, fileName: string) => void;
+  onUploadImage: (
+    dataUrl: string,
+    element: HTMLImageElement,
+    fileName: string,
+  ) => void;
   onSelectOverlay: (overlay: string | null) => void;
   onUpdateScale: (scale: number) => void;
   onUpdateRotation: (rotation: number) => void;
   onMarkPositioned: () => void;
 };
 
-function StepCircle({ status, number }: { status: StepStatus; number: number }) {
+function StepCircle({
+  status,
+  number,
+}: {
+  status: StepStatus;
+  number: number;
+}) {
   if (status === "completed") {
     return (
       <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-status-success-dark">
@@ -89,13 +99,20 @@ export function InstructionSteps({
 
       <div className="flex flex-col gap-7">
         {/* Step 1 — Upload your card art */}
-        <div className={cn("flex flex-col gap-3", step1Status === "upcoming" && "opacity-35")}>
+        <div
+          className={cn(
+            "flex flex-col gap-3",
+            step1Status === "upcoming" && "opacity-35",
+          )}
+        >
           <div className="flex items-center gap-2.5">
             <StepCircle status={step1Status} number={1} />
             <p
               className={cn(
                 "text-sm font-medium leading-6",
-                step1Status === "upcoming" ? "text-text-secondary" : "text-text-primary",
+                step1Status === "upcoming"
+                  ? "text-text-secondary"
+                  : "text-text-primary",
               )}
             >
               Upload your card art
@@ -146,13 +163,20 @@ export function InstructionSteps({
         </div>
 
         {/* Step 2 — Position & frame */}
-        <div className={cn("flex flex-col gap-3", step2Status === "upcoming" && "opacity-35")}>
+        <div
+          className={cn(
+            "flex flex-col gap-3",
+            step2Status === "upcoming" && "opacity-35",
+          )}
+        >
           <div className="flex items-center gap-2.5">
             <StepCircle status={step2Status} number={2} />
             <p
               className={cn(
                 "text-sm font-medium leading-6",
-                step2Status === "upcoming" ? "text-text-secondary" : "text-text-primary",
+                step2Status === "upcoming"
+                  ? "text-text-secondary"
+                  : "text-text-primary",
               )}
             >
               Position & frame
@@ -190,13 +214,20 @@ export function InstructionSteps({
         </div>
 
         {/* Step 3 — Download prepared image */}
-        <div className={cn("flex flex-col gap-3", step3Status === "upcoming" && "opacity-35")}>
+        <div
+          className={cn(
+            "flex flex-col gap-3",
+            step3Status === "upcoming" && "opacity-35",
+          )}
+        >
           <div className="flex items-center gap-2.5">
             <StepCircle status={step3Status} number={3} />
             <p
               className={cn(
                 "text-sm font-medium leading-6",
-                step3Status === "upcoming" ? "text-text-secondary" : "text-text-primary",
+                step3Status === "upcoming"
+                  ? "text-text-secondary"
+                  : "text-text-primary",
               )}
             >
               Download prepared image

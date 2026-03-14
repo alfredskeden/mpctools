@@ -30,7 +30,9 @@ describe("InstructionSteps", () => {
   it("renders an aside with instructions label", () => {
     render(<InstructionSteps {...defaultProps} />);
 
-    expect(screen.getByRole("complementary", { name: "Instructions" })).toBeDefined();
+    expect(
+      screen.getByRole("complementary", { name: "Instructions" }),
+    ).toBeDefined();
   });
 
   it("renders step titles", () => {
@@ -46,7 +48,9 @@ describe("InstructionSteps", () => {
 
     expect(screen.getByText("Upload Now")).toBeDefined();
     expect(
-      screen.getByText("Upload your card scan from Scryfall or browse your files."),
+      screen.getByText(
+        "Upload your card scan from Scryfall or browse your files.",
+      ),
     ).toBeDefined();
   });
 
@@ -132,9 +136,7 @@ describe("InstructionSteps", () => {
 
     expect(screen.getByRole("group", { name: "Controls" })).toBeDefined();
     expect(screen.getByText("Scale")).toBeDefined();
-    expect(screen.getByText("Position")).toBeDefined();
     expect(screen.getByText("Frame Overlay")).toBeDefined();
-    expect(screen.getByText("Rotation")).toBeDefined();
   });
 
   it("shows positioned summary when step 2 is completed", () => {
@@ -178,7 +180,9 @@ describe("InstructionSteps", () => {
     render(<InstructionSteps {...props} />);
 
     expect(
-      screen.getByText("Your PNG is ready. Download it or continue to outpainting."),
+      screen.getByText(
+        "Your PNG is ready. Download it or continue to outpainting.",
+      ),
     ).toBeDefined();
   });
 
@@ -276,7 +280,9 @@ describe("InstructionSteps", () => {
       return img;
     });
 
-    render(<InstructionSteps {...defaultProps} onUploadImage={onUploadImage} />);
+    render(
+      <InstructionSteps {...defaultProps} onUploadImage={onUploadImage} />,
+    );
 
     const input = screen.getByTestId("file-input");
     const file = new File(["pixels"], "card.png", { type: "image/png" });
@@ -320,7 +326,9 @@ describe("InstructionSteps", () => {
     render(<InstructionSteps {...defaultProps} />);
 
     expect(
-      screen.getByText("Export your positioned card as a PNG for Gemini outpainting."),
+      screen.getByText(
+        "Export your positioned card as a PNG for Gemini outpainting.",
+      ),
     ).toBeDefined();
   });
 });

@@ -2,6 +2,7 @@ import { render, act } from "@testing-library/react";
 import { GhostCard } from "./ghost-card";
 
 vi.mock("next/image", () => ({
+  // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
   default: (props: Record<string, unknown>) => <img {...props} />,
 }));
 
@@ -19,9 +20,7 @@ describe("GhostCard", () => {
       <GhostCard side="left" images={["/img1.webp", "/img2.webp"]} />,
     );
 
-    expect(
-      container.querySelector("[aria-hidden='true']"),
-    ).toBeDefined();
+    expect(container.querySelector("[aria-hidden='true']")).toBeDefined();
   });
 
   it("applies left positioning for left side", () => {

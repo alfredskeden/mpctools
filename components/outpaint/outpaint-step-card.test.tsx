@@ -120,9 +120,7 @@ describe("OutpaintStepCard", () => {
   it("shows 'Show more' button by default", () => {
     render(<OutpaintStepCard {...defaultProps} />);
 
-    expect(
-      screen.getByRole("button", { name: /show more/i }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: /show more/i })).toBeDefined();
   });
 
   it("text is collapsed by default with max height constraint", () => {
@@ -144,9 +142,7 @@ describe("OutpaintStepCard", () => {
   it("expands text when 'Show more' is clicked", async () => {
     render(<OutpaintStepCard {...defaultProps} />);
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /show more/i }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: /show more/i }));
 
     const codeText = screen.getByText("Some prompt text");
     const textContainer = codeText.parentElement!;
@@ -157,21 +153,15 @@ describe("OutpaintStepCard", () => {
   it("shows 'Show less' after expanding", async () => {
     render(<OutpaintStepCard {...defaultProps} />);
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /show more/i }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: /show more/i }));
 
-    expect(
-      screen.getByRole("button", { name: /show less/i }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: /show less/i })).toBeDefined();
   });
 
   it("hides gradient overlay when expanded", async () => {
     const { container } = render(<OutpaintStepCard {...defaultProps} />);
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /show more/i }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: /show more/i }));
 
     const gradient = container.querySelector(".bg-gradient-to-t");
     expect(gradient).toBeNull();
@@ -180,12 +170,8 @@ describe("OutpaintStepCard", () => {
   it("collapses text when 'Show less' is clicked", async () => {
     render(<OutpaintStepCard {...defaultProps} />);
 
-    await userEvent.click(
-      screen.getByRole("button", { name: /show more/i }),
-    );
-    await userEvent.click(
-      screen.getByRole("button", { name: /show less/i }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: /show more/i }));
+    await userEvent.click(screen.getByRole("button", { name: /show less/i }));
 
     const codeText = screen.getByText("Some prompt text");
     const textContainer = codeText.parentElement!;
@@ -202,7 +188,7 @@ describe("OutpaintStepCard", () => {
   });
 
   it("rotates chevron icon when expanded", async () => {
-    const { container } = render(<OutpaintStepCard {...defaultProps} />);
+    render(<OutpaintStepCard {...defaultProps} />);
 
     const showMoreBtn = screen.getByRole("button", { name: /show more/i });
     const svgBefore = showMoreBtn.querySelector("svg")!;

@@ -6,6 +6,10 @@ import {
   MIN_VISIBLE,
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
+  BG_COLOR,
+  sharpenPixelData,
+  applyUnsharpMask,
+  detailPreservingResize,
 } from "./canvas-utils";
 
 describe("calculateFitDimensions", () => {
@@ -139,6 +143,123 @@ describe("calculateInitialScale", () => {
   });
 });
 
+describe("BG_COLOR", () => {
+  it("exports the background color constant as gray", () => {
+    // Given / When
+    const color = BG_COLOR;
+
+    // Then
+    expect(color).toBe("#808080");
+  });
+});
+
+describe("sharpenPixelData", () => {
+  it("returns pixel data unchanged for a single pixel", () => {
+    // Given
+    const pixels = new Uint8ClampedArray([100, 150, 200, 255]);
+
+    // When
+    const result = sharpenPixelData(pixels, 1, 1, 0.5, 1);
+
+    // Then
+    expect(result).toEqual(new Uint8ClampedArray([100, 150, 200, 255]));
+  });
+
+  it("returns pixel data unchanged when amount is zero", () => {
+    // Given — 2x2 image with varying pixels, but amount=0
+    const pixels = new Uint8ClampedArray([
+      10, 20, 30, 255, 200, 210, 220, 255, 50, 60, 70, 255, 150, 160, 170, 255,
+    ]);
+
+    // When
+    const result = sharpenPixelData(pixels, 2, 2, 0, 1);
+
+    // Then
+    expect(result).toEqual(pixels);
+  });
+
+  it("returns uniform pixel data unchanged when all pixels are the same", () => {
+    // Given — 2x2 image, all pixels identical
+    const pixels = new Uint8ClampedArray([
+      120, 80, 200, 255, 120, 80, 200, 255, 120, 80, 200, 255, 120, 80, 200,
+      255,
+    ]);
+
+    // When
+    const result = sharpenPixelData(pixels, 2, 2, 0.8, 1);
+
+    // Then
+    expect(result).toEqual(pixels);
+  });
+
+  it("increases contrast at edges when sharpening", () => {
+    // Given — 3x1 image: dark-light-dark edge pattern
+    const pixels = new Uint8ClampedArray([
+      50, 50, 50, 255, 200, 200, 200, 255, 50, 50, 50, 255,
+    ]);
+
+    // When
+    const result = sharpenPixelData(pixels, 3, 1, 1.0, 1);
+
+    // Then — center pixel should become brighter (pushed away from neighbors)
+    expect(result[4]).toBeGreaterThan(200);
+  });
+
+  it("clamps sharpened values to 0-255 range", () => {
+    // Given — extreme edge: 0-255-0 with high amount
+    const pixels = new Uint8ClampedArray([
+      0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 255,
+    ]);
+
+    // When
+    const result = sharpenPixelData(pixels, 3, 1, 5.0, 1);
+
+    // Then — all RGB values stay within valid range
+    for (let i = 0; i < result.length; i += 4) {
+      expect(result[i]).toBeGreaterThanOrEqual(0);
+      expect(result[i]).toBeLessThanOrEqual(255);
+      expect(result[i + 1]).toBeGreaterThanOrEqual(0);
+      expect(result[i + 1]).toBeLessThanOrEqual(255);
+      expect(result[i + 2]).toBeGreaterThanOrEqual(0);
+      expect(result[i + 2]).toBeLessThanOrEqual(255);
+    }
+  });
+
+  it("preserves alpha channel unchanged", () => {
+    // Given — pixels with varying alpha
+    const pixels = new Uint8ClampedArray([
+      0, 0, 0, 128, 255, 255, 255, 64, 0, 0, 0, 200,
+    ]);
+
+    // When
+    const result = sharpenPixelData(pixels, 3, 1, 1.0, 1);
+
+    // Then
+    expect(result[3]).toBe(128);
+    expect(result[7]).toBe(64);
+    expect(result[11]).toBe(200);
+  });
+});
+
+describe("applyUnsharpMask", () => {
+  it("reads pixel data, sharpens it, and writes it back", () => {
+    // Given
+    const canvas = document.createElement("canvas");
+    canvas.width = 2;
+    canvas.height = 2;
+    const ctx = canvas.getContext("2d")!;
+    const getImageDataSpy = vi.spyOn(ctx, "getImageData");
+    const putImageDataSpy = vi.spyOn(ctx, "putImageData");
+
+    // When
+    applyUnsharpMask(canvas, 0.6, 1);
+
+    // Then
+    expect(getImageDataSpy).toHaveBeenCalledWith(0, 0, 2, 2);
+    expect(putImageDataSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("clampPosition", () => {
   it("exports MIN_VISIBLE constant", () => {
     expect(MIN_VISIBLE).toBe(50);
@@ -205,5 +326,145 @@ describe("clampPosition", () => {
     );
 
     expect(result).toEqual({ x: 450, y: 450 });
+  });
+});
+
+describe("detailPreservingResize", () => {
+  function createMockSource(width: number, height: number) {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas as unknown as HTMLImageElement;
+  }
+
+  it("uses single draw and sharpens with 0.6 amount on upscale", () => {
+    // Given — source 50x50, target 200x200 (upscale)
+    const source = createMockSource(50, 50);
+    const target = document.createElement("canvas");
+    target.width = 200;
+    target.height = 200;
+    const ctx = target.getContext("2d")!;
+    const fillRectSpy = vi.spyOn(ctx, "fillRect");
+    const drawImageSpy = vi.spyOn(ctx, "drawImage");
+
+    // When
+    detailPreservingResize(source, 0, 0, 50, 50, target);
+
+    // Then — fills background, draws once, calls applyUnsharpMask
+    expect(fillRectSpy).toHaveBeenCalledWith(0, 0, 200, 200);
+    expect(drawImageSpy).toHaveBeenCalledTimes(1);
+    expect(drawImageSpy).toHaveBeenCalledWith(
+      source,
+      0,
+      0,
+      50,
+      50,
+      0,
+      0,
+      200,
+      200,
+    );
+  });
+
+  it("draws directly without halving when downscale is within 2x", () => {
+    // Given — source 300x300, target 200x200 (ratio 1.5x, within 2x)
+    const source = createMockSource(300, 300);
+    const target = document.createElement("canvas");
+    target.width = 200;
+    target.height = 200;
+    const ctx = target.getContext("2d")!;
+    const drawImageSpy = vi.spyOn(ctx, "drawImage");
+
+    // When
+    detailPreservingResize(source, 0, 0, 300, 300, target);
+
+    // Then — single draw directly from source (no intermediate canvases)
+    expect(drawImageSpy).toHaveBeenCalledTimes(1);
+    expect(drawImageSpy).toHaveBeenCalledWith(
+      source,
+      0,
+      0,
+      300,
+      300,
+      0,
+      0,
+      200,
+      200,
+    );
+  });
+
+  it("performs multi-pass halving for large downscale ratios", () => {
+    // Given — source 800x800, target 100x100 (8x downscale, needs halving)
+    // 800 → 400 → 200 (200/2 = 100, not > 100, so stop) → final draw from 200 to 100
+    const source = createMockSource(800, 800);
+    const target = document.createElement("canvas");
+    target.width = 100;
+    target.height = 100;
+    const createElementSpy = vi.spyOn(document, "createElement");
+
+    // When
+    detailPreservingResize(source, 0, 0, 800, 800, target);
+
+    // Then — intermediate canvases were created for halving steps
+    const canvasCalls = createElementSpy.mock.calls.filter(
+      (call) => call[0] === "canvas",
+    );
+    expect(canvasCalls.length).toBe(2);
+  });
+
+  it("extracts the specified source region on upscale", () => {
+    // Given — source 400x400, extract region (100, 50, 200, 150), target 300x300
+    const source = createMockSource(400, 400);
+    const target = document.createElement("canvas");
+    target.width = 300;
+    target.height = 300;
+    const ctx = target.getContext("2d")!;
+    const drawImageSpy = vi.spyOn(ctx, "drawImage");
+
+    // When
+    detailPreservingResize(source, 100, 50, 200, 150, target);
+
+    // Then — drawImage uses the specified source region
+    expect(drawImageSpy).toHaveBeenCalledWith(
+      source,
+      100,
+      50,
+      200,
+      150,
+      0,
+      0,
+      300,
+      300,
+    );
+  });
+
+  it("fills background with BG_COLOR", () => {
+    // Given
+    const source = createMockSource(100, 100);
+    const target = document.createElement("canvas");
+    target.width = 200;
+    target.height = 200;
+    const ctx = target.getContext("2d")!;
+
+    // When
+    detailPreservingResize(source, 0, 0, 100, 100, target);
+
+    // Then
+    expect(ctx.fillStyle).toBe(BG_COLOR);
+  });
+
+  it("sets imageSmoothingQuality to high", () => {
+    // Given
+    const source = createMockSource(100, 100);
+    const target = document.createElement("canvas");
+    target.width = 200;
+    target.height = 200;
+    const ctx = target.getContext("2d")!;
+
+    // When
+    detailPreservingResize(source, 0, 0, 100, 100, target);
+
+    // Then
+    expect(ctx.imageSmoothingQuality).toBe("high");
   });
 });
