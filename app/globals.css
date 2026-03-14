@@ -72,11 +72,13 @@
   --spacing-13: 3.25rem;
   --spacing-4.5: 1.125rem;
   --spacing-5.5: 1.375rem;
+  --spacing-8.5: 2.125rem;
   --spacing-9.5: 2.375rem;
   --spacing-10.5: 2.625rem;
 
-  /* Custom max-width */
+  /* Custom max-width / max-height */
   --max-width-content: 640px;
+  --spacing-22: 5.5rem;
 
   /* Custom aspect ratio */
   --aspect-ratio-canvas: 440 / 600;
@@ -107,6 +109,7 @@
 
   /* Status */
   --color-status-success: var(--status-success);
+  --color-status-success-dark: var(--status-success-dark);
 
   /* Canvas */
   --color-canvas-bg: var(--canvas-bg);
@@ -147,6 +150,7 @@
   --brand-hover: oklch(0.48 0.16 253);
   --brand-foreground: oklch(1 0 0);
   --status-success: #22C55E;
+  --status-success-dark: #2D7A3A;
   --text-code: #AAAAAA;
   --accent-blue-muted: #6699EE;
   --sidebar: oklch(0.985 0 0);
@@ -208,6 +212,7 @@
 
   /* Status */
   --status-success: #22C55E;
+  --status-success-dark: #2D7A3A;
 
   /* Code text */
   --text-code: #AAAAAA;

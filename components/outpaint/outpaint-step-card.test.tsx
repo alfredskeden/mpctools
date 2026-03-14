@@ -130,7 +130,7 @@ describe("OutpaintStepCard", () => {
 
     const codeText = screen.getByText("Some prompt text");
     const textContainer = codeText.parentElement!;
-    expect(textContainer.className).toContain("max-h-[5.5rem]");
+    expect(textContainer.className).toContain("max-h-22");
     expect(textContainer.className).toContain("overflow-hidden");
   });
 
@@ -150,7 +150,7 @@ describe("OutpaintStepCard", () => {
 
     const codeText = screen.getByText("Some prompt text");
     const textContainer = codeText.parentElement!;
-    expect(textContainer.className).not.toContain("max-h-[5.5rem]");
+    expect(textContainer.className).not.toContain("max-h-22");
     expect(textContainer.className).not.toContain("overflow-hidden");
   });
 
@@ -189,7 +189,7 @@ describe("OutpaintStepCard", () => {
 
     const codeText = screen.getByText("Some prompt text");
     const textContainer = codeText.parentElement!;
-    expect(textContainer.className).toContain("max-h-[5.5rem]");
+    expect(textContainer.className).toContain("max-h-22");
   });
 
   it("preserves newlines in code text", () => {

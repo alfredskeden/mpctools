@@ -65,8 +65,8 @@ export function calculateDrawParams(
   };
 }
 
-export const CANVAS_WIDTH = 744;
-export const CANVAS_HEIGHT = 1039;
+export const CANVAS_WIDTH = 3520;
+export const CANVAS_HEIGHT = 4800;
 
 /**
  * Calculate initial scale to fit an image within a canvas with 80% padding.

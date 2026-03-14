@@ -6,33 +6,49 @@ import Link from "next/link";
 type PrepActionsProps = {
   canDownload: boolean;
   canContinue: boolean;
+  isDownloaded: boolean;
   onDownload: () => void;
 };
 
 export function PrepActions({
   canDownload,
   canContinue,
+  isDownloaded,
   onDownload,
 }: PrepActionsProps) {
   return (
     <footer className="flex flex-col gap-2.5">
-      <button
-        type="button"
-        disabled={!canDownload}
-        onClick={onDownload}
-        className={cn(
-          "h-11 w-full rounded-lg bg-surface-overlay text-sm font-medium text-text-primary transition-colors hover:bg-surface-border",
-          !canDownload && "opacity-40 cursor-not-allowed",
-        )}
-      >
-        Download PNG
-      </button>
+      {isDownloaded ? (
+        <button
+          type="button"
+          disabled
+          className="h-11 w-full rounded-lg border border-status-success-dark bg-surface-overlay text-sm font-medium text-status-success"
+        >
+          Downloaded ✓
+        </button>
+      ) : (
+        <button
+          type="button"
+          disabled={!canDownload}
+          onClick={onDownload}
+          className={cn(
+            "h-11 w-full rounded-lg text-sm font-medium transition-colors",
+            canDownload
+              ? "bg-accent-blue text-white hover:bg-accent-blue/90"
+              : "bg-surface-overlay text-text-primary opacity-40 cursor-not-allowed",
+          )}
+        >
+          Download PNG
+        </button>
+      )}
       <Link
         href="/outpaint"
         aria-disabled={!canContinue}
         className={cn(
-          "flex h-9.5 w-full items-center justify-center rounded-lg border border-surface-border text-sm font-medium text-text-primary transition-colors hover:bg-surface-raised",
-          !canContinue && "opacity-40 pointer-events-none",
+          "flex h-9.5 w-full items-center justify-center rounded-lg text-sm font-medium transition-colors",
+          canContinue
+            ? "bg-accent-blue text-white hover:bg-accent-blue/90"
+            : "border border-surface-border text-text-primary opacity-60 pointer-events-none",
         )}
       >
         Continue to Outpaint

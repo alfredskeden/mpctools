@@ -1,6 +1,8 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { PrepPageContent } from "./prep-page-content";
 
+vi.mock("react-konva");
+
 function setupImageMocks(dataUrl: string) {
   const OriginalFileReader = globalThis.FileReader;
   const OriginalImage = globalThis.Image;
@@ -55,17 +57,23 @@ function uploadFile() {
 }
 
 describe("PrepPageContent", () => {
-  it("shows the drop zone initially", () => {
+  it("shows the canvas placeholder initially", () => {
+    const { container } = render(<PrepPageContent />);
+
+    expect(container.querySelector(".bg-canvas-bg")).toBeDefined();
+  });
+
+  it("shows upload button initially", () => {
     render(<PrepPageContent />);
 
-    expect(screen.getByRole("button", { name: "Upload image" })).toBeDefined();
+    expect(screen.getByText("Upload Now")).toBeDefined();
   });
 
   it("shows instruction steps", () => {
     render(<PrepPageContent />);
 
-    expect(screen.getByText("Upload card art")).toBeDefined();
-    expect(screen.getByText("Position on canvas")).toBeDefined();
+    expect(screen.getByText("Upload your card art")).toBeDefined();
+    expect(screen.getByText("Position & frame")).toBeDefined();
     expect(screen.getByText("Download prepared image")).toBeDefined();
   });
 
@@ -95,13 +103,12 @@ describe("PrepPageContent", () => {
       uploadFile();
     });
 
-    expect(screen.getByRole("img", { name: "Card art canvas" })).toBeDefined();
-    expect(screen.queryByRole("button", { name: "Upload image" })).toBeNull();
+    expect(screen.getByTestId("konva-image")).toBeDefined();
 
     mocks.restore();
   });
 
-  it("triggers download when download button is clicked", () => {
+  it("shows controls panel after image upload", () => {
     const mocks = setupImageMocks("data:image/png;base64,abc");
     render(<PrepPageContent />);
 
@@ -109,66 +116,72 @@ describe("PrepPageContent", () => {
       uploadFile();
     });
 
-    // Drag to mark positioned
-    const canvas = screen.getByRole("img", { name: "Card art canvas" });
-    fireEvent.mouseDown(canvas, { clientX: 100, clientY: 100 });
-    fireEvent.mouseMove(canvas, { clientX: 110, clientY: 120 });
-    fireEvent.mouseUp(canvas);
+    expect(screen.getByRole("group", { name: "Controls" })).toBeDefined();
+    expect(screen.getByText("Scale")).toBeDefined();
+    expect(screen.getByText("Frame Overlay")).toBeDefined();
 
-    const clickSpy = vi.fn();
-    const origCreateElement = document.createElement.bind(document);
-    vi.spyOn(document, "createElement").mockImplementation((tag: string) => {
-      if (tag === "a") {
-        return {
-          click: clickSpy,
-          download: "",
-          href: "",
-        } as unknown as HTMLAnchorElement;
-      }
-      return origCreateElement(tag);
+    mocks.restore();
+  });
+
+  it("shows filename after upload", () => {
+    const mocks = setupImageMocks("data:image/png;base64,abc");
+    render(<PrepPageContent />);
+
+    act(() => {
+      uploadFile();
     });
 
+    expect(screen.getByText("card.png uploaded")).toBeDefined();
+
+    mocks.restore();
+  });
+
+  it("shows I'm Done button after upload", () => {
+    const mocks = setupImageMocks("data:image/png;base64,abc");
+    render(<PrepPageContent />);
+
+    act(() => {
+      uploadFile();
+    });
+
+    expect(screen.getByText("I'm Done")).toBeDefined();
+
+    mocks.restore();
+  });
+
+  it("downloads PNG after positioning", () => {
+    const mocks = setupImageMocks("data:image/png;base64,abc");
+    render(<PrepPageContent />);
+
+    act(() => {
+      uploadFile();
+    });
+
+    // Mark as positioned
+    act(() => {
+      fireEvent.click(screen.getByText("I'm Done"));
+    });
+
+    // Download button should be enabled
     const downloadBtn = screen.getByRole("button", { name: /download png/i });
+    expect(downloadBtn).not.toBeDisabled();
+
+    // Mock link.click and capture download name
+    const clickSpy = vi.fn();
+    let downloadName = "";
+    const createElementSpy = vi.spyOn(document, "createElement").mockReturnValueOnce({
+      set download(val: string) { downloadName = val; },
+      set href(val: string) { /* noop */ },
+      click: clickSpy,
+    } as unknown as HTMLAnchorElement);
+
     fireEvent.click(downloadBtn);
 
-    expect(clickSpy).toHaveBeenCalled();
+    expect(createElementSpy).toHaveBeenCalledWith("a");
+    expect(clickSpy).toHaveBeenCalledOnce();
+    expect(downloadName).toBe("outpaint_card.png");
 
-    vi.restoreAllMocks();
-    mocks.restore();
-  });
-
-  it("shows overlay selector after image upload", () => {
-    const mocks = setupImageMocks("data:image/png;base64,abc");
-    render(<PrepPageContent />);
-
-    expect(screen.queryByRole("group", { name: "Overlay options" })).toBeNull();
-
-    act(() => {
-      uploadFile();
-    });
-
-    expect(
-      screen.getByRole("group", { name: "Overlay options" }),
-    ).toBeDefined();
-    expect(screen.getByText("None")).toBeDefined();
-    expect(screen.getByText("Normal")).toBeDefined();
-
-    mocks.restore();
-  });
-
-  it("selects an overlay when overlay button is clicked", () => {
-    const mocks = setupImageMocks("data:image/png;base64,abc");
-    render(<PrepPageContent />);
-
-    act(() => {
-      uploadFile();
-    });
-
-    const normalBtn = screen.getByText("Normal");
-    fireEvent.click(normalBtn);
-
-    expect(normalBtn.className).toContain("bg-primary");
-
+    createElementSpy.mockRestore();
     mocks.restore();
   });
 });

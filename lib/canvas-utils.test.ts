@@ -105,8 +105,8 @@ describe("calculateDrawParams", () => {
 
 describe("CANVAS_WIDTH and CANVAS_HEIGHT", () => {
   it("exports canvas dimensions", () => {
-    expect(CANVAS_WIDTH).toBe(744);
-    expect(CANVAS_HEIGHT).toBe(1039);
+    expect(CANVAS_WIDTH).toBe(3520);
+    expect(CANVAS_HEIGHT).toBe(4800);
   });
 });
 

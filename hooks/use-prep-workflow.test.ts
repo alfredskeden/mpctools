@@ -8,9 +8,12 @@ const initialState: PrepState = {
   currentStep: 1,
   uploadedImage: null,
   imageElement: null,
+  fileName: null,
   position: { x: 0, y: 0 },
   scale: 1,
+  rotation: 0,
   isPositioned: false,
+  isDownloaded: false,
   selectedOverlay: null,
   canvasDataUrl: null,
 };
@@ -25,13 +28,15 @@ describe("prepReducer", () => {
     const element = makeImage();
     const result = prepReducer(initialState, {
       type: "UPLOAD_IMAGE",
-      payload: { dataUrl: "data:image/png;base64,abc", element },
+      payload: { dataUrl: "data:image/png;base64,abc", element, fileName: "card.png" },
     });
 
     expect(result.currentStep).toBe(2);
     expect(result.uploadedImage).toBe("data:image/png;base64,abc");
     expect(result.imageElement).toBe(element);
+    expect(result.fileName).toBe("card.png");
     expect(result.isPositioned).toBe(false);
+    expect(result.isDownloaded).toBe(false);
   });
 
   it("resets position and scale on new upload", () => {
@@ -45,22 +50,23 @@ describe("prepReducer", () => {
 
     const result = prepReducer(state, {
       type: "UPLOAD_IMAGE",
-      payload: { dataUrl: "data:new", element: makeImage() },
+      payload: { dataUrl: "data:new", element: makeImage(), fileName: "new.png" },
     });
 
     expect(result.position).toEqual({ x: 0, y: 0 });
     expect(result.scale).toBe(1); // 100x100 fits in 816x1110, so scale stays 1
     expect(result.isPositioned).toBe(false);
+    expect(result.rotation).toBe(0);
   });
 
   it("auto-scales a large image to fit the canvas with padding", () => {
     const largeImage = { width: 4000, height: 3000 } as HTMLImageElement;
     const result = prepReducer(initialState, {
       type: "UPLOAD_IMAGE",
-      payload: { dataUrl: "data:large", element: largeImage },
+      payload: { dataUrl: "data:large", element: largeImage, fileName: "large.png" },
     });
 
-    expect(result.scale).toBe((744 * 0.8) / 4000);
+    expect(result.scale).toBe((3520 * 0.8) / 4000);
   });
 
   it("handles UPDATE_POSITION", () => {
@@ -81,12 +87,28 @@ describe("prepReducer", () => {
     expect(result.scale).toBe(1.5);
   });
 
+  it("handles UPDATE_ROTATION", () => {
+    const result = prepReducer(initialState, {
+      type: "UPDATE_ROTATION",
+      payload: 90,
+    });
+
+    expect(result.rotation).toBe(90);
+  });
+
   it("handles MARK_POSITIONED", () => {
     const state: PrepState = { ...initialState, currentStep: 2 };
     const result = prepReducer(state, { type: "MARK_POSITIONED" });
 
     expect(result.currentStep).toBe(3);
     expect(result.isPositioned).toBe(true);
+  });
+
+  it("handles MARK_DOWNLOADED", () => {
+    const state: PrepState = { ...initialState, currentStep: 3, isPositioned: true };
+    const result = prepReducer(state, { type: "MARK_DOWNLOADED" });
+
+    expect(result.isDownloaded).toBe(true);
   });
 
   it("handles SELECT_OVERLAY", () => {
@@ -108,14 +130,14 @@ describe("prepReducer", () => {
     expect(result.selectedOverlay).toBeNull();
   });
 
-  it("resets selectedOverlay on UPLOAD_IMAGE", () => {
+  it("sets selectedOverlay to tall_normal on UPLOAD_IMAGE", () => {
     const state: PrepState = { ...initialState, selectedOverlay: "normal" };
     const result = prepReducer(state, {
       type: "UPLOAD_IMAGE",
-      payload: { dataUrl: "data:new", element: makeImage() },
+      payload: { dataUrl: "data:new", element: makeImage(), fileName: "new.png" },
     });
 
-    expect(result.selectedOverlay).toBeNull();
+    expect(result.selectedOverlay).toBe("tall_normal");
   });
 
   it("handles SET_CANVAS_DATA_URL", () => {
@@ -132,10 +154,14 @@ describe("prepReducer", () => {
       currentStep: 3,
       uploadedImage: "data:test",
       imageElement: makeImage(),
+      fileName: "test.png",
       position: { x: 50, y: 50 },
       scale: 2,
+      rotation: 45,
       isPositioned: true,
+      isDownloaded: true,
       canvasDataUrl: null,
+      selectedOverlay: null,
     };
 
     const result = prepReducer(state, { type: "RESET" });
@@ -182,11 +208,12 @@ describe("usePrepWorkflow", () => {
     const { result } = renderHook(() => usePrepWorkflow());
 
     act(() => {
-      result.current.uploadImage("data:test", makeImage());
+      result.current.uploadImage("data:test", makeImage(), "test.png");
     });
 
     expect(result.current.state.currentStep).toBe(2);
     expect(result.current.state.uploadedImage).toBe("data:test");
+    expect(result.current.state.fileName).toBe("test.png");
   });
 
   it("updates position", () => {
@@ -209,11 +236,21 @@ describe("usePrepWorkflow", () => {
     expect(result.current.state.scale).toBe(1.5);
   });
 
+  it("updates rotation", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.updateRotation(90);
+    });
+
+    expect(result.current.state.rotation).toBe(90);
+  });
+
   it("transitions to step 3 on markPositioned", () => {
     const { result } = renderHook(() => usePrepWorkflow());
 
     act(() => {
-      result.current.uploadImage("data:test", makeImage());
+      result.current.uploadImage("data:test", makeImage(), "test.png");
     });
     act(() => {
       result.current.markPositioned();
@@ -227,10 +264,27 @@ describe("usePrepWorkflow", () => {
     const { result } = renderHook(() => usePrepWorkflow());
 
     act(() => {
-      result.current.uploadImage("data:test", makeImage());
+      result.current.uploadImage("data:test", makeImage(), "test.png");
     });
     act(() => {
       result.current.markPositioned();
+    });
+
+    expect(result.current.canDownload).toBe(true);
+    expect(result.current.canContinue).toBe(false);
+  });
+
+  it("enables continue when downloaded", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.uploadImage("data:test", makeImage(), "test.png");
+    });
+    act(() => {
+      result.current.markPositioned();
+    });
+    act(() => {
+      result.current.markDownloaded();
     });
 
     expect(result.current.canDownload).toBe(true);
@@ -247,7 +301,7 @@ describe("usePrepWorkflow", () => {
     ]);
 
     act(() => {
-      result.current.uploadImage("data:test", makeImage());
+      result.current.uploadImage("data:test", makeImage(), "test.png");
     });
 
     expect(result.current.stepStatuses).toEqual([
@@ -294,7 +348,7 @@ describe("usePrepWorkflow", () => {
     const { result } = renderHook(() => usePrepWorkflow());
 
     act(() => {
-      result.current.uploadImage("data:test", makeImage());
+      result.current.uploadImage("data:test", makeImage(), "test.png");
     });
     act(() => {
       result.current.reset();

@@ -68,7 +68,7 @@ export function OutpaintStepCard({
         )}
       </div>
       <div className="flex flex-col rounded-md py-3.5 px-4 bg-surface-ground">
-        <div className={cn("relative", !expanded && "max-h-[5.5rem] overflow-hidden")}>
+        <div className={cn("relative", !expanded && "max-h-22 overflow-hidden")}>
           <span
             className={cn(
               "text-caption leading-4.5 font-mono whitespace-pre-line",

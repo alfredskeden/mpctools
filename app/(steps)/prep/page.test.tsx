@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import PrepPage from "./page";
 
+vi.mock("react-konva");
+
 describe("PrepPage", () => {
   it("renders inside a main element", () => {
     render(<PrepPage />);
@@ -8,11 +10,9 @@ describe("PrepPage", () => {
     expect(screen.getByRole("main")).toBeDefined();
   });
 
-  it("shows the image drop zone initially", () => {
+  it("shows the upload button initially", () => {
     render(<PrepPage />);
 
-    expect(
-      screen.getByRole("button", { name: "Upload image" }),
-    ).toBeDefined();
+    expect(screen.getByText("Upload Now")).toBeDefined();
   });
 });

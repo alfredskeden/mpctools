@@ -19,18 +19,23 @@ export type PrepState = {
   currentStep: PrepStep;
   uploadedImage: string | null;
   imageElement: HTMLImageElement | null;
+  fileName: string | null;
   position: { x: number; y: number };
   scale: number;
+  rotation: number;
   isPositioned: boolean;
+  isDownloaded: boolean;
   selectedOverlay: string | null;
   canvasDataUrl: string | null;
 };
 
 type PrepAction =
-  | { type: "UPLOAD_IMAGE"; payload: { dataUrl: string; element: HTMLImageElement } }
+  | { type: "UPLOAD_IMAGE"; payload: { dataUrl: string; element: HTMLImageElement; fileName: string } }
   | { type: "UPDATE_POSITION"; payload: { x: number; y: number } }
   | { type: "UPDATE_SCALE"; payload: number }
+  | { type: "UPDATE_ROTATION"; payload: number }
   | { type: "MARK_POSITIONED" }
+  | { type: "MARK_DOWNLOADED" }
   | { type: "SELECT_OVERLAY"; payload: string | null }
   | { type: "SET_CANVAS_DATA_URL"; payload: string }
   | { type: "RESET" };
@@ -39,9 +44,12 @@ const initialState: PrepState = {
   currentStep: 1,
   uploadedImage: null,
   imageElement: null,
+  fileName: null,
   position: { x: 0, y: 0 },
   scale: 1,
+  rotation: 0,
   isPositioned: false,
+  isDownloaded: false,
   selectedOverlay: null,
   canvasDataUrl: null,
 };
@@ -54,13 +62,16 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         currentStep: 2,
         uploadedImage: action.payload.dataUrl,
         imageElement: action.payload.element,
+        fileName: action.payload.fileName,
         position: { x: 0, y: 0 },
         scale: calculateInitialScale(
           action.payload.element,
           { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
         ),
+        rotation: 0,
         isPositioned: false,
-        selectedOverlay: null,
+        isDownloaded: false,
+        selectedOverlay: "tall_normal",
       };
     case "UPDATE_POSITION":
       return {
@@ -72,11 +83,21 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         ...state,
         scale: action.payload,
       };
+    case "UPDATE_ROTATION":
+      return {
+        ...state,
+        rotation: action.payload,
+      };
     case "MARK_POSITIONED":
       return {
         ...state,
         currentStep: 3,
         isPositioned: true,
+      };
+    case "MARK_DOWNLOADED":
+      return {
+        ...state,
+        isDownloaded: true,
       };
     case "SELECT_OVERLAY":
       return {
@@ -107,8 +128,8 @@ export function usePrepWorkflow() {
   const [state, dispatch] = useReducer(prepReducer, initialState);
 
   const uploadImage = useCallback(
-    (dataUrl: string, element: HTMLImageElement) => {
-      dispatch({ type: "UPLOAD_IMAGE", payload: { dataUrl, element } });
+    (dataUrl: string, element: HTMLImageElement, fileName: string) => {
+      dispatch({ type: "UPLOAD_IMAGE", payload: { dataUrl, element, fileName } });
     },
     [],
   );
@@ -121,8 +142,16 @@ export function usePrepWorkflow() {
     dispatch({ type: "UPDATE_SCALE", payload: scale });
   }, []);
 
+  const updateRotation = useCallback((rotation: number) => {
+    dispatch({ type: "UPDATE_ROTATION", payload: rotation });
+  }, []);
+
   const markPositioned = useCallback(() => {
     dispatch({ type: "MARK_POSITIONED" });
+  }, []);
+
+  const markDownloaded = useCallback(() => {
+    dispatch({ type: "MARK_DOWNLOADED" });
   }, []);
 
   const selectOverlay = useCallback((overlay: string | null) => {
@@ -138,7 +167,7 @@ export function usePrepWorkflow() {
   }, []);
 
   const canDownload = state.isPositioned;
-  const canContinue = canDownload;
+  const canContinue = state.isDownloaded;
   const stepStatuses = getStepStatuses(state.currentStep);
 
   return {
@@ -146,7 +175,9 @@ export function usePrepWorkflow() {
     uploadImage,
     updatePosition,
     updateScale,
+    updateRotation,
     markPositioned,
+    markDownloaded,
     selectOverlay,
     setCanvasDataUrl,
     reset,

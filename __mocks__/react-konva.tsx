@@ -1,7 +1,10 @@
 import React from "react";
 
-function createMockNode(x: number, y: number) {
-  const state = { x, y };
+// Tracks visibility calls on the most recent Transformer instance
+export const transformerVisibilityCalls: boolean[] = [];
+
+function createMockNode(x: number, y: number, scaleX = 1, rotation = 0) {
+  const state = { x, y, scaleX, rotation };
   return {
     x(val?: number) {
       if (val !== undefined) state.x = val;
@@ -10,6 +13,14 @@ function createMockNode(x: number, y: number) {
     y(val?: number) {
       if (val !== undefined) state.y = val;
       return state.y;
+    },
+    scaleX(val?: number) {
+      if (val !== undefined) state.scaleX = val;
+      return state.scaleX;
+    },
+    rotation(val?: number) {
+      if (val !== undefined) state.rotation = val;
+      return state.rotation;
     },
   };
 }
@@ -48,9 +59,15 @@ export const Stage = React.forwardRef(function MockStage(
 
 export const Layer = React.forwardRef(function MockLayer(
   { children }: { children?: React.ReactNode },
-  ref: React.Ref<{ toDataURL: (opts?: object) => string }>,
+  ref: React.Ref<{ visible: (v?: boolean) => boolean; toDataURL: (opts?: object) => string }>,
 ) {
+  const visibleState = React.useRef(true);
+
   React.useImperativeHandle(ref, () => ({
+    visible(v?: boolean) {
+      if (v !== undefined) visibleState.current = v;
+      return visibleState.current;
+    },
     toDataURL: () => "data:image/png;base64,mock",
   }));
 
@@ -65,8 +82,11 @@ export function Image({
   draggable,
   onDragMove,
   onDragEnd,
+  onTransformEnd,
   x,
   y,
+  scaleX,
+  rotation,
   listening,
 }: {
   image?: HTMLImageElement | null;
@@ -74,10 +94,15 @@ export function Image({
   y?: number;
   width?: number;
   height?: number;
+  scaleX?: number;
+  scaleY?: number;
+  rotation?: number;
   draggable?: boolean;
   onDragMove?: (e: { target: ReturnType<typeof createMockNode> }) => void;
-  onDragEnd?: (e: object) => void;
+  onDragEnd?: (e: { target: ReturnType<typeof createMockNode> }) => void;
+  onTransformEnd?: (e: { target: ReturnType<typeof createMockNode> }) => void;
   listening?: boolean;
+  alt?: string;
 }) {
   const isDragging = React.useRef(false);
   const hasMoved = React.useRef(false);
@@ -99,10 +124,10 @@ export function Image({
       hasMoved.current = true;
       const newX = (x ?? 0) + (e.clientX - startPos.current.x);
       const newY = (y ?? 0) + (e.clientY - startPos.current.y);
-      const mockNode = createMockNode(newX, newY);
+      const mockNode = createMockNode(newX, newY, scaleX, rotation);
       onDragMove?.({ target: mockNode });
     },
-    [draggable, onDragMove, x, y],
+    [draggable, onDragMove, x, y, scaleX, rotation],
   );
 
   const handleMouseUp = React.useCallback(() => {
@@ -112,8 +137,14 @@ export function Image({
     }
     isDragging.current = false;
     hasMoved.current = false;
-    onDragEnd?.({});
-  }, [onDragEnd]);
+    const mockNode = createMockNode(x ?? 0, y ?? 0, scaleX, rotation);
+    onDragEnd?.({ target: mockNode });
+  }, [onDragEnd, x, y, scaleX, rotation]);
+
+  const handleDoubleClick = React.useCallback(() => {
+    const mockNode = createMockNode(x ?? 0, y ?? 0, scaleX ?? 1, rotation ?? 0);
+    onTransformEnd?.({ target: mockNode });
+  }, [onTransformEnd, x, y, scaleX, rotation]);
 
   if (listening === false) {
     return <div data-testid="konva-overlay" />;
@@ -125,6 +156,45 @@ export function Image({
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
+      onDoubleClick={handleDoubleClick}
     />
   );
 }
+
+export const Transformer = React.forwardRef(function MockTransformer(
+  {
+    onTransformEnd,
+  }: {
+    anchorSize?: number;
+    anchorStrokeWidth?: number;
+    anchorCornerRadius?: number;
+    borderStrokeWidth?: number;
+    rotateAnchorOffset?: number;
+    anchorFill?: string;
+    anchorStroke?: string;
+    borderStroke?: string;
+    padding?: number;
+    onTransformEnd?: () => void;
+  },
+  ref: React.Ref<{
+    nodes: (n: unknown[]) => void;
+    getLayer: () => { batchDraw: () => void } | null;
+    visible: (v?: boolean) => boolean;
+  }>,
+) {
+  const visibleState = React.useRef(true);
+
+  React.useImperativeHandle(ref, () => ({
+    nodes: () => {},
+    getLayer: () => ({ batchDraw: () => {} }),
+    visible(v?: boolean) {
+      if (v !== undefined) {
+        transformerVisibilityCalls.push(v);
+        visibleState.current = v;
+      }
+      return visibleState.current;
+    },
+  }));
+
+  return <div data-testid="konva-transformer" onClick={onTransformEnd} />;
+});
