@@ -5,6 +5,7 @@ import { useMergerWorkflow } from "@/hooks/use-merger-workflow";
 import { MergerSteps } from "./merger-steps";
 import { MergerActions } from "./merger-actions";
 import { MergerCanvas } from "./MergerCanvas";
+import type { MergerCanvasHandle } from "./MergerCanvas";
 import { downloadCanvasAsBlob } from "@/lib/merger-utils";
 
 export function MergerPageContent() {
@@ -19,14 +20,14 @@ export function MergerPageContent() {
     stepStatuses,
   } = useMergerWorkflow();
 
-  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const mergerCanvasRef = useRef<MergerCanvasHandle>(null);
 
   const handleDownload = useCallback(() => {
     /* v8 ignore start */
     if (!canDownload) return;
     /* v8 ignore stop */
 
-    const canvas = canvasContainerRef.current?.querySelector("canvas");
+    const canvas = mergerCanvasRef.current?.getDownloadCanvas();
     /* v8 ignore start */
     if (!canvas) return;
     /* v8 ignore stop */
@@ -41,11 +42,8 @@ export function MergerPageContent() {
   return (
     <div className="flex min-h-0 flex-1 flex-col md:flex-row">
       {/* Canvas area */}
-      <div
-        ref={canvasContainerRef}
-        className="flex min-h-7/12 flex-1 items-center justify-center bg-surface-ground p-4 md:min-h-0 md:p-6"
-      >
-        <MergerCanvas state={state} />
+      <div className="flex min-h-7/12 flex-1 items-center justify-center bg-surface-ground p-4 md:min-h-0 md:p-6">
+        <MergerCanvas ref={mergerCanvasRef} state={state} />
       </div>
 
       {/* Right panel */}

@@ -160,6 +160,11 @@ export const KonvaCanvas = ({
     [onScaleChange, onRotationChange],
   );
 
+  const stagePixelRatio =
+    typeof window !== "undefined"
+      ? Math.min(1, displayScale * window.devicePixelRatio)
+      : /* v8 ignore next */ displayScale;
+
   const inverseScale = 1 / displayScale;
   const anchorSize = ANCHOR_SCREEN_SIZE * inverseScale;
   const anchorStroke = ANCHOR_STROKE_SCREEN_WIDTH * inverseScale;
@@ -195,7 +200,7 @@ export const KonvaCanvas = ({
             transformOrigin: "top left",
           }}
         >
-          <Stage ref={stageRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT}>
+          <Stage ref={stageRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} pixelRatio={stagePixelRatio}>
             <Layer>
               <Rect
                 width={CANVAS_WIDTH}

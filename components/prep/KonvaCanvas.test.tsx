@@ -346,6 +346,76 @@ describe("KonvaCanvas", () => {
     ).toBe(true);
   });
 
+  it("passes pixelRatio to Stage based on displayScale and devicePixelRatio", () => {
+    const originalGetBCR = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function () {
+      return {
+        width: 352,
+        height: 480,
+        top: 0,
+        left: 0,
+        bottom: 480,
+        right: 352,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    Object.defineProperty(window, "devicePixelRatio", {
+      value: 3,
+      configurable: true,
+    });
+
+    render(<KonvaCanvas {...defaultProps} />);
+
+    const stage = screen.getByTestId("konva-stage");
+    const pixelRatio = parseFloat(stage.getAttribute("data-pixel-ratio")!);
+    // displayScale = 352 / 3520 = 0.1, stagePixelRatio = min(1, 0.1 * 3) = 0.3
+    expect(pixelRatio).toBeCloseTo(0.3, 1);
+
+    Element.prototype.getBoundingClientRect = originalGetBCR;
+    Object.defineProperty(window, "devicePixelRatio", {
+      value: 1,
+      configurable: true,
+    });
+  });
+
+  it("caps pixelRatio at 1", () => {
+    const originalGetBCR = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function () {
+      return {
+        width: 3520,
+        height: 4800,
+        top: 0,
+        left: 0,
+        bottom: 4800,
+        right: 3520,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      };
+    };
+
+    Object.defineProperty(window, "devicePixelRatio", {
+      value: 2,
+      configurable: true,
+    });
+
+    render(<KonvaCanvas {...defaultProps} />);
+
+    const stage = screen.getByTestId("konva-stage");
+    const pixelRatio = parseFloat(stage.getAttribute("data-pixel-ratio")!);
+    // displayScale = 1, stagePixelRatio = min(1, 1 * 2) = 1
+    expect(pixelRatio).toBe(1);
+
+    Element.prototype.getBoundingClientRect = originalGetBCR;
+    Object.defineProperty(window, "devicePixelRatio", {
+      value: 1,
+      configurable: true,
+    });
+  });
+
   it("calls onScaleChange and onRotationChange on transform end", () => {
     const onScaleChange = vi.fn();
     const onRotationChange = vi.fn();

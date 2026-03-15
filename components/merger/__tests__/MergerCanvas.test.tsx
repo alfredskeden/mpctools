@@ -1,5 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import { MergerCanvas } from "../MergerCanvas";
+import { createRef } from "react";
+import { MergerCanvas, drawMergerScene } from "../MergerCanvas";
+import type { MergerCanvasHandle } from "../MergerCanvas";
 import type { MergerState } from "@/hooks/use-merger-workflow";
 import { initialState } from "@/hooks/use-merger-workflow";
 
@@ -102,5 +104,91 @@ describe("MergerCanvas", () => {
     expect(screen.getByTestId("merger-canvas")).toBeDefined();
 
     globalThis.ResizeObserver = originalRO;
+  });
+
+  it("caps display canvas buffer below full resolution", () => {
+    const state: MergerState = {
+      ...initialState,
+      canvasW: 3520,
+      canvasH: 4800,
+      ogImage: makeImage(3520, 4800),
+      ogPosition: { x: 0, y: 0, w: 3520, h: 4800 },
+    };
+
+    render(<MergerCanvas state={state} />);
+    const canvas = screen.getByTestId("merger-canvas") as HTMLCanvasElement;
+
+    // MAX_DISPLAY_DIM = 2048, max dim = 4800
+    // renderScale = 2048 / 4800 ≈ 0.4267
+    // canvas.width = round(3520 * 0.4267) = 1502, canvas.height = round(4800 * 0.4267) = 2048
+    expect(canvas.width).toBeLessThanOrEqual(2048);
+    expect(canvas.height).toBeLessThanOrEqual(2048);
+  });
+
+  it("does not cap display canvas for small dimensions", () => {
+    const state: MergerState = {
+      ...initialState,
+      canvasW: 400,
+      canvasH: 600,
+      ogImage: makeImage(400, 600),
+      ogPosition: { x: 0, y: 0, w: 400, h: 600 },
+    };
+
+    render(<MergerCanvas state={state} />);
+    const canvas = screen.getByTestId("merger-canvas") as HTMLCanvasElement;
+
+    // renderScale = min(1, 2048/600) = 1, so full size
+    expect(canvas.width).toBe(400);
+    expect(canvas.height).toBe(600);
+  });
+
+  it("getDownloadCanvas returns full-resolution canvas", () => {
+    const ref = createRef<MergerCanvasHandle>();
+    const state: MergerState = {
+      ...initialState,
+      canvasW: 3520,
+      canvasH: 4800,
+      ogImage: makeImage(3520, 4800),
+      ogPosition: { x: 0, y: 0, w: 3520, h: 4800 },
+    };
+
+    render(<MergerCanvas ref={ref} state={state} />);
+
+    const downloadCanvas = ref.current!.getDownloadCanvas()!;
+    expect(downloadCanvas).toBeInstanceOf(HTMLCanvasElement);
+    expect(downloadCanvas.width).toBe(3520);
+    expect(downloadCanvas.height).toBe(4800);
+  });
+
+  it("getDownloadCanvas returns null when no content", () => {
+    const ref = createRef<MergerCanvasHandle>();
+    render(<MergerCanvas ref={ref} state={initialState} />);
+
+    expect(ref.current!.getDownloadCanvas()).toBeNull();
+  });
+});
+
+describe("drawMergerScene", () => {
+  it("draws background and calls scale", () => {
+    const ctx = {
+      save: vi.fn(),
+      scale: vi.fn(),
+      fillStyle: "",
+      fillRect: vi.fn(),
+      restore: vi.fn(),
+    } as unknown as CanvasRenderingContext2D;
+
+    const state: MergerState = {
+      ...initialState,
+      canvasW: 100,
+      canvasH: 200,
+    };
+
+    drawMergerScene(ctx, state, 0.5);
+
+    expect(ctx.save).toHaveBeenCalled();
+    expect(ctx.scale).toHaveBeenCalledWith(0.5, 0.5);
+    expect(ctx.fillRect).toHaveBeenCalledWith(0, 0, 100, 200);
+    expect(ctx.restore).toHaveBeenCalled();
   });
 });

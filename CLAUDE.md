@@ -62,3 +62,26 @@ __mocks__/              # Test mocks
 ## Path Aliases
 
 - `@/*` maps to the project root
+
+## Design Context
+
+### Users
+Anyone who wants to outpaint images using Gemini AI. Users arrive with an image and follow a 3-step workflow (Prep → Outpaint → Merge) to produce print-ready card art. They expect a focused, efficient tool that stays out of their way.
+
+### Brand Personality
+**Precise, Dark, Technical.** A tool-first aesthetic — efficient, no-nonsense, and developer-tool inspired. The interface should feel like a professional instrument, not a consumer app.
+
+### Aesthetic Direction
+- **Theme**: Dark mode default. Achromatic base palette with a single blue accent (oklch hue 253)
+- **Typography**: Inter for UI, JetBrains Mono for code/data. Strong weight contrast between headings and body. Tight tracking on display type, wide tracking on labels
+- **Surfaces**: Layered dark scale (ground → base → raised → overlay) with subtle borders at 10% white opacity
+- **Color**: Restrained — one blue accent moment (`#4488FF`), green for success states only. No gradients, no decorative color
+- **Spacing**: Defined custom scale with deliberate rhythm. Generous whitespace around hero content, tighter grouping for controls
+- **Anti-references**: Not a generic SaaS dashboard. Not fantasy/gaming themed. Not playful or casual. No gradient CTAs, stock illustrations, heavy ornaments, or bright rounded aesthetics
+
+### Design Principles
+1. **Tool, not toy** — Every element serves the workflow. If it doesn't help the user prep, outpaint, or merge, it doesn't belong
+2. **Quiet confidence** — Let the card art be the visual hero. The UI recedes through neutral surfaces and restrained color
+3. **One accent, maximum impact** — Blue is the only chromatic color in the UI. Use it sparingly for active states, current steps, and primary actions
+4. **Dark and layered** — Build depth through the surface scale, not shadows or gradients. Borders at low opacity create subtle separation
+5. **Accessible by default** — WCAG AA contrast, keyboard navigation, screen reader support. Good contrast on all text, especially small labels

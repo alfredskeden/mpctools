@@ -29,10 +29,12 @@ export const Stage = React.forwardRef(function MockStage(
   {
     children,
     onWheel,
+    pixelRatio,
   }: {
     children?: React.ReactNode;
     width?: number;
     height?: number;
+    pixelRatio?: number;
     onWheel?: (e: { evt: WheelEvent }) => void;
   },
   ref: React.Ref<{ toDataURL: (opts?: object) => string }>,
@@ -44,6 +46,7 @@ export const Stage = React.forwardRef(function MockStage(
   return (
     <div
       data-testid="konva-stage"
+      data-pixel-ratio={pixelRatio}
       onWheel={
         onWheel
           ? (e: React.WheelEvent) => {
