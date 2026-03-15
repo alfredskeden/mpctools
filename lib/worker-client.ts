@@ -2,6 +2,10 @@ import { sharpenPixelData, analyzeGuideData } from "./image-processing";
 import type { GuideAnalysis } from "./merger-utils";
 import type { WorkerMessage, WorkerResponse } from "./image.worker";
 
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
+  ? Omit<T, K>
+  : never;
+
 let worker: Worker | null = null;
 let nextId = 0;
 const pending = new Map<
@@ -29,7 +33,7 @@ function getWorker(): Worker | null {
   return worker;
 }
 
-function postToWorker(msg: Omit<WorkerMessage, "id">, transfer?: Transferable[]): Promise<WorkerResponse> {
+function postToWorker(msg: DistributiveOmit<WorkerMessage, "id">, transfer?: Transferable[]): Promise<WorkerResponse> {
   const w = getWorker();
   if (!w) return Promise.reject(new Error("Worker unavailable"));
 
