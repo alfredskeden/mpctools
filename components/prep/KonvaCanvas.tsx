@@ -11,6 +11,17 @@ const ANCHOR_SCREEN_SIZE = 12;
 const ANCHOR_STROKE_SCREEN_WIDTH = 2;
 const BORDER_STROKE_SCREEN_WIDTH = 2;
 
+const EXPORT_DEBOUNCE_MS = 150;
+
+// Module-level cache for overlay images
+const overlayImageCache = new Map<string, HTMLImageElement>();
+
+type DisplayState = {
+  scale: number;
+  width: number;
+  height: number;
+};
+
 type KonvaCanvasProps = {
   image: HTMLImageElement | null;
   selectedOverlay: string | null;
@@ -35,8 +46,11 @@ export const KonvaCanvas = ({
   onExport,
 }: KonvaCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [displayScale, setDisplayScale] = useState(1);
-  const [displaySize, setDisplaySize] = useState({ width: 0, height: 0 });
+  const [display, setDisplay] = useState<DisplayState>({
+    scale: 1,
+    width: 0,
+    height: 0,
+  });
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stageRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,7 +59,8 @@ export const KonvaCanvas = ({
   const trRef = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const overlayLayerRef = useRef<any>(null);
-  const [loadedOverlayImage, setLoadedOverlayImage] =
+  const exportTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [asyncLoadedImage, setAsyncLoadedImage] =
     useState<HTMLImageElement | null>(null);
 
   const overlayOption = useMemo(
@@ -53,15 +68,26 @@ export const KonvaCanvas = ({
     [selectedOverlay],
   );
 
-  // Load overlay image
+  // Synchronously read from cache (no setState in effect)
+  const cachedImage = overlayOption
+    ? (overlayImageCache.get(overlayOption.filename) ?? null)
+    : null;
+
+  // Load overlay image asynchronously when not cached
   useEffect(() => {
     if (!overlayOption) return;
+
+    const cacheKey = overlayOption.filename;
+    if (overlayImageCache.has(cacheKey)) return;
 
     let cancelled = false;
     const img = new window.Image();
     /* v8 ignore start */
     img.onload = () => {
-      if (!cancelled) setLoadedOverlayImage(img);
+      if (!cancelled) {
+        overlayImageCache.set(cacheKey, img);
+        setAsyncLoadedImage(img);
+      }
     };
     /* v8 ignore stop */
     img.src = `/overlays/${overlayOption.filename}`;
@@ -70,6 +96,8 @@ export const KonvaCanvas = ({
       cancelled = true;
     };
   }, [overlayOption]);
+
+  const loadedOverlayImage = cachedImage ?? asyncLoadedImage;
 
   // Derive the actual overlay image: only show if the option still matches
   const overlayImage = overlayOption ? loadedOverlayImage : null;
@@ -84,25 +112,45 @@ export const KonvaCanvas = ({
     /* v8 ignore stop */
   }, [image]);
 
-  // Eager export: generate dataUrl whenever image/position/scale/rotation changes
-  useEffect(() => {
-    if (!image || !stageRef.current) return;
+  const stageReady = display.width > 0;
 
-    const overlayLayer = overlayLayerRef.current;
-    const transformer = trRef.current;
+  // Debounced export: generate dataUrl whenever image/position/scale/rotation changes
+  useEffect(() => {
+    if (!image || !stageReady || !stageRef.current) return;
+
+    if (exportTimerRef.current) {
+      clearTimeout(exportTimerRef.current);
+    }
+
+    exportTimerRef.current = setTimeout(() => {
+      /* v8 ignore start */
+      if (!stageRef.current) return;
+      /* v8 ignore stop */
+
+      const overlayLayer = overlayLayerRef.current;
+      const transformer = trRef.current;
+
+      /* v8 ignore start */
+      if (overlayLayer) overlayLayer.visible(false);
+      if (transformer) transformer.visible(false);
+
+      const dataUrl = stageRef.current.toDataURL({ pixelRatio: 1 });
+
+      if (transformer) transformer.visible(true);
+      if (overlayLayer) overlayLayer.visible(true);
+      /* v8 ignore stop */
+
+      onExport(dataUrl);
+    }, EXPORT_DEBOUNCE_MS);
 
     /* v8 ignore start */
-    if (overlayLayer) overlayLayer.visible(false);
-    if (transformer) transformer.visible(false);
-
-    const dataUrl = stageRef.current.toDataURL({ pixelRatio: 1 });
-
-    if (transformer) transformer.visible(true);
-    if (overlayLayer) overlayLayer.visible(true);
+    return () => {
+      if (exportTimerRef.current) {
+        clearTimeout(exportTimerRef.current);
+      }
+    };
     /* v8 ignore stop */
-
-    onExport(dataUrl);
-  }, [image, position, imageScale, rotation, onExport]);
+  }, [image, position, imageScale, rotation, onExport, stageReady]);
 
   // Observe container and compute display scale
   useEffect(() => {
@@ -129,8 +177,11 @@ export const KonvaCanvas = ({
 
       const newScale = displayWidth / CANVAS_WIDTH;
 
-      setDisplayScale(newScale);
-      setDisplaySize({ width: displayWidth, height: displayHeight });
+      setDisplay({
+        scale: newScale,
+        width: displayWidth,
+        height: displayHeight,
+      });
     };
 
     const observer = new ResizeObserver(() => updateScale());
@@ -162,10 +213,10 @@ export const KonvaCanvas = ({
 
   const stagePixelRatio =
     typeof window !== "undefined"
-      ? Math.min(1, displayScale * window.devicePixelRatio)
-      : /* v8 ignore next */ displayScale;
+      ? Math.min(1, display.scale * window.devicePixelRatio)
+      : /* v8 ignore next */ display.scale;
 
-  const inverseScale = 1 / displayScale;
+  const inverseScale = 1 / display.scale;
   const anchorSize = ANCHOR_SCREEN_SIZE * inverseScale;
   const anchorStroke = ANCHOR_STROKE_SCREEN_WIDTH * inverseScale;
   const borderStroke = BORDER_STROKE_SCREEN_WIDTH * inverseScale;
@@ -182,75 +233,83 @@ export const KonvaCanvas = ({
         overflow: "hidden",
       }}
     >
-      <div
-        style={{
-          width: displaySize.width,
-          height: displaySize.height,
-          position: "relative",
-          overflow: "hidden",
-          borderRadius: 4,
-          boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
-        }}
-      >
+      {stageReady && (
         <div
           style={{
-            width: CANVAS_WIDTH,
-            height: CANVAS_HEIGHT,
-            transform: `scale(${displayScale})`,
-            transformOrigin: "top left",
+            width: display.width,
+            height: display.height,
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: 4,
+            boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
           }}
         >
-          <Stage ref={stageRef} width={CANVAS_WIDTH} height={CANVAS_HEIGHT} pixelRatio={stagePixelRatio}>
-            <Layer>
-              <Rect
-                width={CANVAS_WIDTH}
-                height={CANVAS_HEIGHT}
-                fill={BG_COLOR}
-              />
-            </Layer>
-            {image && (
+          <div
+            style={{
+              width: CANVAS_WIDTH,
+              height: CANVAS_HEIGHT,
+              transform: `scale(${display.scale})`,
+              transformOrigin: "top left",
+            }}
+          >
+            <Stage
+              ref={stageRef}
+              width={CANVAS_WIDTH}
+              height={CANVAS_HEIGHT}
+              pixelRatio={stagePixelRatio}
+            >
               <Layer>
-                <Image
-                  ref={imgRef}
-                  image={image}
-                  x={position.x}
-                  y={position.y}
-                  scaleX={imageScale}
-                  scaleY={imageScale}
-                  rotation={rotation}
-                  draggable
-                  onDragEnd={handleDragEnd}
-                  onTransformEnd={handleTransformEnd}
-                  alt=""
-                />
-                <Transformer
-                  ref={trRef}
-                  anchorSize={anchorSize}
-                  anchorStrokeWidth={anchorStroke}
-                  anchorCornerRadius={anchorSize / 2}
-                  borderStrokeWidth={borderStroke}
-                  rotateAnchorOffset={40 * inverseScale}
-                  anchorFill="#ffffff"
-                  anchorStroke="#0088ff"
-                  borderStroke="#0088ff"
-                  padding={8 * inverseScale}
-                />
-              </Layer>
-            )}
-            <Layer ref={overlayLayerRef}>
-              {overlayImage && (
-                <Image
-                  image={overlayImage}
+                <Rect
                   width={CANVAS_WIDTH}
                   height={CANVAS_HEIGHT}
+                  fill={BG_COLOR}
                   listening={false}
-                  alt=""
                 />
-              )}
-            </Layer>
-          </Stage>
+                {image && (
+                  <>
+                    <Image
+                      ref={imgRef}
+                      image={image}
+                      x={position.x}
+                      y={position.y}
+                      scaleX={imageScale}
+                      scaleY={imageScale}
+                      rotation={rotation}
+                      draggable
+                      onDragEnd={handleDragEnd}
+                      onTransformEnd={handleTransformEnd}
+                      alt=""
+                    />
+                    <Transformer
+                      ref={trRef}
+                      anchorSize={anchorSize}
+                      anchorStrokeWidth={anchorStroke}
+                      anchorCornerRadius={anchorSize / 2}
+                      borderStrokeWidth={borderStroke}
+                      rotateAnchorOffset={40 * inverseScale}
+                      anchorFill="#ffffff"
+                      anchorStroke="#0088ff"
+                      borderStroke="#0088ff"
+                      padding={8 * inverseScale}
+                    />
+                  </>
+                )}
+              </Layer>
+              <Layer ref={overlayLayerRef}>
+                {overlayImage && (
+                  <Image
+                    image={overlayImage}
+                    width={CANVAS_WIDTH}
+                    height={CANVAS_HEIGHT}
+                    listening={false}
+                    alt=""
+                  />
+                )}
+              </Layer>
+            </Stage>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

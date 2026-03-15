@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import { KonvaCanvas } from "../KonvaCanvas";
 import { transformerVisibilityCalls } from "@/__mocks__/react-konva";
 
@@ -18,9 +18,33 @@ const defaultProps = {
   onExport: vi.fn(),
 };
 
+const defaultBCR = {
+  width: 700,
+  height: 1000,
+  top: 0,
+  left: 0,
+  bottom: 1000,
+  right: 700,
+  x: 0,
+  y: 0,
+  toJSON: () => ({}),
+};
+
 describe("KonvaCanvas", () => {
+  let originalGetBCR: typeof Element.prototype.getBoundingClientRect;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
+    originalGetBCR = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function () {
+      return defaultBCR;
+    };
+  });
+
+  afterEach(() => {
+    Element.prototype.getBoundingClientRect = originalGetBCR;
+    vi.useRealTimers();
   });
 
   it("renders the stage", () => {
@@ -59,6 +83,10 @@ describe("KonvaCanvas", () => {
       <KonvaCanvas {...defaultProps} image={makeImage()} onExport={onExport} />,
     );
 
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
+
     expect(onExport).toHaveBeenCalledWith("data:image/png;base64,mock");
   });
 
@@ -93,6 +121,10 @@ describe("KonvaCanvas", () => {
         onExport={onExport}
       />,
     );
+
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
 
     // Export should still be called (overlay hidden then restored)
     expect(onExport).toHaveBeenCalledWith("data:image/png;base64,mock");
@@ -225,6 +257,9 @@ describe("KonvaCanvas", () => {
       <KonvaCanvas {...defaultProps} image={makeImage()} onExport={onExport} />,
     );
 
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
     const callCount = onExport.mock.calls.length;
 
     rerender(
@@ -236,6 +271,10 @@ describe("KonvaCanvas", () => {
       />,
     );
 
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
+
     expect(onExport.mock.calls.length).toBeGreaterThan(callCount);
   });
 
@@ -243,26 +282,15 @@ describe("KonvaCanvas", () => {
     const onExport = vi.fn();
     render(<KonvaCanvas {...defaultProps} onExport={onExport} />);
 
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
+
     expect(onExport).not.toHaveBeenCalled();
   });
 
   it("computes display size from container dimensions", () => {
-    // Mock getBoundingClientRect to return a wide container
-    const originalGetBCR = Element.prototype.getBoundingClientRect;
-    Element.prototype.getBoundingClientRect = function () {
-      return {
-        width: 700,
-        height: 1000,
-        top: 0,
-        left: 0,
-        bottom: 1000,
-        right: 700,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      };
-    };
-
+    // beforeEach already mocks BCR to 700x1000 (width-constrained)
     const { container } = render(<KonvaCanvas {...defaultProps} />);
 
     // The inner display wrapper should have non-zero dimensions
@@ -273,12 +301,9 @@ describe("KonvaCanvas", () => {
     // Width-constrained: displayWidth = 700, displayHeight = 700 / (3520/4800) ≈ 954.5
     expect(parseFloat(displayWrapper.style.width)).toBeCloseTo(700, 0);
     expect(parseFloat(displayWrapper.style.height)).toBeGreaterThan(0);
-
-    Element.prototype.getBoundingClientRect = originalGetBCR;
   });
 
   it("computes display size for height-constrained container", () => {
-    const originalGetBCR = Element.prototype.getBoundingClientRect;
     // A very wide container where height is the constraint
     Element.prototype.getBoundingClientRect = function () {
       return {
@@ -302,12 +327,9 @@ describe("KonvaCanvas", () => {
     // Height-constrained: displayHeight = 500, displayWidth = 500 * (3520/4800) ≈ 366.7
     expect(parseFloat(displayWrapper.style.height)).toBeCloseTo(500, 0);
     expect(parseFloat(displayWrapper.style.width)).toBeLessThan(500);
-
-    Element.prototype.getBoundingClientRect = originalGetBCR;
   });
 
   it("handles zero-size container gracefully", () => {
-    const originalGetBCR = Element.prototype.getBoundingClientRect;
     Element.prototype.getBoundingClientRect = function () {
       return {
         width: 0,
@@ -322,10 +344,9 @@ describe("KonvaCanvas", () => {
       };
     };
 
-    // Should not throw
-    render(<KonvaCanvas {...defaultProps} />);
-
-    Element.prototype.getBoundingClientRect = originalGetBCR;
+    // Should not throw — Stage is not rendered when display size is zero
+    const { container } = render(<KonvaCanvas {...defaultProps} />);
+    expect(container.querySelector("[data-testid='konva-stage']")).toBeNull();
   });
 
   it("hides transformer during export so only background and image layers are exported", () => {
@@ -338,6 +359,10 @@ describe("KonvaCanvas", () => {
       <KonvaCanvas {...defaultProps} image={makeImage()} onExport={onExport} />,
     );
 
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
+
     // Then — the transformer should have been hidden before toDataURL and restored after
     expect(onExport).toHaveBeenCalled();
     expect(transformerVisibilityCalls).toContain(false);
@@ -347,7 +372,6 @@ describe("KonvaCanvas", () => {
   });
 
   it("passes pixelRatio to Stage based on displayScale and devicePixelRatio", () => {
-    const originalGetBCR = Element.prototype.getBoundingClientRect;
     Element.prototype.getBoundingClientRect = function () {
       return {
         width: 352,
@@ -374,7 +398,6 @@ describe("KonvaCanvas", () => {
     // displayScale = 352 / 3520 = 0.1, stagePixelRatio = min(1, 0.1 * 3) = 0.3
     expect(pixelRatio).toBeCloseTo(0.3, 1);
 
-    Element.prototype.getBoundingClientRect = originalGetBCR;
     Object.defineProperty(window, "devicePixelRatio", {
       value: 1,
       configurable: true,
@@ -382,7 +405,6 @@ describe("KonvaCanvas", () => {
   });
 
   it("caps pixelRatio at 1", () => {
-    const originalGetBCR = Element.prototype.getBoundingClientRect;
     Element.prototype.getBoundingClientRect = function () {
       return {
         width: 3520,
@@ -409,7 +431,6 @@ describe("KonvaCanvas", () => {
     // displayScale = 1, stagePixelRatio = min(1, 1 * 2) = 1
     expect(pixelRatio).toBe(1);
 
-    Element.prototype.getBoundingClientRect = originalGetBCR;
     Object.defineProperty(window, "devicePixelRatio", {
       value: 1,
       configurable: true,

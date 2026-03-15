@@ -57,6 +57,22 @@ function uploadFile() {
 }
 
 describe("PrepPageContent", () => {
+  let originalGetBCR: typeof Element.prototype.getBoundingClientRect;
+
+  beforeEach(() => {
+    originalGetBCR = Element.prototype.getBoundingClientRect;
+    Element.prototype.getBoundingClientRect = function () {
+      return {
+        width: 700, height: 1000, top: 0, left: 0,
+        bottom: 1000, right: 700, x: 0, y: 0, toJSON: () => ({}),
+      };
+    };
+  });
+
+  afterEach(() => {
+    Element.prototype.getBoundingClientRect = originalGetBCR;
+  });
+
   it("shows the canvas placeholder initially", () => {
     const { container } = render(<PrepPageContent />);
 
@@ -150,12 +166,16 @@ describe("PrepPageContent", () => {
   });
 
   it("downloads PNG after positioning", () => {
+    vi.useFakeTimers();
     const mocks = setupImageMocks("data:image/png;base64,abc");
     render(<PrepPageContent />);
 
     act(() => {
       uploadFile();
     });
+
+    // Advance past export debounce so canvasDataUrl is set
+    act(() => { vi.advanceTimersByTime(150); });
 
     // Mark as positioned
     act(() => {
@@ -189,5 +209,6 @@ describe("PrepPageContent", () => {
 
     createElementSpy.mockRestore();
     mocks.restore();
+    vi.useRealTimers();
   });
 });
