@@ -1,5 +1,3 @@
-import { sharpenInWorker, analyzeGuideInWorker } from "./worker-client";
-
 // Reset module state between tests since worker-client uses module-level singleton
 beforeEach(() => {
   vi.resetModules();
@@ -15,8 +13,8 @@ describe("worker-client", () => {
       const { sharpenInWorker: fn } = await import("./worker-client");
 
       const pixels = new Uint8ClampedArray([
-        100, 100, 100, 255, 100, 100, 100, 255,
-        100, 100, 100, 255, 100, 100, 100, 255,
+        100, 100, 100, 255, 100, 100, 100, 255, 100, 100, 100, 255, 100, 100,
+        100, 255,
       ]);
 
       const result = await fn(pixels, 2, 2, 0, 1);
@@ -41,8 +39,8 @@ describe("worker-client", () => {
       const { sharpenInWorker: fn } = await import("./worker-client");
 
       const pixels = new Uint8ClampedArray([
-        100, 100, 100, 255, 100, 100, 100, 255,
-        100, 100, 100, 255, 100, 100, 100, 255,
+        100, 100, 100, 255, 100, 100, 100, 255, 100, 100, 100, 255, 100, 100,
+        100, 255,
       ]);
 
       const result = await fn(pixels, 2, 2, 0, 1);
@@ -68,8 +66,8 @@ describe("worker-client", () => {
         postMessage(data: { type: string; id: number }) {
           // Simulate async worker response
           const resultPixels = new Uint8ClampedArray([
-            110, 110, 110, 255, 110, 110, 110, 255,
-            110, 110, 110, 255, 110, 110, 110, 255,
+            110, 110, 110, 255, 110, 110, 110, 255, 110, 110, 110, 255, 110,
+            110, 110, 255,
           ]);
           setTimeout(() => {
             onMessageHandler?.({
@@ -82,8 +80,8 @@ describe("worker-client", () => {
       const { sharpenInWorker: fn } = await import("./worker-client");
 
       const pixels = new Uint8ClampedArray([
-        100, 100, 100, 255, 100, 100, 100, 255,
-        100, 100, 100, 255, 100, 100, 100, 255,
+        100, 100, 100, 255, 100, 100, 100, 255, 100, 100, 100, 255, 100, 100,
+        100, 255,
       ]);
 
       const result = await fn(pixels, 2, 2, 1, 1);
@@ -147,7 +145,12 @@ describe("worker-client", () => {
       const data = new Uint8ClampedArray(10 * 10 * 4);
       const result = await fn(data, 10, 10, 100, 100);
 
-      expect(result).toEqual({ canvasW: 800, canvasH: 1200, ogX: 100, ogY: 150 });
+      expect(result).toEqual({
+        canvasW: 800,
+        canvasH: 1200,
+        ogX: 100,
+        ogY: 150,
+      });
 
       globalThis.Worker = originalWorker;
     });
