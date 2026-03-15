@@ -7,8 +7,8 @@ const STEP_LABELS = ["Prep", "Outpaint", "Merge"];
 
 const STEP_TITLES: Record<number, string> = {
   1: "Prepare Image",
-  2: "Outpaint Image",
-  3: "Merge Cards",
+  2: "Outpaint with Gemini",
+  3: "Merge Result",
 };
 
 type HeaderProps = {
@@ -23,11 +23,12 @@ export function Header({ currentStep, stepStatuses }: HeaderProps) {
   }));
 
   return (
-    <header className="flex h-11 shrink-0 items-center justify-between border-b border-surface-border bg-surface-raised px-4">
+    <header className="flex h-11 shrink-0 items-center justify-between border-b border-surface-border bg-surface-header px-4">
       <div className="flex items-center gap-2">
         <span className="text-label font-semibold text-accent-blue">
           STEP {currentStep}
         </span>
+        <span className="text-text-faint" aria-hidden="true">|</span>
         <span className="text-label font-medium text-text-primary">
           {STEP_TITLES[currentStep]}
         </span>

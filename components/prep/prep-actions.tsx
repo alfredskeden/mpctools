@@ -47,8 +47,8 @@ export function PrepActions({
         className={cn(
           "flex h-9.5 w-full items-center justify-center rounded-lg text-sm font-medium transition-colors",
           canContinue
-            ? "bg-accent-blue text-white hover:bg-accent-blue/90"
-            : "border border-surface-border text-text-primary opacity-60 pointer-events-none",
+            ? "border border-surface-border text-text-primary hover:bg-surface-overlay"
+            : "border border-surface-border text-text-primary opacity-40 pointer-events-none",
         )}
       >
         Continue to Outpaint

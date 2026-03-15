@@ -86,8 +86,8 @@ export function MergerActions({
             />
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-text-secondary">Layers</span>
-            <span className="text-xs text-text-tertiary">OG + Outpaint</span>
+            <span className="text-xs text-text-secondary">Layer Toggles</span>
+            <span className="font-mono text-xs text-text-tertiary">OG + Outpaint</span>
           </div>
         </div>
       )}

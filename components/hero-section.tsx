@@ -11,14 +11,14 @@ export function HeroSection() {
           variant="secondary"
           className="font-medium uppercase tracking-extra-wide text-brand"
         >
-          Welcome to
+          Image Outpainting Tool
         </Badge>
-        <h1 className="scroll-m-20 text-center text-display font-black tracking-display text-balance text-foreground sm:text-display-lg text-4xl tracking-tight">
-          All-in-One MTG Playtest Card Builder
+        <h1 className="scroll-m-20 text-center font-black tracking-display text-balance text-foreground text-4xl sm:text-display-lg">
+          Prep, Outpaint, Merge
         </h1>
-        <p className="text-center text-xl leading-7 font-light text-white">
-          Prepare, outpaint, and merge high-quality card art for print-ready
-          playtest proxies.
+        <p className="text-center text-base leading-7 font-light text-text-secondary">
+          Extend any image with Gemini AI. Three steps from
+          source art to print-ready result.
         </p>
       </div>
 
@@ -28,7 +28,7 @@ export function HeroSection() {
         className="h-13 gap-2.5 rounded-lg bg-brand px-9 text-base font-semibold text-brand-foreground hover:bg-brand-hover"
       >
         <Link href="/prep">
-          Begin Step 1
+          Get Started
           <ArrowRight className="size-4.5" />
         </Link>
       </Button>

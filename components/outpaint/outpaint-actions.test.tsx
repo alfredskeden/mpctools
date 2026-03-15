@@ -56,7 +56,7 @@ describe("OutpaintActions", () => {
 
     const link = screen.getByText("Continue to Merge");
     expect(link.getAttribute("aria-disabled")).toBe("false");
-    expect(link.className).toContain("bg-accent-blue");
+    expect(link.className).toContain("border-surface-border");
     expect(link.className).not.toContain("opacity-40");
   });
 

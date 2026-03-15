@@ -216,7 +216,7 @@ export const MergerSteps = ({
           {step1Status === "active" && (
             <>
               <p className="pl-8.5 text-xs leading-normal text-text-secondary">
-                The high-res card original art.
+                The high-res card scan from Scryfall.
               </p>
               <button
                 type="button"

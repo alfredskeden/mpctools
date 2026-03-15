@@ -15,7 +15,7 @@ describe("Home", () => {
   it("renders the hero section", () => {
     render(<Home />);
     expect(
-      screen.getByText("All-in-One MTG Playtest Card Builder"),
+      screen.getByText("Prep, Outpaint, Merge"),
     ).toBeDefined();
   });
 

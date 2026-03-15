@@ -75,7 +75,7 @@ describe("PrepActions", () => {
     );
 
     const link = screen.getByText("Continue to Outpaint");
-    expect(link.className).toContain("opacity-60");
+    expect(link.className).toContain("opacity-40");
   });
 
   it("shows downloaded state with green border", () => {
@@ -94,6 +94,6 @@ describe("PrepActions", () => {
     );
 
     const link = screen.getByText("Continue to Outpaint");
-    expect(link.className).toContain("bg-accent-blue");
+    expect(link.className).toContain("border-surface-border");
   });
 });

@@ -46,7 +46,7 @@ describe("StepsLayout", () => {
     render(<StepsLayout><div>child</div></StepsLayout>);
 
     expect(screen.getByText("STEP 2")).toBeDefined();
-    expect(screen.getByText("Outpaint Image")).toBeDefined();
+    expect(screen.getByText("Outpaint with Gemini")).toBeDefined();
   });
 
   it("shows step 3 on /merger route", () => {
@@ -54,7 +54,7 @@ describe("StepsLayout", () => {
     render(<StepsLayout><div>child</div></StepsLayout>);
 
     expect(screen.getByText("STEP 3")).toBeDefined();
-    expect(screen.getByText("Merge Cards")).toBeDefined();
+    expect(screen.getByText("Merge Result")).toBeDefined();
   });
 
   it("marks previous steps as completed", () => {

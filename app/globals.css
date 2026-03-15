@@ -60,8 +60,8 @@
   --font-size-micro--line-height: 0.75rem;
   --font-size-display: 2rem;
   --font-size-display--line-height: 1.12;
-  --font-size-display-lg: 3rem;
-  --font-size-display-lg--line-height: 3.375rem;
+  --font-size-display-lg: 3.5rem;
+  --font-size-display-lg--line-height: 1.1;
 
   /* Custom letter spacing */
   --letter-spacing-extra-wide: 0.15em;
@@ -88,6 +88,7 @@
 
   /* Surface colors */
   --color-surface-ground: var(--surface-ground);
+  --color-surface-header: var(--surface-header);
   --color-surface-base: var(--surface-base);
   --color-surface-raised: var(--surface-raised);
   --color-surface-overlay: var(--surface-overlay);
@@ -179,7 +180,7 @@
   --accent: oklch(0.25 0 0);
   --accent-foreground: oklch(0.925 0 0);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: rgba(255, 255, 255, 0.06);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
   --chart-1: oklch(0.809 0.105 251.813);
@@ -191,7 +192,8 @@
   --brand-hover: oklch(0.62 0.15 253);
   --brand-foreground: oklch(1 0 0);
   /* Surface scale */
-  --surface-ground: #0D0D0D;
+  --surface-ground: #0A0A0A;
+  --surface-header: #0F0F0F;
   --surface-base: #111111;
   --surface-raised: #1A1A1A;
   --surface-overlay: #222222;

@@ -88,7 +88,7 @@ describe("MergerSteps", () => {
   it("shows upload button for active step 1", () => {
     render(<MergerSteps {...defaultProps} />);
 
-    expect(screen.getByText("The high-res card original art.")).toBeDefined();
+    expect(screen.getByText("The high-res card scan from Scryfall.")).toBeDefined();
     const buttons = screen.getAllByText("Choose file");
     expect(buttons.length).toBe(1);
   });

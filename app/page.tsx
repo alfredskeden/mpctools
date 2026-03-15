@@ -28,7 +28,7 @@ export default function Home() {
         ]}
       />
       <HeroSection />
-      <StepIndicator steps={steps} />
+      <StepIndicator steps={steps} variant="landing" />
     </main>
   );
 }

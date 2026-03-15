@@ -43,8 +43,8 @@ export function OutpaintActions({
         className={cn(
           "flex items-center justify-center h-10.5 rounded-lg text-label font-semibold",
           handshakeSent
-            ? "bg-accent-blue text-white"
-            : "opacity-40 bg-surface-overlay text-text-tertiary pointer-events-none",
+            ? "border border-surface-border text-text-primary hover:bg-surface-overlay"
+            : "opacity-40 border border-surface-border text-text-tertiary pointer-events-none",
         )}
       >
         Continue to Merge

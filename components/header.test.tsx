@@ -39,7 +39,7 @@ describe("Header", () => {
       <Header currentStep={2} stepStatuses={["completed", "active", "upcoming"]} />,
     );
 
-    expect(screen.getByText("Outpaint Image")).toBeDefined();
+    expect(screen.getByText("Outpaint with Gemini")).toBeDefined();
   });
 
   it("renders the page title for step 3", () => {
@@ -47,7 +47,7 @@ describe("Header", () => {
       <Header currentStep={3} stepStatuses={["completed", "completed", "active"]} />,
     );
 
-    expect(screen.getByText("Merge Cards")).toBeDefined();
+    expect(screen.getByText("Merge Result")).toBeDefined();
   });
 
   it("renders the step indicator", () => {
@@ -79,7 +79,7 @@ describe("Header", () => {
 
     const header = screen.getByRole("banner");
     expect(header.className).toContain("h-11");
-    expect(header.className).toContain("bg-surface-raised");
+    expect(header.className).toContain("bg-surface-header");
     expect(header.className).toContain("border-surface-border");
   });
 
