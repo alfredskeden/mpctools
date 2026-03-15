@@ -1,10 +1,18 @@
 "use client";
 
-import { Search, Frame, ChevronDown, RotateCw } from "lucide-react";
+import {
+  Minus,
+  Plus,
+  Search,
+  Frame,
+  ChevronDown,
+  RotateCw,
+} from "lucide-react";
 import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
+const SCALE_STEP = 0.01;
 
 type ControlsPanelProps = {
   scale: number;
@@ -26,6 +34,16 @@ export function ControlsPanel({
   const scalePercent = Math.round(scale * 100);
   const rotationDisplay = Math.round(rotation);
 
+  const handleScaleDown = () => {
+    const newScale = Math.max(MIN_SCALE, scale - SCALE_STEP);
+    onUpdateScale(Math.round(newScale * 100) / 100);
+  };
+
+  const handleScaleUp = () => {
+    const newScale = Math.min(MAX_SCALE, scale + SCALE_STEP);
+    onUpdateScale(Math.round(newScale * 100) / 100);
+  };
+
   return (
     <div
       className="flex flex-col gap-1.5 pl-8.5"
@@ -34,24 +52,35 @@ export function ControlsPanel({
     >
       {/* Scale Control */}
       <div className="flex flex-col gap-2 rounded-lg bg-surface-overlay px-3 py-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Search className="size-3.5 text-text-secondary" />
-            <span className="text-sm text-text-primary">Scale</span>
-          </div>
-          <span className="text-xs font-medium text-accent-blue">
+        <div className="flex items-center gap-1.5">
+          <Search className="size-3.5 text-text-secondary" />
+          <span className="text-sm text-text-primary">Scale</span>
+        </div>
+        <div className="flex items-center overflow-hidden rounded-lg border border-surface-border bg-surface-ground">
+          <button
+            type="button"
+            onClick={handleScaleDown}
+            disabled={scale <= MIN_SCALE}
+            className="flex size-9 items-center justify-center text-text-primary disabled:text-text-disabled"
+            aria-label="Decrease scale"
+          >
+            <Minus className="size-4" />
+          </button>
+          <div className="h-5 w-px bg-surface-border" />
+          <span className="flex min-w-14 items-center justify-center font-mono text-label font-medium text-accent-blue">
             {scalePercent}%
           </span>
+          <div className="h-5 w-px bg-surface-border" />
+          <button
+            type="button"
+            onClick={handleScaleUp}
+            disabled={scale >= MAX_SCALE}
+            className="flex size-9 items-center justify-center text-text-primary disabled:text-text-disabled"
+            aria-label="Increase scale"
+          >
+            <Plus className="size-4" />
+          </button>
         </div>
-        <input
-          type="range"
-          min={MIN_SCALE * 100}
-          max={MAX_SCALE * 100}
-          value={scalePercent}
-          onChange={(e) => onUpdateScale(Number(e.target.value) / 100)}
-          className="h-1 w-full cursor-pointer appearance-none rounded-full bg-surface-subtle accent-accent-blue [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent-blue"
-          aria-label="Scale"
-        />
       </div>
       {/* Rotation Control */}
       <div className="flex flex-col gap-2 rounded-lg bg-surface-overlay px-3 py-2.5">

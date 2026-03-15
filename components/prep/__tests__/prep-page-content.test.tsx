@@ -132,6 +132,12 @@ describe("PrepPageContent", () => {
 
     expect(screen.getByRole("group", { name: "Controls" })).toBeDefined();
     expect(screen.getByText("Scale")).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Decrease scale" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Increase scale" }),
+    ).toBeDefined();
     expect(screen.getByText("Frame Overlay")).toBeDefined();
 
     mocks.restore();

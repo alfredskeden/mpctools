@@ -27,14 +27,72 @@ describe("ControlsPanel", () => {
     expect(screen.getByText("150%")).toBeDefined();
   });
 
-  it("calls onUpdateScale when slider changes", () => {
+  it("shows Scale label", () => {
+    render(<ControlsPanel {...defaultProps} />);
+
+    expect(screen.getByText("Scale")).toBeDefined();
+  });
+
+  it("calls onUpdateScale with decreased value when minus is clicked", () => {
     const onUpdateScale = vi.fn();
     render(<ControlsPanel {...defaultProps} onUpdateScale={onUpdateScale} />);
 
-    const slider = screen.getByRole("slider", { name: "Scale" });
-    fireEvent.change(slider, { target: { value: "150" } });
+    fireEvent.click(screen.getByRole("button", { name: "Decrease scale" }));
 
-    expect(onUpdateScale).toHaveBeenCalledWith(1.5);
+    expect(onUpdateScale).toHaveBeenCalledWith(0.99);
+  });
+
+  it("calls onUpdateScale with increased value when plus is clicked", () => {
+    const onUpdateScale = vi.fn();
+    render(<ControlsPanel {...defaultProps} onUpdateScale={onUpdateScale} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Increase scale" }));
+
+    expect(onUpdateScale).toHaveBeenCalledWith(1.01);
+  });
+
+  it("disables decrease button at minimum scale", () => {
+    render(<ControlsPanel {...defaultProps} scale={0.5} />);
+
+    const btn = screen.getByRole("button", { name: "Decrease scale" });
+    expect(btn).toBeDisabled();
+  });
+
+  it("disables increase button at maximum scale", () => {
+    render(<ControlsPanel {...defaultProps} scale={3} />);
+
+    const btn = screen.getByRole("button", { name: "Increase scale" });
+    expect(btn).toBeDisabled();
+  });
+
+  it("clamps scale down to minimum", () => {
+    const onUpdateScale = vi.fn();
+    render(
+      <ControlsPanel
+        {...defaultProps}
+        scale={0.505}
+        onUpdateScale={onUpdateScale}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Decrease scale" }));
+
+    expect(onUpdateScale).toHaveBeenCalledWith(0.5);
+  });
+
+  it("clamps scale up to maximum", () => {
+    const onUpdateScale = vi.fn();
+    render(
+      <ControlsPanel
+        {...defaultProps}
+        scale={2.995}
+        onUpdateScale={onUpdateScale}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Increase scale" }));
+
+    expect(onUpdateScale).toHaveBeenCalledWith(3);
   });
 
   it("renders Frame Overlay section", () => {
