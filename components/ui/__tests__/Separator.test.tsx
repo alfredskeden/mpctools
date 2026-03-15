@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
-import { Separator } from "./separator";
+import { Separator } from "../Separator";
 
-describe("Separator", () => {
+describe(Separator.name, () => {
   it("renders with separator slot", () => {
     const { container } = render(<Separator />);
 

@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { KonvaCanvas } from "./KonvaCanvas";
-import { transformerVisibilityCalls } from "../../__mocks__/react-konva";
+import { KonvaCanvas } from "../KonvaCanvas";
+import { transformerVisibilityCalls } from "@/__mocks__/react-konva";
 
 vi.mock("react-konva");
 

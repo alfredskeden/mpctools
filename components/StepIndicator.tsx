@@ -11,11 +11,11 @@ type StepIndicatorProps = {
   variant?: "default" | "landing";
 };
 
-export function StepIndicator({
+export const StepIndicator = ({
   steps,
   className,
   variant = "default",
-}: StepIndicatorProps) {
+}: StepIndicatorProps) => {
   if (variant === "landing") {
     return (
       <nav
@@ -108,4 +108,4 @@ export function StepIndicator({
       </ol>
     </nav>
   );
-}
+};

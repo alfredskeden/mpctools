@@ -4,8 +4,8 @@ import {
   useOutpaintWorkflow,
   HANDSHAKE_PROMPT,
   OUTPAINT_COMMAND,
-} from "./use-outpaint-workflow";
-import type { OutpaintState } from "./use-outpaint-workflow";
+  type OutpaintState,
+} from "../use-outpaint-workflow";
 
 const initialState: OutpaintState = {
   currentStep: 1,

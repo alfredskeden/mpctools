@@ -4,8 +4,8 @@ import {
   getMergerStepStatuses,
   useMergerWorkflow,
   initialState,
-} from "./use-merger-workflow";
-import type { MergerState } from "./use-merger-workflow";
+  type MergerState,
+} from "../use-merger-workflow";
 import * as mergerUtils from "@/lib/merger-utils";
 
 vi.mock("@/lib/merger-utils", () => ({

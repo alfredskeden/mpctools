@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { StepIndicator } from "./step-indicator";
+import { StepIndicator } from "../StepIndicator";
 
 const steps = [
   { label: "Prep", active: true },
@@ -44,7 +44,9 @@ describe("StepIndicator", () => {
   it("applies inactive styling classes to inactive step labels", () => {
     render(<StepIndicator steps={steps} />);
 
-    expect(screen.getByText("Outpaint").className).toContain("text-text-tertiary");
+    expect(screen.getByText("Outpaint").className).toContain(
+      "text-text-tertiary",
+    );
     expect(screen.getByText("Outpaint").className).toContain("font-normal");
   });
 

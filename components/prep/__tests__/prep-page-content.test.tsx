@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
-import { PrepPageContent } from "./prep-page-content";
+import { PrepPageContent } from "../prep-page-content";
 
 vi.mock("react-konva");
 
@@ -169,11 +169,17 @@ describe("PrepPageContent", () => {
     // Mock link.click and capture download name
     const clickSpy = vi.fn();
     let downloadName = "";
-    const createElementSpy = vi.spyOn(document, "createElement").mockReturnValueOnce({
-      set download(val: string) { downloadName = val; },
-      set href(val: string) { /* noop */ },
-      click: clickSpy,
-    } as unknown as HTMLAnchorElement);
+    const createElementSpy = vi
+      .spyOn(document, "createElement")
+      .mockReturnValueOnce({
+        set download(val: string) {
+          downloadName = val;
+        },
+        set href(val: string) {
+          /* noop */
+        },
+        click: clickSpy,
+      } as unknown as HTMLAnchorElement);
 
     fireEvent.click(downloadBtn);
 

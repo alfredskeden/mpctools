@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ImageDropZone } from "./image-drop-zone";
+import { ImageDropZone } from "../image-drop-zone";
 
 function mockFileReaderAndImage(dataUrl: string) {
   const OriginalFileReader = globalThis.FileReader;
@@ -43,9 +43,7 @@ describe("ImageDropZone", () => {
   it("renders the drop zone with upload label", () => {
     render(<ImageDropZone onImageLoad={vi.fn()} />);
 
-    expect(
-      screen.getByRole("button", { name: "Upload image" }),
-    ).toBeDefined();
+    expect(screen.getByRole("button", { name: "Upload image" })).toBeDefined();
   });
 
   it("renders instructional text", () => {
@@ -70,9 +68,7 @@ describe("ImageDropZone", () => {
     const input = screen.getByTestId("file-input") as HTMLInputElement;
     const clickSpy = vi.spyOn(input, "click");
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Upload image" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Upload image" }));
 
     expect(clickSpy).toHaveBeenCalled();
   });

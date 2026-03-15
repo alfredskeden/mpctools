@@ -1,6 +1,11 @@
 import { renderHook, act } from "@testing-library/react";
-import { prepReducer, getStepStatuses, usePrepWorkflow, OVERLAY_OPTIONS } from "./use-prep-workflow";
-import type { PrepState } from "./use-prep-workflow";
+import {
+  prepReducer,
+  getStepStatuses,
+  usePrepWorkflow,
+  OVERLAY_OPTIONS,
+  type PrepState,
+} from "../use-prep-workflow";
 
 const makeImage = () => ({ width: 100, height: 100 }) as HTMLImageElement;
 
@@ -28,7 +33,11 @@ describe("prepReducer", () => {
     const element = makeImage();
     const result = prepReducer(initialState, {
       type: "UPLOAD_IMAGE",
-      payload: { dataUrl: "data:image/png;base64,abc", element, fileName: "card.png" },
+      payload: {
+        dataUrl: "data:image/png;base64,abc",
+        element,
+        fileName: "card.png",
+      },
     });
 
     expect(result.currentStep).toBe(2);
@@ -50,7 +59,11 @@ describe("prepReducer", () => {
 
     const result = prepReducer(state, {
       type: "UPLOAD_IMAGE",
-      payload: { dataUrl: "data:new", element: makeImage(), fileName: "new.png" },
+      payload: {
+        dataUrl: "data:new",
+        element: makeImage(),
+        fileName: "new.png",
+      },
     });
 
     expect(result.position).toEqual({ x: 0, y: 0 });
@@ -63,7 +76,11 @@ describe("prepReducer", () => {
     const largeImage = { width: 4000, height: 3000 } as HTMLImageElement;
     const result = prepReducer(initialState, {
       type: "UPLOAD_IMAGE",
-      payload: { dataUrl: "data:large", element: largeImage, fileName: "large.png" },
+      payload: {
+        dataUrl: "data:large",
+        element: largeImage,
+        fileName: "large.png",
+      },
     });
 
     expect(result.scale).toBe((3520 * 0.8) / 4000);
@@ -105,7 +122,11 @@ describe("prepReducer", () => {
   });
 
   it("handles MARK_DOWNLOADED", () => {
-    const state: PrepState = { ...initialState, currentStep: 3, isPositioned: true };
+    const state: PrepState = {
+      ...initialState,
+      currentStep: 3,
+      isPositioned: true,
+    };
     const result = prepReducer(state, { type: "MARK_DOWNLOADED" });
 
     expect(result.isDownloaded).toBe(true);
@@ -134,7 +155,11 @@ describe("prepReducer", () => {
     const state: PrepState = { ...initialState, selectedOverlay: "normal" };
     const result = prepReducer(state, {
       type: "UPLOAD_IMAGE",
-      payload: { dataUrl: "data:new", element: makeImage(), fileName: "new.png" },
+      payload: {
+        dataUrl: "data:new",
+        element: makeImage(),
+        fileName: "new.png",
+      },
     });
 
     expect(result.selectedOverlay).toBe("tall_normal");
@@ -341,7 +366,9 @@ describe("usePrepWorkflow", () => {
       result.current.setCanvasDataUrl("data:image/png;base64,xyz");
     });
 
-    expect(result.current.state.canvasDataUrl).toBe("data:image/png;base64,xyz");
+    expect(result.current.state.canvasDataUrl).toBe(
+      "data:image/png;base64,xyz",
+    );
   });
 
   it("resets to initial state", () => {

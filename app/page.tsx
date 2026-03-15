@@ -1,6 +1,6 @@
-import { GhostCard } from "@/components/ghost-card";
-import { HeroSection } from "@/components/hero-section";
-import { StepIndicator } from "@/components/step-indicator";
+import { GhostCard } from "@/components/GhostCard";
+import { HeroSection } from "@/components/HeroSection";
+import { StepIndicator } from "@/components/StepIndicator";
 
 const steps = [
   { label: "Prep", active: true },

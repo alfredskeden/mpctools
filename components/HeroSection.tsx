@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 
-export function HeroSection() {
+export const HeroSection = () => {
   return (
     <div className="relative flex flex-col items-center gap-12 px-6 rounded-2xl py-10 backdrop-blur-md bg-white/5 border border-white/10 sm:backdrop-blur-none sm:bg-transparent sm:border-transparent sm:py-0 sm:rounded-none mx-4 sm:mx-0">
       <div className="flex max-w-xl flex-col items-center gap-4">
@@ -17,8 +17,8 @@ export function HeroSection() {
           Prep, Outpaint, Merge
         </h1>
         <p className="text-center text-base leading-7 font-light text-text-secondary">
-          Extend any image with Gemini AI. Three steps from
-          source art to print-ready result.
+          Extend any image with Gemini AI. Three steps from source art to
+          print-ready result.
         </p>
       </div>
 
@@ -34,4 +34,4 @@ export function HeroSection() {
       </Button>
     </div>
   );
-}
+};

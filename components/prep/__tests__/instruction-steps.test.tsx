@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { InstructionSteps } from "./instruction-steps";
+import { InstructionSteps } from "../instruction-steps";
 import type { PrepState } from "@/hooks/use-prep-workflow";
 
 const defaultState: PrepState = {

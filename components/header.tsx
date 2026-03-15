@@ -1,6 +1,6 @@
 "use client";
 
-import { StepIndicator } from "@/components/step-indicator";
+import { StepIndicator } from "@/components/StepIndicator";
 import type { StepStatus } from "@/hooks/use-prep-workflow";
 
 const STEP_LABELS = ["Prep", "Outpaint", "Merge"];
@@ -28,7 +28,9 @@ export function Header({ currentStep, stepStatuses }: HeaderProps) {
         <span className="text-label font-semibold text-accent-blue">
           STEP {currentStep}
         </span>
-        <span className="text-text-faint" aria-hidden="true">|</span>
+        <span className="text-text-faint" aria-hidden="true">
+          |
+        </span>
         <span className="text-label font-medium text-text-primary">
           {STEP_TITLES[currentStep]}
         </span>

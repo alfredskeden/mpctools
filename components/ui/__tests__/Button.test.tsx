@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { Button } from "./button";
+import { Button } from "../Button";
 
 describe("Button", () => {
   it("renders as a button element by default", () => {
@@ -31,7 +31,9 @@ describe("Button", () => {
   it("applies variant prop to data-variant", () => {
     render(<Button variant="outline">Outlined</Button>);
 
-    expect(screen.getByRole("button").getAttribute("data-variant")).toBe("outline");
+    expect(screen.getByRole("button").getAttribute("data-variant")).toBe(
+      "outline",
+    );
   });
 
   it("applies size prop to data-size", () => {

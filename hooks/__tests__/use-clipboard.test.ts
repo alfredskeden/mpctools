@@ -1,5 +1,5 @@
 import { renderHook, act } from "@testing-library/react";
-import { useCopyToClipboard } from "./use-clipboard";
+import { useCopyToClipboard } from "../use-clipboard";
 
 describe("useCopyToClipboard", () => {
   beforeEach(() => {

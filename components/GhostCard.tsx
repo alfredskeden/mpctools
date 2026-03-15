@@ -1,6 +1,6 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { Card } from "@/components/ui/Card";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
@@ -11,14 +11,14 @@ type GhostCardProps = {
   fadeDuration?: number;
 };
 
-export function GhostCard({
+export const GhostCard = ({
   side,
   images,
   displayDuration = 1000,
   fadeDuration = 3000,
-}: GhostCardProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isFading, setIsFading] = useState(false);
+}: GhostCardProps) => {
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const [isFading, setIsFading] = useState<boolean>(false);
 
   useEffect(() => {
     if (images.length < 2) return;
@@ -72,4 +72,4 @@ export function GhostCard({
       </Card>
     </div>
   );
-}
+};

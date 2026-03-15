@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { OverlaySelector } from "./overlay-selector";
+import { OverlaySelector } from "../overlay-selector";
 import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 
 const defaultProps = {
@@ -24,7 +24,9 @@ describe("OverlaySelector", () => {
   it("renders with group role", () => {
     render(<OverlaySelector {...defaultProps} />);
 
-    expect(screen.getByRole("group", { name: "Overlay options" })).toBeDefined();
+    expect(
+      screen.getByRole("group", { name: "Overlay options" }),
+    ).toBeDefined();
   });
 
   it("highlights None when no overlay is selected", () => {
@@ -46,7 +48,9 @@ describe("OverlaySelector", () => {
 
   it("calls onSelectOverlay with overlay id when clicked", () => {
     const onSelectOverlay = vi.fn();
-    render(<OverlaySelector {...defaultProps} onSelectOverlay={onSelectOverlay} />);
+    render(
+      <OverlaySelector {...defaultProps} onSelectOverlay={onSelectOverlay} />,
+    );
 
     fireEvent.click(screen.getByText("Normal"));
 

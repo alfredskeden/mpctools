@@ -1,5 +1,5 @@
 import { render, act } from "@testing-library/react";
-import { GhostCard } from "./ghost-card";
+import { GhostCard } from "../GhostCard";
 
 vi.mock("next/image", () => ({
   // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text

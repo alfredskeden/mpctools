@@ -7,9 +7,9 @@ import {
   CardAction,
   CardContent,
   CardFooter,
-} from "./card";
+} from "../Card";
 
-describe("Card", () => {
+describe(Card.name, () => {
   it("renders with default size", () => {
     render(<Card data-testid="card">Content</Card>);
 
@@ -81,9 +81,7 @@ describe("CardTitle", () => {
 
 describe("CardDescription", () => {
   it("renders with card-description slot", () => {
-    render(
-      <CardDescription data-testid="desc">Description</CardDescription>,
-    );
+    render(<CardDescription data-testid="desc">Description</CardDescription>);
 
     expect(screen.getByTestId("desc").getAttribute("data-slot")).toBe(
       "card-description",

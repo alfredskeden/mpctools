@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { Header } from "@/components/header";
+import { Header } from "@/components/Header";
 import type { StepStatus } from "@/hooks/use-prep-workflow";
 
 const ROUTE_TO_STEP: Record<string, number> = {

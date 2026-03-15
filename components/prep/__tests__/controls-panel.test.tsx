@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { ControlsPanel } from "./controls-panel";
+import { ControlsPanel } from "../controls-panel";
 
 const defaultProps = {
   scale: 1,

@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { CollapsedStep } from "./collapsed-step";
+import { CollapsedStep } from "../collapsed-step";
 
 describe("CollapsedStep", () => {
   it("renders the title", () => {

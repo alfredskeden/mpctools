@@ -1,10 +1,13 @@
 import { render, screen } from "@testing-library/react";
-import { Header } from "./header";
+import { Header } from "../Header";
 
 describe("Header", () => {
   it("renders the current step number", () => {
     render(
-      <Header currentStep={1} stepStatuses={["active", "upcoming", "upcoming"]} />,
+      <Header
+        currentStep={1}
+        stepStatuses={["active", "upcoming", "upcoming"]}
+      />,
     );
 
     expect(screen.getByText("STEP 1")).toBeDefined();
@@ -12,7 +15,10 @@ describe("Header", () => {
 
   it("renders step 2 when on outpaint", () => {
     render(
-      <Header currentStep={2} stepStatuses={["completed", "active", "upcoming"]} />,
+      <Header
+        currentStep={2}
+        stepStatuses={["completed", "active", "upcoming"]}
+      />,
     );
 
     expect(screen.getByText("STEP 2")).toBeDefined();
@@ -20,7 +26,10 @@ describe("Header", () => {
 
   it("renders step 3 when on merger", () => {
     render(
-      <Header currentStep={3} stepStatuses={["completed", "completed", "active"]} />,
+      <Header
+        currentStep={3}
+        stepStatuses={["completed", "completed", "active"]}
+      />,
     );
 
     expect(screen.getByText("STEP 3")).toBeDefined();
@@ -28,7 +37,10 @@ describe("Header", () => {
 
   it("renders the page title for step 1", () => {
     render(
-      <Header currentStep={1} stepStatuses={["active", "upcoming", "upcoming"]} />,
+      <Header
+        currentStep={1}
+        stepStatuses={["active", "upcoming", "upcoming"]}
+      />,
     );
 
     expect(screen.getByText("Prepare Image")).toBeDefined();
@@ -36,7 +48,10 @@ describe("Header", () => {
 
   it("renders the page title for step 2", () => {
     render(
-      <Header currentStep={2} stepStatuses={["completed", "active", "upcoming"]} />,
+      <Header
+        currentStep={2}
+        stepStatuses={["completed", "active", "upcoming"]}
+      />,
     );
 
     expect(screen.getByText("Outpaint with Gemini")).toBeDefined();
@@ -44,7 +59,10 @@ describe("Header", () => {
 
   it("renders the page title for step 3", () => {
     render(
-      <Header currentStep={3} stepStatuses={["completed", "completed", "active"]} />,
+      <Header
+        currentStep={3}
+        stepStatuses={["completed", "completed", "active"]}
+      />,
     );
 
     expect(screen.getByText("Merge Result")).toBeDefined();
@@ -52,7 +70,10 @@ describe("Header", () => {
 
   it("renders the step indicator", () => {
     render(
-      <Header currentStep={1} stepStatuses={["active", "upcoming", "upcoming"]} />,
+      <Header
+        currentStep={1}
+        stepStatuses={["active", "upcoming", "upcoming"]}
+      />,
     );
 
     expect(
@@ -62,7 +83,10 @@ describe("Header", () => {
 
   it("marks active and completed steps in the indicator", () => {
     render(
-      <Header currentStep={2} stepStatuses={["completed", "active", "upcoming"]} />,
+      <Header
+        currentStep={2}
+        stepStatuses={["completed", "active", "upcoming"]}
+      />,
     );
 
     expect(screen.getByText("Prep").getAttribute("aria-current")).toBe("step");
@@ -74,7 +98,10 @@ describe("Header", () => {
 
   it("renders as a dark top bar with correct height", () => {
     render(
-      <Header currentStep={1} stepStatuses={["active", "upcoming", "upcoming"]} />,
+      <Header
+        currentStep={1}
+        stepStatuses={["active", "upcoming", "upcoming"]}
+      />,
     );
 
     const header = screen.getByRole("banner");
@@ -85,7 +112,10 @@ describe("Header", () => {
 
   it("renders step label with blue color", () => {
     render(
-      <Header currentStep={1} stepStatuses={["active", "upcoming", "upcoming"]} />,
+      <Header
+        currentStep={1}
+        stepStatuses={["active", "upcoming", "upcoming"]}
+      />,
     );
 
     const stepLabel = screen.getByText("STEP 1");
@@ -95,7 +125,10 @@ describe("Header", () => {
 
   it("overrides default absolute positioning on StepIndicator", () => {
     render(
-      <Header currentStep={1} stepStatuses={["active", "upcoming", "upcoming"]} />,
+      <Header
+        currentStep={1}
+        stepStatuses={["active", "upcoming", "upcoming"]}
+      />,
     );
 
     const nav = screen.getByRole("navigation", { name: "Build steps" });

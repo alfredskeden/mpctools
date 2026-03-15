@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { PrepCanvas } from "./prep-canvas";
+import { PrepCanvas } from "../prep-canvas";
 
 function createMockImage(width = 400, height = 600) {
   const img = new window.Image();
@@ -33,7 +33,9 @@ describe("PrepCanvas", () => {
   it("sets canvas dimensions to 744x1039", () => {
     render(<PrepCanvas {...defaultProps} />);
 
-    const canvas = screen.getByRole("img", { name: "Card art canvas" }) as HTMLCanvasElement;
+    const canvas = screen.getByRole("img", {
+      name: "Card art canvas",
+    }) as HTMLCanvasElement;
     expect(canvas.width).toBe(744);
     expect(canvas.height).toBe(1039);
   });
@@ -41,7 +43,9 @@ describe("PrepCanvas", () => {
   it("fills gray background and draws image on mount", () => {
     render(<PrepCanvas {...defaultProps} />);
 
-    const canvas = screen.getByRole("img", { name: "Card art canvas" }) as HTMLCanvasElement;
+    const canvas = screen.getByRole("img", {
+      name: "Card art canvas",
+    }) as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
     expect(ctx?.fillRect).toHaveBeenCalled();
     expect(ctx?.drawImage).toHaveBeenCalled();
@@ -66,7 +70,9 @@ describe("PrepCanvas", () => {
 
   it("updates position on drag", () => {
     const onPositionChange = vi.fn();
-    render(<PrepCanvas {...defaultProps} onPositionChange={onPositionChange} />);
+    render(
+      <PrepCanvas {...defaultProps} onPositionChange={onPositionChange} />,
+    );
 
     const canvas = screen.getByRole("img", { name: "Card art canvas" });
 
@@ -78,7 +84,9 @@ describe("PrepCanvas", () => {
 
   it("marks positioned on mouse up after drag", () => {
     const onMarkPositioned = vi.fn();
-    render(<PrepCanvas {...defaultProps} onMarkPositioned={onMarkPositioned} />);
+    render(
+      <PrepCanvas {...defaultProps} onMarkPositioned={onMarkPositioned} />,
+    );
 
     const canvas = screen.getByRole("img", { name: "Card art canvas" });
 
@@ -91,7 +99,9 @@ describe("PrepCanvas", () => {
 
   it("does not mark positioned on mouse up without drag", () => {
     const onMarkPositioned = vi.fn();
-    render(<PrepCanvas {...defaultProps} onMarkPositioned={onMarkPositioned} />);
+    render(
+      <PrepCanvas {...defaultProps} onMarkPositioned={onMarkPositioned} />,
+    );
 
     const canvas = screen.getByRole("img", { name: "Card art canvas" });
 
@@ -103,7 +113,9 @@ describe("PrepCanvas", () => {
 
   it("stops dragging on mouseLeave", () => {
     const onPositionChange = vi.fn();
-    render(<PrepCanvas {...defaultProps} onPositionChange={onPositionChange} />);
+    render(
+      <PrepCanvas {...defaultProps} onPositionChange={onPositionChange} />,
+    );
 
     const canvas = screen.getByRole("img", { name: "Card art canvas" });
 
@@ -130,7 +142,9 @@ describe("PrepCanvas", () => {
 
   it("marks positioned on wheel event", () => {
     const onMarkPositioned = vi.fn();
-    render(<PrepCanvas {...defaultProps} onMarkPositioned={onMarkPositioned} />);
+    render(
+      <PrepCanvas {...defaultProps} onMarkPositioned={onMarkPositioned} />,
+    );
 
     const canvas = screen.getByRole("img", { name: "Card art canvas" });
 
@@ -141,7 +155,9 @@ describe("PrepCanvas", () => {
 
   it("does not call onMarkPositioned again on second wheel event", () => {
     const onMarkPositioned = vi.fn();
-    render(<PrepCanvas {...defaultProps} onMarkPositioned={onMarkPositioned} />);
+    render(
+      <PrepCanvas {...defaultProps} onMarkPositioned={onMarkPositioned} />,
+    );
 
     const canvas = screen.getByRole("img", { name: "Card art canvas" });
 
@@ -155,7 +171,9 @@ describe("PrepCanvas", () => {
 
   it("ignores mouse move when not dragging", () => {
     const onPositionChange = vi.fn();
-    render(<PrepCanvas {...defaultProps} onPositionChange={onPositionChange} />);
+    render(
+      <PrepCanvas {...defaultProps} onPositionChange={onPositionChange} />,
+    );
 
     const canvas = screen.getByRole("img", { name: "Card art canvas" });
 
@@ -187,7 +205,9 @@ describe("PrepCanvas", () => {
     expect(capturedOnload).not.toBeNull();
     capturedOnload!();
 
-    const canvas = screen.getByRole("img", { name: "Card art canvas" }) as HTMLCanvasElement;
+    const canvas = screen.getByRole("img", {
+      name: "Card art canvas",
+    }) as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
     // drawImage called for user image + overlay
     expect(ctx?.drawImage).toHaveBeenCalled();
@@ -196,11 +216,15 @@ describe("PrepCanvas", () => {
   });
 
   it("clears overlay ref when selectedOverlay is null", () => {
-    const { rerender } = render(<PrepCanvas {...defaultProps} selectedOverlay="normal" />);
+    const { rerender } = render(
+      <PrepCanvas {...defaultProps} selectedOverlay="normal" />,
+    );
 
     rerender(<PrepCanvas {...defaultProps} selectedOverlay={null} />);
 
-    const canvas = screen.getByRole("img", { name: "Card art canvas" }) as HTMLCanvasElement;
+    const canvas = screen.getByRole("img", {
+      name: "Card art canvas",
+    }) as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
     // fillRect is called for gray background; drawImage still called for user image
     expect(ctx?.fillRect).toHaveBeenCalled();
@@ -209,7 +233,9 @@ describe("PrepCanvas", () => {
   it("clears overlay ref for unknown overlay id", () => {
     render(<PrepCanvas {...defaultProps} selectedOverlay="nonexistent" />);
 
-    const canvas = screen.getByRole("img", { name: "Card art canvas" }) as HTMLCanvasElement;
+    const canvas = screen.getByRole("img", {
+      name: "Card art canvas",
+    }) as HTMLCanvasElement;
     const ctx = canvas.getContext("2d");
     expect(ctx?.fillRect).toHaveBeenCalled();
   });
