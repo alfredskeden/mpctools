@@ -185,6 +185,59 @@ describe("TransformCanvas", () => {
     expect(onPositionChange).not.toHaveBeenCalled();
   });
 
+  it("ignores second pointer to prevent pinch-zoom chaos", () => {
+    const onPositionChange = vi.fn();
+    render(
+      <TransformCanvas
+        {...defaultProps}
+        image={makeImage()}
+        onPositionChange={onPositionChange}
+      />,
+    );
+
+    const surface = screen.getByTestId("transform-canvas-interaction");
+    surface.setPointerCapture = vi.fn();
+
+    // First finger down
+    fireEvent.pointerDown(surface, { clientX: 100, clientY: 100, pointerId: 1 });
+    // Second finger down — should be ignored
+    fireEvent.pointerDown(surface, { clientX: 200, clientY: 200, pointerId: 2 });
+
+    onPositionChange.mockClear();
+
+    // Movement from second finger should be ignored
+    fireEvent.pointerMove(surface, { clientX: 250, clientY: 250, pointerId: 2 });
+    expect(onPositionChange).not.toHaveBeenCalled();
+
+    // Movement from first finger should still work
+    fireEvent.pointerMove(surface, { clientX: 120, clientY: 110, pointerId: 1 });
+    expect(onPositionChange).toHaveBeenCalled();
+  });
+
+  it("ignores pointer up from non-active pointer", () => {
+    const onPositionChange = vi.fn();
+    render(
+      <TransformCanvas
+        {...defaultProps}
+        image={makeImage()}
+        onPositionChange={onPositionChange}
+      />,
+    );
+
+    const surface = screen.getByTestId("transform-canvas-interaction");
+    surface.setPointerCapture = vi.fn();
+
+    fireEvent.pointerDown(surface, { clientX: 100, clientY: 100, pointerId: 1 });
+    // Lifting a different pointer should not stop drag
+    fireEvent.pointerUp(surface, { pointerId: 2 });
+
+    onPositionChange.mockClear();
+
+    // First pointer should still drag
+    fireEvent.pointerMove(surface, { clientX: 120, clientY: 110, pointerId: 1 });
+    expect(onPositionChange).toHaveBeenCalled();
+  });
+
   it("does not start drag when image is null", () => {
     const onPositionChange = vi.fn();
     render(

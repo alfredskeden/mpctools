@@ -53,8 +53,9 @@ export const TransformCanvas = ({
   const [asyncLoadedImage, setAsyncLoadedImage] =
     useState<HTMLImageElement | null>(null);
 
-  // Drag state refs
+  // Drag state refs — track active pointer to ignore multi-touch (pinch)
   const isDragging = useRef(false);
+  const activePointerId = useRef<number | null>(null);
   const lastPointer = useRef({ x: 0, y: 0 });
 
   const overlayOptions = useMemo(
@@ -185,10 +186,13 @@ export const TransformCanvas = ({
     return () => observer.disconnect();
   }, []);
 
-  // Pointer handlers for drag
+  // Pointer handlers for drag — only track one pointer to prevent pinch chaos
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (!image) return;
+      // Ignore additional fingers — only first touch can pan
+      if (activePointerId.current !== null) return;
+      activePointerId.current = e.pointerId;
       isDragging.current = true;
       lastPointer.current = { x: e.clientX, y: e.clientY };
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
@@ -198,7 +202,9 @@ export const TransformCanvas = ({
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
+      // Only respond to the pointer that started the drag
       if (!isDragging.current || display.scale === 0) return;
+      if (e.pointerId !== activePointerId.current) return;
 
       const dx = (e.clientX - lastPointer.current.x) / display.scale;
       const dy = (e.clientY - lastPointer.current.y) / display.scale;
@@ -209,8 +215,10 @@ export const TransformCanvas = ({
     [display.scale, position, onPositionChange],
   );
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (e.pointerId !== activePointerId.current) return;
     isDragging.current = false;
+    activePointerId.current = null;
   }, []);
 
   // Wheel handler for zoom
