@@ -1,8 +1,6 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { PrepPageContent } from "../prep-page-content";
 
-vi.mock("react-konva");
-
 function setupImageMocks(dataUrl: string) {
   const OriginalFileReader = globalThis.FileReader;
   const OriginalImage = globalThis.Image;
@@ -119,7 +117,7 @@ describe("PrepPageContent", () => {
       uploadFile();
     });
 
-    expect(screen.getByTestId("konva-image")).toBeDefined();
+    expect(screen.getByTestId("transform-canvas-image")).toBeDefined();
 
     mocks.restore();
   });

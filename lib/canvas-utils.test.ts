@@ -9,6 +9,7 @@ import {
   BG_COLOR,
   sharpenPixelData,
   applyUnsharpMask,
+  applyUnsharpMaskAsync,
   detailPreservingResize,
 } from "./canvas-utils";
 
@@ -255,6 +256,22 @@ describe("applyUnsharpMask", () => {
     applyUnsharpMask(canvas, 0.6, 1);
 
     // Then
+    expect(getImageDataSpy).toHaveBeenCalledWith(0, 0, 2, 2);
+    expect(putImageDataSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("applyUnsharpMaskAsync", () => {
+  it("reads pixel data, sharpens it via worker, and writes it back", async () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 2;
+    canvas.height = 2;
+    const ctx = canvas.getContext("2d")!;
+    const getImageDataSpy = vi.spyOn(ctx, "getImageData");
+    const putImageDataSpy = vi.spyOn(ctx, "putImageData");
+
+    await applyUnsharpMaskAsync(canvas, 0.6, 1);
+
     expect(getImageDataSpy).toHaveBeenCalledWith(0, 0, 2, 2);
     expect(putImageDataSpy).toHaveBeenCalledTimes(1);
   });

@@ -1,9 +1,6 @@
 import "vitest-canvas-mock";
 import "@testing-library/jest-dom/vitest";
 
-// Prevent "Several Konva instances detected" warning in tests
-vi.mock("konva", () => ({}));
-
 // Polyfill ResizeObserver for tests
 globalThis.ResizeObserver = class ResizeObserver {
   private callback: ResizeObserverCallback;
@@ -17,3 +14,8 @@ globalThis.ResizeObserver = class ResizeObserver {
   unobserve() {}
   disconnect() {}
 };
+
+// Polyfill createImageBitmap for tests
+globalThis.createImageBitmap = vi
+  .fn()
+  .mockResolvedValue({ width: 100, height: 100, close: vi.fn() });

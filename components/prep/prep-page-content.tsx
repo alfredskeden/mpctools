@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import { usePrepWorkflow } from "@/hooks/use-prep-workflow";
 import { InstructionSteps } from "./instruction-steps";
 import { PrepActions } from "./prep-actions";
-import { KonvaCanvas } from "./KonvaCanvas";
+import { TransformCanvas } from "./TransformCanvas";
 export function PrepPageContent() {
   const {
     state,
@@ -40,7 +40,7 @@ export function PrepPageContent() {
     <div className="flex min-h-0 flex-1 flex-col md:flex-row">
       {/* Canvas area */}
       <div className="flex min-h-7/12 flex-1 items-center justify-center bg-surface-ground p-4 md:min-h-0 md:p-6">
-        <KonvaCanvas
+        <TransformCanvas
           image={state.imageElement}
           selectedOverlay={state.selectedOverlay}
           scale={state.scale}

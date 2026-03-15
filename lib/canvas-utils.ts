@@ -67,64 +67,9 @@ export function calculateDrawParams(
 
 export const BG_COLOR = "#808080";
 
-export function sharpenPixelData(
-  pixels: Uint8ClampedArray,
-  width: number,
-  height: number,
-  amount: number,
-  radius: number,
-): Uint8ClampedArray {
-  const length = pixels.length;
-  const result = new Uint8ClampedArray(length);
-
-  // Box blur
-  const blurred = new Uint8ClampedArray(length);
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      let r = 0,
-        g = 0,
-        b = 0,
-        count = 0;
-      for (let dy = -radius; dy <= radius; dy++) {
-        for (let dx = -radius; dx <= radius; dx++) {
-          const nx = x + dx;
-          const ny = y + dy;
-          if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
-            const idx = (ny * width + nx) * 4;
-            r += pixels[idx];
-            g += pixels[idx + 1];
-            b += pixels[idx + 2];
-            count++;
-          }
-        }
-      }
-      const idx = (y * width + x) * 4;
-      blurred[idx] = r / count;
-      blurred[idx + 1] = g / count;
-      blurred[idx + 2] = b / count;
-      blurred[idx + 3] = pixels[idx + 3];
-    }
-  }
-
-  // Unsharp mask: result = original + amount * (original - blurred)
-  for (let i = 0; i < length; i += 4) {
-    result[i] = Math.min(
-      255,
-      Math.max(0, pixels[i] + amount * (pixels[i] - blurred[i])),
-    );
-    result[i + 1] = Math.min(
-      255,
-      Math.max(0, pixels[i + 1] + amount * (pixels[i + 1] - blurred[i + 1])),
-    );
-    result[i + 2] = Math.min(
-      255,
-      Math.max(0, pixels[i + 2] + amount * (pixels[i + 2] - blurred[i + 2])),
-    );
-    result[i + 3] = pixels[i + 3];
-  }
-
-  return result;
-}
+import { sharpenPixelData } from "./image-processing";
+import { sharpenInWorker } from "./worker-client";
+export { sharpenPixelData } from "./image-processing";
 
 export function applyUnsharpMask(
   canvas: HTMLCanvasElement,
@@ -134,6 +79,28 @@ export function applyUnsharpMask(
   const ctx = canvas.getContext("2d")!;
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const sharpened = sharpenPixelData(
+    imageData.data,
+    canvas.width,
+    canvas.height,
+    amount,
+    radius,
+  );
+  const result = new ImageData(
+    new Uint8ClampedArray(sharpened.buffer as ArrayBuffer),
+    canvas.width,
+    canvas.height,
+  );
+  ctx.putImageData(result, 0, 0);
+}
+
+export async function applyUnsharpMaskAsync(
+  canvas: HTMLCanvasElement,
+  amount: number,
+  radius: number,
+): Promise<void> {
+  const ctx = canvas.getContext("2d")!;
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const sharpened = await sharpenInWorker(
     imageData.data,
     canvas.width,
     canvas.height,

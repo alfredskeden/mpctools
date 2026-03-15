@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, Frame, ChevronDown } from "lucide-react";
+import { Search, Frame, ChevronDown, RotateCw } from "lucide-react";
 import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 
 const MIN_SCALE = 0.5;
@@ -18,10 +18,13 @@ type ControlsPanelProps = {
 export function ControlsPanel({
   scale,
   selectedOverlay,
+  rotation,
   onUpdateScale,
   onSelectOverlay,
+  onUpdateRotation,
 }: ControlsPanelProps) {
   const scalePercent = Math.round(scale * 100);
+  const rotationDisplay = Math.round(rotation);
 
   return (
     <div
@@ -48,6 +51,27 @@ export function ControlsPanel({
           onChange={(e) => onUpdateScale(Number(e.target.value) / 100)}
           className="h-1 w-full cursor-pointer appearance-none rounded-full bg-surface-subtle accent-accent-blue [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent-blue"
           aria-label="Scale"
+        />
+      </div>
+      {/* Rotation Control */}
+      <div className="flex flex-col gap-2 rounded-lg bg-surface-overlay px-3 py-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <RotateCw className="size-3.5 text-text-secondary" />
+            <span className="text-sm text-text-primary">Rotation</span>
+          </div>
+          <span className="text-xs font-medium text-accent-blue">
+            {rotationDisplay}&deg;
+          </span>
+        </div>
+        <input
+          type="range"
+          min={-180}
+          max={180}
+          value={rotationDisplay}
+          onChange={(e) => onUpdateRotation(Number(e.target.value))}
+          className="h-1 w-full cursor-pointer appearance-none rounded-full bg-surface-subtle accent-accent-blue [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent-blue"
+          aria-label="Rotation"
         />
       </div>
       {/* Frame Overlay Control */}

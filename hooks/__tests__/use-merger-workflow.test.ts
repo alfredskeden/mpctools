@@ -26,6 +26,13 @@ const makeGuideCanvas = () => {
   return canvas;
 };
 
+const mockAnalysis = {
+  canvasW: 800,
+  canvasH: 1200,
+  ogX: 200,
+  ogY: 300,
+};
+
 describe("mergerReducer", () => {
   it("returns initial state for unknown action", () => {
     const result = mergerReducer(initialState, { type: "UNKNOWN" } as never);
@@ -76,14 +83,7 @@ describe("mergerReducer", () => {
     expect(result.isDownloaded).toBe(false);
   });
 
-  it("handles UPLOAD_GUIDE with successful analysis", () => {
-    vi.mocked(mergerUtils.analyzeGuide).mockReturnValue({
-      canvasW: 800,
-      canvasH: 1200,
-      ogX: 200,
-      ogY: 300,
-    });
-
+  it("handles UPLOAD_GUIDE with analysis result", () => {
     const ogImg = makeImage(400, 600);
     const state: MergerState = {
       ...initialState,
@@ -97,7 +97,6 @@ describe("mergerReducer", () => {
     };
 
     const guideImg = makeImage(200, 200);
-    const guideCanvas = makeGuideCanvas();
 
     const result = mergerReducer(state, {
       type: "UPLOAD_GUIDE",
@@ -105,7 +104,7 @@ describe("mergerReducer", () => {
         image: guideImg,
         fileName: "guide.png",
         fileSize: 512,
-        guideCanvas,
+        analysis: mockAnalysis,
       },
     });
 
@@ -125,44 +124,14 @@ describe("mergerReducer", () => {
         image: makeImage(100, 100),
         fileName: "guide.png",
         fileSize: 512,
-        guideCanvas: makeGuideCanvas(),
+        analysis: mockAnalysis,
       },
     });
 
     expect(result).toEqual(initialState);
   });
 
-  it("does not change state on UPLOAD_GUIDE when analysis returns null", () => {
-    vi.mocked(mergerUtils.analyzeGuide).mockReturnValue(null);
-
-    const ogImg = makeImage(400, 600);
-    const state: MergerState = {
-      ...initialState,
-      currentStep: 2,
-      ogImage: ogImg,
-    };
-
-    const result = mergerReducer(state, {
-      type: "UPLOAD_GUIDE",
-      payload: {
-        image: makeImage(100, 100),
-        fileName: "guide.png",
-        fileSize: 512,
-        guideCanvas: makeGuideCanvas(),
-      },
-    });
-
-    expect(result).toEqual(state);
-  });
-
   it("resets downstream state on UPLOAD_GUIDE", () => {
-    vi.mocked(mergerUtils.analyzeGuide).mockReturnValue({
-      canvasW: 800,
-      canvasH: 1200,
-      ogX: 200,
-      ogY: 300,
-    });
-
     const state: MergerState = {
       ...initialState,
       currentStep: 2,
@@ -179,7 +148,7 @@ describe("mergerReducer", () => {
         image: makeImage(100, 100),
         fileName: "guide.png",
         fileSize: 512,
-        guideCanvas: makeGuideCanvas(),
+        analysis: mockAnalysis,
       },
     });
 
@@ -306,6 +275,41 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.currentStep).toBe(3);
+  });
+
+  it("does not transition when analyzeGuide returns null", () => {
+    vi.mocked(mergerUtils.analyzeGuide).mockReturnValue(null);
+
+    const { result } = renderHook(() => useMergerWorkflow());
+
+    act(() => {
+      result.current.uploadOg(makeImage(400, 600), "card.png", 1024);
+    });
+    act(() => {
+      result.current.uploadGuide(
+        makeImage(200, 200),
+        "guide.png",
+        512,
+        makeGuideCanvas(),
+      );
+    });
+
+    expect(result.current.state.currentStep).toBe(2);
+  });
+
+  it("does not transition when no OG image uploaded", () => {
+    const { result } = renderHook(() => useMergerWorkflow());
+
+    act(() => {
+      result.current.uploadGuide(
+        makeImage(200, 200),
+        "guide.png",
+        512,
+        makeGuideCanvas(),
+      );
+    });
+
+    expect(result.current.state.currentStep).toBe(1);
   });
 
   it("enables download when all 3 images are uploaded", () => {

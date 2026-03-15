@@ -5,6 +5,7 @@ import {
   generateCombinedMask,
   applyFeatheredMask,
   analyzeGuide,
+  analyzeGuideAsync,
   downloadCanvasAsBlob,
 } from "./merger-utils";
 
@@ -259,6 +260,57 @@ describe("analyzeGuide", () => {
     // ogX = (50 / 200) * 800 = 200
     expect(result!.ogX).toBe(200);
     expect(result!.ogY).toBe(200);
+  });
+});
+
+describe("analyzeGuideAsync", () => {
+  function makeGuideCanvas(w: number, h: number, pixelData: Uint8ClampedArray) {
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d")!;
+    vi.spyOn(ctx, "getImageData").mockReturnValue({
+      data: pixelData,
+      width: w,
+      height: h,
+      colorSpace: "srgb",
+    } as ImageData);
+    return canvas;
+  }
+
+  function makeGrayPixels(w: number, h: number): Uint8ClampedArray {
+    const data = new Uint8ClampedArray(w * h * 4);
+    for (let i = 0; i < w * h; i++) {
+      data[i * 4] = 128;
+      data[i * 4 + 1] = 128;
+      data[i * 4 + 2] = 128;
+      data[i * 4 + 3] = 255;
+    }
+    return data;
+  }
+
+  it("returns null when guide is entirely gray", async () => {
+    const pixels = makeGrayPixels(100, 100);
+    const canvas = makeGuideCanvas(100, 100, pixels);
+    const result = await analyzeGuideAsync(canvas, 200, 300);
+    expect(result).toBeNull();
+  });
+
+  it("detects non-gray region asynchronously", async () => {
+    const w = 100;
+    const h = 100;
+    const pixels = makeGrayPixels(w, h);
+    for (let y = 30; y < 70; y++) {
+      for (let x = 40; x < 60; x++) {
+        const i = (y * w + x) * 4;
+        pixels[i] = 255;
+      }
+    }
+    const canvas = makeGuideCanvas(w, h, pixels);
+    const result = await analyzeGuideAsync(canvas, 200, 300);
+    expect(result).not.toBeNull();
+    expect(result!.canvasW).toBe(1000);
+    expect(result!.canvasH).toBe(750);
   });
 });
 

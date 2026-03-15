@@ -93,4 +93,31 @@ describe("ControlsPanel", () => {
     const noneBtn = screen.getByText("None");
     expect(noneBtn.className).toContain("border-accent-blue");
   });
+
+  it("shows rotation label and value", () => {
+    render(<ControlsPanel {...defaultProps} rotation={45} />);
+
+    expect(screen.getByText("Rotation")).toBeDefined();
+    expect(screen.getByText("45°")).toBeDefined();
+  });
+
+  it("calls onUpdateRotation when rotation slider changes", () => {
+    const onUpdateRotation = vi.fn();
+    render(
+      <ControlsPanel {...defaultProps} onUpdateRotation={onUpdateRotation} />,
+    );
+
+    const slider = screen.getByRole("slider", { name: "Rotation" });
+    fireEvent.change(slider, { target: { value: "90" } });
+
+    expect(onUpdateRotation).toHaveBeenCalledWith(90);
+  });
+
+  it("renders rotation slider with correct range", () => {
+    render(<ControlsPanel {...defaultProps} />);
+
+    const slider = screen.getByRole("slider", { name: "Rotation" });
+    expect(slider.getAttribute("min")).toBe("-180");
+    expect(slider.getAttribute("max")).toBe("180");
+  });
 });

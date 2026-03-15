@@ -1,3 +1,6 @@
+import { analyzeGuideData } from "./image-processing";
+import { analyzeGuideInWorker } from "./worker-client";
+
 export function mulberry32(seed: number): () => number {
   return function () {
     seed |= 0;
@@ -277,52 +280,30 @@ export function analyzeGuide(
   ogHeight: number,
 ): GuideAnalysis | null {
   const ctx = guideCanvas.getContext("2d")!;
-  const data = ctx.getImageData(
+  const { data } = ctx.getImageData(
     0,
     0,
     guideCanvas.width,
     guideCanvas.height,
-  ).data;
+  );
 
-  const threshold = 12;
-  let minX = guideCanvas.width;
-  let minY = guideCanvas.height;
-  let maxX = 0;
-  let maxY = 0;
-  let found = false;
+  return analyzeGuideData(data, guideCanvas.width, guideCanvas.height, ogWidth, ogHeight);
+}
 
-  for (let y = 0; y < guideCanvas.height; y++) {
-    for (let x = 0; x < guideCanvas.width; x++) {
-      const i = (y * guideCanvas.width + x) * 4;
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      if (
-        Math.abs(r - 128) > threshold ||
-        Math.abs(g - 128) > threshold ||
-        Math.abs(b - 128) > threshold
-      ) {
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-        found = true;
-      }
-    }
-  }
+export async function analyzeGuideAsync(
+  guideCanvas: HTMLCanvasElement,
+  ogWidth: number,
+  ogHeight: number,
+): Promise<GuideAnalysis | null> {
+  const ctx = guideCanvas.getContext("2d")!;
+  const { data } = ctx.getImageData(
+    0,
+    0,
+    guideCanvas.width,
+    guideCanvas.height,
+  );
 
-  if (!found) return null;
-
-  const bboxW = maxX - minX + 1;
-  const bboxH = maxY - minY + 1;
-
-  const newCanvasW = Math.round(ogWidth * (guideCanvas.width / bboxW));
-  const newCanvasH = Math.round(ogHeight * (guideCanvas.height / bboxH));
-
-  const newX = Math.round((minX / guideCanvas.width) * newCanvasW);
-  const newY = Math.round((minY / guideCanvas.height) * newCanvasH);
-
-  return { canvasW: newCanvasW, canvasH: newCanvasH, ogX: newX, ogY: newY };
+  return analyzeGuideInWorker(data, guideCanvas.width, guideCanvas.height, ogWidth, ogHeight);
 }
 
 export function downloadCanvasAsBlob(

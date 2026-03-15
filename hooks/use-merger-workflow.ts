@@ -1,7 +1,7 @@
 "use client";
 
 import { useReducer, useCallback } from "react";
-import { analyzeGuide } from "@/lib/merger-utils";
+import { analyzeGuide, type GuideAnalysis } from "@/lib/merger-utils";
 
 export type MergerStep = 1 | 2 | 3;
 
@@ -40,7 +40,7 @@ type MergerAction =
         image: HTMLImageElement;
         fileName: string;
         fileSize: number;
-        guideCanvas: HTMLCanvasElement;
+        analysis: GuideAnalysis;
       };
     }
   | {
@@ -103,8 +103,7 @@ export function mergerReducer(
       if (!state.ogImage) return state;
       const ogW = state.ogImage.naturalWidth;
       const ogH = state.ogImage.naturalHeight;
-      const analysis = analyzeGuide(action.payload.guideCanvas, ogW, ogH);
-      if (!analysis) return state;
+      const { analysis } = action.payload;
       return {
         ...state,
         currentStep: 3,
@@ -178,12 +177,17 @@ export function useMergerWorkflow() {
       fileSize: number,
       guideCanvas: HTMLCanvasElement,
     ) => {
+      if (!state.ogImage) return;
+      const ogW = state.ogImage.naturalWidth;
+      const ogH = state.ogImage.naturalHeight;
+      const analysis = analyzeGuide(guideCanvas, ogW, ogH);
+      if (!analysis) return;
       dispatch({
         type: "UPLOAD_GUIDE",
-        payload: { image, fileName, fileSize, guideCanvas },
+        payload: { image, fileName, fileSize, analysis },
       });
     },
-    [],
+    [state.ogImage],
   );
 
   const uploadOutpaint = useCallback(
