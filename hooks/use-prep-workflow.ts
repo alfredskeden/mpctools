@@ -25,7 +25,7 @@ export type PrepState = {
   rotation: number;
   isPositioned: boolean;
   isDownloaded: boolean;
-  selectedOverlay: string | null;
+  selectedOverlays: string[];
   canvasDataUrl: string | null;
 };
 
@@ -36,7 +36,7 @@ type PrepAction =
   | { type: "UPDATE_ROTATION"; payload: number }
   | { type: "MARK_POSITIONED" }
   | { type: "MARK_DOWNLOADED" }
-  | { type: "SELECT_OVERLAY"; payload: string | null }
+  | { type: "TOGGLE_OVERLAY"; payload: string }
   | { type: "SET_CANVAS_DATA_URL"; payload: string }
   | { type: "RESET" };
 
@@ -50,7 +50,7 @@ const initialState: PrepState = {
   rotation: 0,
   isPositioned: false,
   isDownloaded: false,
-  selectedOverlay: null,
+  selectedOverlays: [],
   canvasDataUrl: null,
 };
 
@@ -71,7 +71,7 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         rotation: 0,
         isPositioned: false,
         isDownloaded: false,
-        selectedOverlay: "tall_normal",
+        selectedOverlays: ["tall_normal", "black_bottom"],
       };
     case "UPDATE_POSITION":
       return {
@@ -99,10 +99,12 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         ...state,
         isDownloaded: true,
       };
-    case "SELECT_OVERLAY":
+    case "TOGGLE_OVERLAY":
       return {
         ...state,
-        selectedOverlay: action.payload,
+        selectedOverlays: state.selectedOverlays.includes(action.payload)
+          ? state.selectedOverlays.filter((id) => id !== action.payload)
+          : [...state.selectedOverlays, action.payload],
       };
     case "SET_CANVAS_DATA_URL":
       return {
@@ -154,8 +156,8 @@ export function usePrepWorkflow() {
     dispatch({ type: "MARK_DOWNLOADED" });
   }, []);
 
-  const selectOverlay = useCallback((overlay: string | null) => {
-    dispatch({ type: "SELECT_OVERLAY", payload: overlay });
+  const toggleOverlay = useCallback((overlay: string) => {
+    dispatch({ type: "TOGGLE_OVERLAY", payload: overlay });
   }, []);
 
   const setCanvasDataUrl = useCallback((dataUrl: string) => {
@@ -178,7 +180,7 @@ export function usePrepWorkflow() {
     updateRotation,
     markPositioned,
     markDownloaded,
-    selectOverlay,
+    toggleOverlay,
     setCanvasDataUrl,
     reset,
     canDownload,

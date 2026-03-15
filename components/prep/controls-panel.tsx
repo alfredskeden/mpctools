@@ -16,19 +16,19 @@ const SCALE_STEP = 0.01;
 
 type ControlsPanelProps = {
   scale: number;
-  selectedOverlay: string | null;
+  selectedOverlays: string[];
   rotation: number;
   onUpdateScale: (scale: number) => void;
-  onSelectOverlay: (overlay: string | null) => void;
+  onToggleOverlay: (overlay: string) => void;
   onUpdateRotation: (rotation: number) => void;
 };
 
 export function ControlsPanel({
   scale,
-  selectedOverlay,
+  selectedOverlays,
   rotation,
   onUpdateScale,
-  onSelectOverlay,
+  onToggleOverlay,
   onUpdateRotation,
 }: ControlsPanelProps) {
   const scalePercent = Math.round(scale * 100);
@@ -112,32 +112,26 @@ export function ControlsPanel({
           </div>
           <ChevronDown className="size-3 text-text-secondary transition-transform group-open:rotate-180" />
         </summary>
-        <div className="mt-1.5 flex flex-wrap gap-1.5 rounded-lg bg-surface-overlay px-3 py-2.5">
-          <button
-            type="button"
-            className={`rounded-md border px-2.5 py-1 text-xs ${
-              selectedOverlay === null
-                ? "border-accent-blue bg-accent-blue/10 text-accent-blue"
-                : "border-surface-subtle bg-transparent text-text-secondary"
-            }`}
-            onClick={() => onSelectOverlay(null)}
-          >
-            None
-          </button>
-          {OVERLAY_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              className={`rounded-md border px-2.5 py-1 text-xs ${
-                selectedOverlay === option.id
-                  ? "border-accent-blue bg-accent-blue/10 text-accent-blue"
-                  : "border-surface-subtle bg-transparent text-text-secondary"
-              }`}
-              onClick={() => onSelectOverlay(option.id)}
-            >
-              {option.label}
-            </button>
-          ))}
+        <div className="mt-1.5 flex flex-col gap-1.5 rounded-lg bg-surface-overlay px-3 py-2.5">
+          {OVERLAY_OPTIONS.map((option) => {
+            const checked = selectedOverlays.includes(option.id);
+            return (
+              <label
+                key={option.id}
+                className="flex cursor-pointer items-center gap-2 text-xs text-text-secondary"
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={() => onToggleOverlay(option.id)}
+                  className="accent-accent-blue"
+                />
+                <span className={checked ? "text-accent-blue" : ""}>
+                  {option.label}
+                </span>
+              </label>
+            );
+          })}
         </div>
       </details>
     </div>

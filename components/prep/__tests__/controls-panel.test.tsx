@@ -3,10 +3,10 @@ import { ControlsPanel } from "../controls-panel";
 
 const defaultProps = {
   scale: 1,
-  selectedOverlay: null as string | null,
+  selectedOverlays: [] as string[],
   rotation: 0,
   onUpdateScale: vi.fn(),
-  onSelectOverlay: vi.fn(),
+  onToggleOverlay: vi.fn(),
   onUpdateRotation: vi.fn(),
 };
 
@@ -101,13 +101,7 @@ describe("ControlsPanel", () => {
     expect(screen.getByText("Frame Overlay")).toBeDefined();
   });
 
-  it("renders None button for overlay", () => {
-    render(<ControlsPanel {...defaultProps} />);
-
-    expect(screen.getByText("None")).toBeDefined();
-  });
-
-  it("renders overlay option buttons", () => {
+  it("renders overlay option checkboxes", () => {
     render(<ControlsPanel {...defaultProps} />);
 
     expect(screen.getByText("Normal")).toBeDefined();
@@ -117,39 +111,41 @@ describe("ControlsPanel", () => {
     expect(screen.getByText("Black Bottom")).toBeDefined();
   });
 
-  it("calls onSelectOverlay with null when None is clicked", () => {
-    const onSelectOverlay = vi.fn();
+  it("calls onToggleOverlay with option id when checkbox is clicked", () => {
+    const onToggleOverlay = vi.fn();
     render(
-      <ControlsPanel {...defaultProps} onSelectOverlay={onSelectOverlay} />,
-    );
-
-    fireEvent.click(screen.getByText("None"));
-    expect(onSelectOverlay).toHaveBeenCalledWith(null);
-  });
-
-  it("calls onSelectOverlay with option id when overlay button is clicked", () => {
-    const onSelectOverlay = vi.fn();
-    render(
-      <ControlsPanel {...defaultProps} onSelectOverlay={onSelectOverlay} />,
+      <ControlsPanel {...defaultProps} onToggleOverlay={onToggleOverlay} />,
     );
 
     fireEvent.click(screen.getByText("Normal"));
-    expect(onSelectOverlay).toHaveBeenCalledWith("normal");
+    expect(onToggleOverlay).toHaveBeenCalledWith("normal");
   });
 
-  it("highlights selected overlay button", () => {
-    render(<ControlsPanel {...defaultProps} selectedOverlay="normal" />);
+  it("checks checkboxes for selected overlays", () => {
+    render(<ControlsPanel {...defaultProps} selectedOverlays={["normal", "short"]} />);
 
-    const normalBtn = screen.getByText("Normal");
-    expect(normalBtn.className).toContain("border-accent-blue");
-    expect(normalBtn.className).toContain("text-accent-blue");
+    const checkboxes = screen.getAllByRole("checkbox");
+    const normalCheckbox = checkboxes[0];
+    const mediumCheckbox = checkboxes[1];
+    const shortCheckbox = checkboxes[2];
+
+    expect(normalCheckbox).toBeChecked();
+    expect(mediumCheckbox).not.toBeChecked();
+    expect(shortCheckbox).toBeChecked();
   });
 
-  it("highlights None when no overlay is selected", () => {
-    render(<ControlsPanel {...defaultProps} selectedOverlay={null} />);
+  it("highlights selected overlay text", () => {
+    render(<ControlsPanel {...defaultProps} selectedOverlays={["normal"]} />);
 
-    const noneBtn = screen.getByText("None");
-    expect(noneBtn.className).toContain("border-accent-blue");
+    const normalText = screen.getByText("Normal");
+    expect(normalText.className).toContain("text-accent-blue");
+  });
+
+  it("does not highlight unselected overlay text", () => {
+    render(<ControlsPanel {...defaultProps} selectedOverlays={[]} />);
+
+    const normalText = screen.getByText("Normal");
+    expect(normalText.className).not.toContain("text-accent-blue");
   });
 
   it("shows rotation label and value", () => {

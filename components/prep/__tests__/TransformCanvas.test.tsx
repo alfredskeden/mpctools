@@ -11,7 +11,7 @@ const makeImage = () => {
 
 const defaultProps = {
   image: null as HTMLImageElement | null,
-  selectedOverlay: null as string | null,
+  selectedOverlays: [] as string[],
   scale: 1,
   position: { x: 0, y: 0 },
   rotation: 0,
@@ -336,7 +336,7 @@ describe("TransformCanvas", () => {
       <TransformCanvas
         {...defaultProps}
         image={makeImage()}
-        selectedOverlay="tall_normal"
+        selectedOverlays={["tall_normal"]}
       />,
     );
 
@@ -371,7 +371,7 @@ describe("TransformCanvas", () => {
       <TransformCanvas
         {...defaultProps}
         image={makeImage()}
-        selectedOverlay="tall_normal"
+        selectedOverlays={["tall_normal"]}
       />,
     );
 
@@ -381,7 +381,7 @@ describe("TransformCanvas", () => {
       <TransformCanvas
         {...defaultProps}
         image={makeImage()}
-        selectedOverlay={null}
+        selectedOverlays={[]}
       />,
     );
 
@@ -395,7 +395,7 @@ describe("TransformCanvas", () => {
       <TransformCanvas
         {...defaultProps}
         image={makeImage()}
-        selectedOverlay="unknown_id"
+        selectedOverlays={["unknown_id"]}
       />,
     );
 

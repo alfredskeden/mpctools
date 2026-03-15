@@ -19,7 +19,7 @@ const initialState: PrepState = {
   rotation: 0,
   isPositioned: false,
   isDownloaded: false,
-  selectedOverlay: null,
+  selectedOverlays: [],
   canvasDataUrl: null,
 };
 
@@ -132,27 +132,27 @@ describe("prepReducer", () => {
     expect(result.isDownloaded).toBe(true);
   });
 
-  it("handles SELECT_OVERLAY", () => {
+  it("handles TOGGLE_OVERLAY to add an overlay", () => {
     const result = prepReducer(initialState, {
-      type: "SELECT_OVERLAY",
+      type: "TOGGLE_OVERLAY",
       payload: "normal",
     });
 
-    expect(result.selectedOverlay).toBe("normal");
+    expect(result.selectedOverlays).toEqual(["normal"]);
   });
 
-  it("handles SELECT_OVERLAY with null to deselect", () => {
-    const state: PrepState = { ...initialState, selectedOverlay: "normal" };
+  it("handles TOGGLE_OVERLAY to remove an overlay", () => {
+    const state: PrepState = { ...initialState, selectedOverlays: ["normal", "short"] };
     const result = prepReducer(state, {
-      type: "SELECT_OVERLAY",
-      payload: null,
+      type: "TOGGLE_OVERLAY",
+      payload: "normal",
     });
 
-    expect(result.selectedOverlay).toBeNull();
+    expect(result.selectedOverlays).toEqual(["short"]);
   });
 
-  it("sets selectedOverlay to tall_normal on UPLOAD_IMAGE", () => {
-    const state: PrepState = { ...initialState, selectedOverlay: "normal" };
+  it("sets selectedOverlays to tall_normal and black_bottom on UPLOAD_IMAGE", () => {
+    const state: PrepState = { ...initialState, selectedOverlays: ["normal"] };
     const result = prepReducer(state, {
       type: "UPLOAD_IMAGE",
       payload: {
@@ -162,7 +162,7 @@ describe("prepReducer", () => {
       },
     });
 
-    expect(result.selectedOverlay).toBe("tall_normal");
+    expect(result.selectedOverlays).toEqual(["tall_normal", "black_bottom"]);
   });
 
   it("handles SET_CANVAS_DATA_URL", () => {
@@ -186,7 +186,7 @@ describe("prepReducer", () => {
       isPositioned: true,
       isDownloaded: true,
       canvasDataUrl: null,
-      selectedOverlay: null,
+      selectedOverlays: ["normal"],
     };
 
     const result = prepReducer(state, { type: "RESET" });
@@ -336,27 +336,27 @@ describe("usePrepWorkflow", () => {
     ]);
   });
 
-  it("selects an overlay", () => {
+  it("toggles an overlay on", () => {
     const { result } = renderHook(() => usePrepWorkflow());
 
     act(() => {
-      result.current.selectOverlay("normal");
+      result.current.toggleOverlay("normal");
     });
 
-    expect(result.current.state.selectedOverlay).toBe("normal");
+    expect(result.current.state.selectedOverlays).toEqual(["normal"]);
   });
 
-  it("deselects overlay with null", () => {
+  it("toggles an overlay off", () => {
     const { result } = renderHook(() => usePrepWorkflow());
 
     act(() => {
-      result.current.selectOverlay("normal");
+      result.current.toggleOverlay("normal");
     });
     act(() => {
-      result.current.selectOverlay(null);
+      result.current.toggleOverlay("normal");
     });
 
-    expect(result.current.state.selectedOverlay).toBeNull();
+    expect(result.current.state.selectedOverlays).toEqual([]);
   });
 
   it("sets canvas data URL", () => {

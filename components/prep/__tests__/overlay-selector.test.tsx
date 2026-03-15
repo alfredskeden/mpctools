@@ -3,8 +3,8 @@ import { OverlaySelector } from "../overlay-selector";
 import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 
 const defaultProps = {
-  selectedOverlay: null as string | null,
-  onSelectOverlay: vi.fn(),
+  selectedOverlays: [] as string[],
+  onToggleOverlay: vi.fn(),
 };
 
 describe("OverlaySelector", () => {
@@ -12,13 +12,13 @@ describe("OverlaySelector", () => {
     vi.clearAllMocks();
   });
 
-  it("renders a None button and all overlay options", () => {
+  it("renders all overlay options as checkboxes", () => {
     render(<OverlaySelector {...defaultProps} />);
 
-    expect(screen.getByText("None")).toBeDefined();
     for (const option of OVERLAY_OPTIONS) {
       expect(screen.getByText(option.label)).toBeDefined();
     }
+    expect(screen.getAllByRole("checkbox")).toHaveLength(OVERLAY_OPTIONS.length);
   });
 
   it("renders with group role", () => {
@@ -29,45 +29,36 @@ describe("OverlaySelector", () => {
     ).toBeDefined();
   });
 
-  it("highlights None when no overlay is selected", () => {
-    render(<OverlaySelector {...defaultProps} selectedOverlay={null} />);
+  it("checks checkboxes for selected overlays", () => {
+    render(<OverlaySelector {...defaultProps} selectedOverlays={["normal"]} />);
 
-    const noneBtn = screen.getByText("None");
-    expect(noneBtn.className).toContain("bg-primary");
+    const checkboxes = screen.getAllByRole("checkbox");
+    expect(checkboxes[0]).toBeChecked();
+    expect(checkboxes[1]).not.toBeChecked();
   });
 
-  it("highlights selected overlay button", () => {
-    render(<OverlaySelector {...defaultProps} selectedOverlay="normal" />);
-
-    const normalBtn = screen.getByText("Normal");
-    expect(normalBtn.className).toContain("bg-primary");
-
-    const noneBtn = screen.getByText("None");
-    expect(noneBtn.className).toContain("bg-background");
-  });
-
-  it("calls onSelectOverlay with overlay id when clicked", () => {
-    const onSelectOverlay = vi.fn();
+  it("calls onToggleOverlay with overlay id when clicked", () => {
+    const onToggleOverlay = vi.fn();
     render(
-      <OverlaySelector {...defaultProps} onSelectOverlay={onSelectOverlay} />,
+      <OverlaySelector {...defaultProps} onToggleOverlay={onToggleOverlay} />,
     );
 
     fireEvent.click(screen.getByText("Normal"));
 
-    expect(onSelectOverlay).toHaveBeenCalledWith("normal");
+    expect(onToggleOverlay).toHaveBeenCalledWith("normal");
   });
 
-  it("calls onSelectOverlay with null when None is clicked", () => {
-    const onSelectOverlay = vi.fn();
+  it("calls onToggleOverlay to uncheck a selected overlay", () => {
+    const onToggleOverlay = vi.fn();
     render(
       <OverlaySelector
-        selectedOverlay="normal"
-        onSelectOverlay={onSelectOverlay}
+        selectedOverlays={["normal"]}
+        onToggleOverlay={onToggleOverlay}
       />,
     );
 
-    fireEvent.click(screen.getByText("None"));
+    fireEvent.click(screen.getByText("Normal"));
 
-    expect(onSelectOverlay).toHaveBeenCalledWith(null);
+    expect(onToggleOverlay).toHaveBeenCalledWith("normal");
   });
 });

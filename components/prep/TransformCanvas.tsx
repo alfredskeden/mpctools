@@ -22,7 +22,7 @@ type DisplayState = {
 
 type TransformCanvasProps = {
   image: HTMLImageElement | null;
-  selectedOverlay: string | null;
+  selectedOverlays: string[];
   scale: number;
   position: { x: number; y: number };
   rotation: number;
@@ -34,7 +34,7 @@ type TransformCanvasProps = {
 
 export const TransformCanvas = ({
   image,
-  selectedOverlay,
+  selectedOverlays,
   scale: imageScale,
   position,
   rotation,
@@ -57,42 +57,48 @@ export const TransformCanvas = ({
   const isDragging = useRef(false);
   const lastPointer = useRef({ x: 0, y: 0 });
 
-  const overlayOption = useMemo(
-    () => OVERLAY_OPTIONS.find((o) => o.id === selectedOverlay) ?? null,
-    [selectedOverlay],
+  const overlayOptions = useMemo(
+    () => OVERLAY_OPTIONS.filter((o) => selectedOverlays.includes(o.id)),
+    [selectedOverlays],
   );
 
-  // Synchronously read from cache
-  const cachedImage = overlayOption
-    ? (overlayImageCache.get(overlayOption.filename) ?? null)
-    : null;
-
-  // Load overlay image asynchronously when not cached
+  // Load overlay images asynchronously when not cached
   useEffect(() => {
-    if (!overlayOption) return;
-
-    const cacheKey = overlayOption.filename;
-    if (overlayImageCache.has(cacheKey)) return;
-
     let cancelled = false;
-    const img = new window.Image();
-    /* v8 ignore start */
-    img.onload = () => {
-      if (!cancelled) {
-        overlayImageCache.set(cacheKey, img);
-        setAsyncLoadedImage(img);
-      }
-    };
-    /* v8 ignore stop */
-    img.src = `/overlays/${overlayOption.filename}`;
+
+    for (const option of overlayOptions) {
+      const cacheKey = option.filename;
+      if (overlayImageCache.has(cacheKey)) continue;
+
+      const img = new window.Image();
+      /* v8 ignore start */
+      img.onload = () => {
+        if (!cancelled) {
+          overlayImageCache.set(cacheKey, img);
+          setAsyncLoadedImage(img);
+        }
+      };
+      /* v8 ignore stop */
+      img.src = `/overlays/${option.filename}`;
+    }
 
     return () => {
       cancelled = true;
     };
-  }, [overlayOption]);
+  }, [overlayOptions]);
 
-  const loadedOverlayImage = cachedImage ?? asyncLoadedImage;
-  const overlayImage = overlayOption ? loadedOverlayImage : null;
+  // Force re-read from cache when asyncLoadedImage changes
+  void asyncLoadedImage;
+
+  const overlayImages = overlayOptions
+    .map((option) => ({
+      option,
+      image: overlayImageCache.get(option.filename) ?? null,
+    }))
+    .filter(
+      (entry): entry is { option: (typeof OVERLAY_OPTIONS)[number]; image: HTMLImageElement } =>
+        entry.image !== null,
+    );
 
   const stageReady = display.width > 0;
 
@@ -289,12 +295,13 @@ export const TransformCanvas = ({
               />
             )}
 
-            {/* Overlay image */}
-            {overlayImage && (
+            {/* Overlay images */}
+            {overlayImages.map(({ option, image: overlayImg }) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img
+                key={option.id}
                 data-testid="transform-canvas-overlay"
-                src={overlayImage.src}
+                src={overlayImg.src}
                 alt=""
                 style={{
                   position: "absolute",
@@ -304,7 +311,7 @@ export const TransformCanvas = ({
                   pointerEvents: "none",
                 }}
               />
-            )}
+            ))}
 
             {/* Interaction surface */}
             <div

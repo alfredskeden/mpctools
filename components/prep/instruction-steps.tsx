@@ -14,7 +14,7 @@ type InstructionStepsProps = {
     element: HTMLImageElement,
     fileName: string,
   ) => void;
-  onSelectOverlay: (overlay: string | null) => void;
+  onToggleOverlay: (overlay: string) => void;
   onUpdateScale: (scale: number) => void;
   onUpdateRotation: (rotation: number) => void;
   onMarkPositioned: () => void;
@@ -53,7 +53,7 @@ export function InstructionSteps({
   stepStatuses,
   state,
   onUploadImage,
-  onSelectOverlay,
+  onToggleOverlay,
   onUpdateScale,
   onUpdateRotation,
   onMarkPositioned,
@@ -190,10 +190,10 @@ export function InstructionSteps({
               </p>
               <ControlsPanel
                 scale={state.scale}
-                selectedOverlay={state.selectedOverlay}
+                selectedOverlays={state.selectedOverlays}
                 rotation={state.rotation}
                 onUpdateScale={onUpdateScale}
-                onSelectOverlay={onSelectOverlay}
+                onToggleOverlay={onToggleOverlay}
                 onUpdateRotation={onUpdateRotation}
               />
               <button

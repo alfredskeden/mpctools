@@ -12,7 +12,7 @@ const defaultState: PrepState = {
   rotation: 0,
   isPositioned: false,
   isDownloaded: false,
-  selectedOverlay: null,
+  selectedOverlays: [],
   canvasDataUrl: null,
 };
 
@@ -20,7 +20,7 @@ const defaultProps = {
   stepStatuses: ["active", "upcoming", "upcoming"] as const,
   state: defaultState,
   onUploadImage: vi.fn(),
-  onSelectOverlay: vi.fn(),
+  onToggleOverlay: vi.fn(),
   onUpdateScale: vi.fn(),
   onUpdateRotation: vi.fn(),
   onMarkPositioned: vi.fn(),

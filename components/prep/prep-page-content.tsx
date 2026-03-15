@@ -15,7 +15,7 @@ export function PrepPageContent() {
     markPositioned,
     markDownloaded,
     setCanvasDataUrl,
-    selectOverlay,
+    toggleOverlay,
     canDownload,
     canContinue,
     stepStatuses,
@@ -42,7 +42,7 @@ export function PrepPageContent() {
       <div className="flex min-h-7/12 flex-1 items-center justify-center bg-surface-ground p-4 md:min-h-0 md:p-6">
         <TransformCanvas
           image={state.imageElement}
-          selectedOverlay={state.selectedOverlay}
+          selectedOverlays={state.selectedOverlays}
           scale={state.scale}
           position={state.position}
           rotation={state.rotation}
@@ -60,7 +60,7 @@ export function PrepPageContent() {
             stepStatuses={stepStatuses}
             state={state}
             onUploadImage={uploadImage}
-            onSelectOverlay={selectOverlay}
+            onToggleOverlay={toggleOverlay}
             onUpdateScale={updateScale}
             onUpdateRotation={updateRotation}
             onMarkPositioned={markPositioned}
