@@ -148,7 +148,7 @@ export const MergerCanvas = forwardRef<MergerCanvasHandle, MergerCanvasProps>(
         className="flex size-full items-center justify-center"
         data-testid="merger-canvas-container"
       >
-        {hasContent ? (
+        {hasContent && (
           <canvas
             ref={canvasRef}
             data-testid="merger-canvas"
@@ -158,15 +158,6 @@ export const MergerCanvas = forwardRef<MergerCanvasHandle, MergerCanvasProps>(
             }}
             className="rounded-lg"
           />
-        ) : (
-          <div
-            className="flex aspect-canvas max-h-canvas max-w-canvas items-center justify-center rounded-lg bg-canvas-bg"
-            data-testid="merger-canvas-placeholder"
-          >
-            <p className="text-sm text-text-secondary">
-              Upload images to preview
-            </p>
-          </div>
         )}
       </div>
     );

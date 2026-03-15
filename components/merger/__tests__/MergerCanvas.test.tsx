@@ -1,9 +1,11 @@
 import { render, screen } from "@testing-library/react";
 import { createRef } from "react";
-import { MergerCanvas, drawMergerScene } from "../MergerCanvas";
-import type { MergerCanvasHandle } from "../MergerCanvas";
-import type { MergerState } from "@/hooks/use-merger-workflow";
-import { initialState } from "@/hooks/use-merger-workflow";
+import {
+  MergerCanvas,
+  drawMergerScene,
+  type MergerCanvasHandle,
+} from "../MergerCanvas";
+import { initialState, type MergerState } from "@/hooks/use-merger-workflow";
 
 vi.mock("@/lib/merger-utils", () => ({
   applyFeatheredMask: vi.fn(),
@@ -17,13 +19,7 @@ const makeImage = (w: number, h: number) => {
   return img;
 };
 
-describe("MergerCanvas", () => {
-  it("shows placeholder when no content", () => {
-    render(<MergerCanvas state={initialState} />);
-    expect(screen.getByTestId("merger-canvas-placeholder")).toBeDefined();
-    expect(screen.getByText("Upload images to preview")).toBeDefined();
-  });
-
+describe(MergerCanvas.name, () => {
   it("shows canvas when canvasW and canvasH are set", () => {
     const state: MergerState = {
       ...initialState,

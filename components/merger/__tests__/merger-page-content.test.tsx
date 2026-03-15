@@ -69,12 +69,7 @@ function uploadFile(testId: string, fileName: string) {
   fireEvent.change(input, { target: { files: [file] } });
 }
 
-describe("MergerPageContent", () => {
-  it("shows placeholder initially", () => {
-    render(<MergerPageContent />);
-    expect(screen.getByTestId("merger-canvas-placeholder")).toBeDefined();
-  });
-
+describe(MergerPageContent.name, () => {
   it("shows all step titles", () => {
     render(<MergerPageContent />);
 
