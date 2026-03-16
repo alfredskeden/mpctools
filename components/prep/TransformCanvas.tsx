@@ -181,9 +181,14 @@ export const TransformCanvas = ({
     const observer = new ResizeObserver(() => updateScale());
     observer.observe(container);
 
+    window.visualViewport?.addEventListener("resize", updateScale);
+
     updateScale();
 
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.visualViewport?.removeEventListener("resize", updateScale);
+    };
   }, []);
 
   // Pointer handlers for drag — only track one pointer to prevent pinch chaos
@@ -265,10 +270,8 @@ export const TransformCanvas = ({
         >
           <div
             style={{
-              width: CANVAS_WIDTH,
-              height: CANVAS_HEIGHT,
-              transform: `scale(${display.scale})`,
-              transformOrigin: "top left",
+              width: display.width,
+              height: display.height,
               position: "relative",
             }}
           >
@@ -293,9 +296,9 @@ export const TransformCanvas = ({
                   position: "absolute",
                   left: 0,
                   top: 0,
-                  width: image.width,
-                  height: image.height,
-                  transform: `translate(${position.x}px, ${position.y}px) scale(${imageScale}) rotate(${rotation}deg)`,
+                  width: image.width * display.scale,
+                  height: image.height * display.scale,
+                  transform: `translate(${position.x * display.scale}px, ${position.y * display.scale}px) scale(${imageScale}) rotate(${rotation}deg)`,
                   transformOrigin: "center",
                   willChange: "transform",
                   pointerEvents: "none",
@@ -314,8 +317,8 @@ export const TransformCanvas = ({
                 style={{
                   position: "absolute",
                   inset: 0,
-                  width: CANVAS_WIDTH,
-                  height: CANVAS_HEIGHT,
+                  width: "100%",
+                  height: "100%",
                   pointerEvents: "none",
                 }}
               />

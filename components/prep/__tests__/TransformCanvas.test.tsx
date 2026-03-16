@@ -86,8 +86,9 @@ describe("TransformCanvas", () => {
     );
 
     const img = screen.getByTestId("transform-canvas-image");
+    const s = 700 / 3520;
     expect(img.style.transform).toBe(
-      "translate(100px, 200px) scale(1.5) rotate(45deg)",
+      `translate(${100 * s}px, ${200 * s}px) scale(1.5) rotate(45deg)`,
     );
   });
 
@@ -482,6 +483,31 @@ describe("TransformCanvas", () => {
 
     // Should not throw
     unmount();
+  });
+
+  it("registers and cleans up visualViewport resize listener", () => {
+    const addSpy = vi.fn();
+    const removeSpy = vi.fn();
+
+    Object.defineProperty(window, "visualViewport", {
+      value: { addEventListener: addSpy, removeEventListener: removeSpy },
+      writable: true,
+      configurable: true,
+    });
+
+    const { unmount } = render(<TransformCanvas {...defaultProps} />);
+
+    expect(addSpy).toHaveBeenCalledWith("resize", expect.any(Function));
+
+    unmount();
+
+    expect(removeSpy).toHaveBeenCalledWith("resize", expect.any(Function));
+
+    Object.defineProperty(window, "visualViewport", {
+      value: undefined,
+      writable: true,
+      configurable: true,
+    });
   });
 
   it("scales drag movement by inverse display scale", () => {
