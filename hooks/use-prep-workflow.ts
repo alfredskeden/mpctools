@@ -54,7 +54,8 @@ type PrepAction =
   | { type: "MARK_DOWNLOADED" }
   | { type: "TOGGLE_OVERLAY"; payload: string }
   | { type: "SET_CANVAS_DATA_URL"; payload: string }
-  | { type: "RESET" };
+  | { type: "RESET" }
+  | { type: "REPOSITION" };
 
 const initialState: PrepState = {
   currentStep: 1,
@@ -129,6 +130,13 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
       };
     case "RESET":
       return initialState;
+    case "REPOSITION":
+      return {
+        ...state,
+        currentStep: 2 as PrepStep,
+        isPositioned: false,
+        isDownloaded: false,
+      };
     default:
       return state;
   }
@@ -187,6 +195,10 @@ export function usePrepWorkflow() {
     dispatch({ type: "RESET" });
   }, []);
 
+  const resetWorkflow = useCallback(() => {
+    dispatch({ type: "REPOSITION" });
+  }, []);
+
   const canDownload = state.isPositioned;
   const canContinue = state.isDownloaded;
   const stepStatuses = getStepStatuses(state.currentStep);
@@ -202,6 +214,7 @@ export function usePrepWorkflow() {
     toggleOverlay,
     setCanvasDataUrl,
     reset,
+    resetWorkflow,
     canDownload,
     canContinue,
     stepStatuses,

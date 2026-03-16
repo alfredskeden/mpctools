@@ -186,8 +186,8 @@ describe("PrepPageContent", () => {
       fireEvent.click(screen.getAllByText("I'm Done")[0]);
     });
 
-    // Download button should be enabled
-    const downloadBtn = screen.getByRole("button", { name: /download png/i });
+    // Download button should be enabled (rendered in both mobile and desktop, pick first)
+    const downloadBtn = screen.getAllByRole("button", { name: /download png/i })[0];
     expect(downloadBtn).not.toBeDisabled();
 
     // Mock link.click and capture download name

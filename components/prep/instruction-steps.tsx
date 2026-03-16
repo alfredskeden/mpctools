@@ -138,9 +138,18 @@ export const InstructionSteps = ({
             </>
           )}
           {step2Status === "completed" && (
-            <p className="text-xs leading-normal text-text-secondary">
-              Positioned and framed
-            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs leading-normal text-text-secondary">
+                Positioned and framed
+              </p>
+              <button
+                type="button"
+                onClick={onReposition}
+                className="flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-surface-subtle px-2.5 text-xs text-text-secondary"
+              >
+                Reposition again
+              </button>
+            </div>
           )}
         </>
       ),

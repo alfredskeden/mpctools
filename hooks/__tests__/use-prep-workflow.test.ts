@@ -174,6 +174,36 @@ describe("prepReducer", () => {
     expect(result.canvasDataUrl).toBe("data:image/png;base64,xyz");
   });
 
+  it("handles REPOSITION by going back to step 2 while keeping the image", () => {
+    const state: PrepState = {
+      currentStep: 3,
+      uploadedImage: "data:test",
+      imageElement: makeImage(),
+      fileName: "test.png",
+      position: { x: 50, y: 50 },
+      scale: 2,
+      rotation: 45,
+      isPositioned: true,
+      isDownloaded: true,
+      canvasDataUrl: "data:image/png;base64,xyz",
+      selectedOverlays: ["normal"],
+    };
+
+    const result = prepReducer(state, { type: "REPOSITION" });
+
+    expect(result.currentStep).toBe(2);
+    expect(result.isPositioned).toBe(false);
+    expect(result.isDownloaded).toBe(false);
+    expect(result.canvasDataUrl).toBe("data:image/png;base64,xyz");
+    expect(result.uploadedImage).toBe("data:test");
+    expect(result.imageElement).toBe(state.imageElement);
+    expect(result.fileName).toBe("test.png");
+    expect(result.position).toEqual({ x: 50, y: 50 });
+    expect(result.scale).toBe(2);
+    expect(result.rotation).toBe(45);
+    expect(result.selectedOverlays).toEqual(["normal"]);
+  });
+
   it("handles RESET", () => {
     const state: PrepState = {
       currentStep: 3,
@@ -383,5 +413,24 @@ describe("usePrepWorkflow", () => {
 
     expect(result.current.state.currentStep).toBe(1);
     expect(result.current.state.uploadedImage).toBeNull();
+  });
+
+  it("resetWorkflow goes back to step 2 keeping the image", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.uploadImage("data:test", makeImage(), "test.png");
+    });
+    act(() => {
+      result.current.markPositioned();
+    });
+    act(() => {
+      result.current.resetWorkflow();
+    });
+
+    expect(result.current.state.currentStep).toBe(2);
+    expect(result.current.state.isPositioned).toBe(false);
+    expect(result.current.state.isDownloaded).toBe(false);
+    expect(result.current.state.uploadedImage).toBe("data:test");
   });
 });

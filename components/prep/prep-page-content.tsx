@@ -16,6 +16,7 @@ export function PrepPageContent() {
     markDownloaded,
     setCanvasDataUrl,
     toggleOverlay,
+    resetWorkflow,
     canDownload,
     canContinue,
     stepStatuses,
