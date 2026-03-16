@@ -2,6 +2,7 @@
 
 import { useCallback } from "react";
 import { usePrepWorkflow } from "@/hooks/use-prep-workflow";
+import { exportFullResolution } from "@/lib/prep-renderer";
 import { InstructionSteps } from "./instruction-steps";
 import { PrepActions } from "./prep-actions";
 import { TransformCanvas } from "./TransformCanvas";
@@ -24,7 +25,17 @@ export function PrepPageContent() {
 
   const handleDownload = useCallback(() => {
     /* v8 ignore start */
-    if (!state.canvasDataUrl) return;
+    if (!state.imageElement) return;
+    /* v8 ignore stop */
+
+    const fullResDataUrl = exportFullResolution(
+      state.imageElement,
+      state.position,
+      state.scale,
+      state.rotation,
+    );
+    /* v8 ignore start */
+    if (!fullResDataUrl) return;
     /* v8 ignore stop */
 
     const link = document.createElement("a");
@@ -32,10 +43,10 @@ export function PrepPageContent() {
     const baseName = state.fileName?.replace(/\.[^.]+$/, "") ?? "card";
     /* v8 ignore stop */
     link.download = `outpaint_${baseName}.png`;
-    link.href = state.canvasDataUrl;
+    link.href = fullResDataUrl;
     link.click();
     markDownloaded();
-  }, [state.canvasDataUrl, state.fileName, markDownloaded]);
+  }, [state.imageElement, state.position, state.scale, state.rotation, state.fileName, markDownloaded]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col md:flex-row">

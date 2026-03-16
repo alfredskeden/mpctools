@@ -1,4 +1,4 @@
-import { renderPrepScene } from "./prep-renderer";
+import { renderPrepScene, exportFullResolution } from "./prep-renderer";
 import { BG_COLOR, CANVAS_WIDTH, CANVAS_HEIGHT } from "./canvas-utils";
 
 function createMockCtx() {
@@ -177,5 +177,33 @@ describe("renderPrepScene", () => {
     });
 
     expect(ctx.rotate).toHaveBeenCalledWith(0);
+  });
+});
+
+describe("exportFullResolution", () => {
+  function createRealImage(width = 400, height = 600) {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas as unknown as CanvasImageSource & { width: number; height: number };
+  }
+
+  it("creates a full-resolution canvas and returns a data URL", () => {
+    const image = createRealImage(400, 600);
+    const result = exportFullResolution(image, { x: 10, y: 20 }, 1.5, 45);
+
+    expect(result).toMatch(/^data:image\/png/);
+  });
+
+  it("returns empty string when getContext returns null", () => {
+    const image = createRealImage(400, 600);
+    const fakeCanvas = { width: 0, height: 0, getContext: () => null, toDataURL: () => "" };
+    vi.spyOn(document, "createElement").mockReturnValueOnce(fakeCanvas as unknown as HTMLCanvasElement);
+
+    const result = exportFullResolution(image, { x: 0, y: 0 }, 1, 0);
+
+    expect(result).toBe("");
+
+    vi.restoreAllMocks();
   });
 });

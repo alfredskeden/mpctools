@@ -42,3 +42,31 @@ export function renderPrepScene(
   );
   ctx.restore();
 }
+
+/**
+ * Render at full resolution (3520×4800) and return as a data URL.
+ */
+export function exportFullResolution(
+  image: CanvasImageSource & { width: number; height: number },
+  position: { x: number; y: number },
+  imageScale: number,
+  rotation: number,
+): string {
+  const canvas = document.createElement("canvas");
+  canvas.width = CANVAS_WIDTH;
+  canvas.height = CANVAS_HEIGHT;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return "";
+
+  renderPrepScene(ctx, {
+    image,
+    position,
+    imageScale,
+    renderScale: 1,
+    rotation,
+    canvasWidth: CANVAS_WIDTH,
+    canvasHeight: CANVAS_HEIGHT,
+  });
+
+  return canvas.toDataURL("image/png");
+}

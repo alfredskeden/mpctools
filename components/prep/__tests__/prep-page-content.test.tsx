@@ -193,21 +193,26 @@ describe("PrepPageContent", () => {
     // Mock link.click and capture download name
     const clickSpy = vi.fn();
     let downloadName = "";
+    const originalCreateElement = document.createElement.bind(document);
     const createElementSpy = vi
       .spyOn(document, "createElement")
-      .mockReturnValueOnce({
-        set download(val: string) {
-          downloadName = val;
-        },
-        set href(val: string) {
-          /* noop */
-        },
-        click: clickSpy,
-      } as unknown as HTMLAnchorElement);
+      .mockImplementation((tag: string, options?: ElementCreationOptions) => {
+        if (tag === "a") {
+          return {
+            set download(val: string) {
+              downloadName = val;
+            },
+            set href(_val: string) {
+              /* noop */
+            },
+            click: clickSpy,
+          } as unknown as HTMLAnchorElement;
+        }
+        return originalCreateElement(tag, options);
+      });
 
     fireEvent.click(downloadBtn);
 
-    expect(createElementSpy).toHaveBeenCalledWith("a");
     expect(clickSpy).toHaveBeenCalledOnce();
     expect(downloadName).toBe("outpaint_card.png");
 
