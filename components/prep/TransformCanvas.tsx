@@ -124,11 +124,9 @@ export const TransformCanvas = ({
 
       renderPrepScene(offCtx, {
         image,
-        position: {
-          x: position.x * PREVIEW_SCALE,
-          y: position.y * PREVIEW_SCALE,
-        },
-        scale: imageScale * PREVIEW_SCALE,
+        position,
+        imageScale,
+        renderScale: PREVIEW_SCALE,
         rotation,
         canvasWidth: previewW,
         canvasHeight: previewH,

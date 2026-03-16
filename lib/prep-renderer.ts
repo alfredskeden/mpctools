@@ -3,7 +3,8 @@ import { CANVAS_WIDTH, CANVAS_HEIGHT, BG_COLOR } from "./canvas-utils";
 export type PrepSceneParams = {
   image: CanvasImageSource & { width: number; height: number };
   position: { x: number; y: number };
-  scale: number;
+  imageScale: number;
+  renderScale: number;
   rotation: number;
   canvasWidth?: number;
   canvasHeight?: number;
@@ -26,12 +27,14 @@ export function renderPrepScene(
 
   // Draw image with transforms
   ctx.save();
+  const rs = params.renderScale;
+  const is = params.imageScale;
   ctx.translate(
-    params.position.x + (params.image.width * params.scale) / 2,
-    params.position.y + (params.image.height * params.scale) / 2,
+    params.position.x * rs + (params.image.width * rs) / 2,
+    params.position.y * rs + (params.image.height * rs) / 2,
   );
   ctx.rotate((params.rotation * Math.PI) / 180);
-  ctx.scale(params.scale, params.scale);
+  ctx.scale(is * rs, is * rs);
   ctx.drawImage(
     params.image,
     -params.image.width / 2,
