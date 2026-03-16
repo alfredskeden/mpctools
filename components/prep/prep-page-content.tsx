@@ -64,10 +64,19 @@ export function PrepPageContent() {
             onUpdateScale={updateScale}
             onUpdateRotation={updateRotation}
             onMarkPositioned={markPositioned}
+            onReposition={resetWorkflow}
+            prepAction={
+              <PrepActions
+                canDownload={canDownload}
+                canContinue={canContinue}
+                isDownloaded={state.isDownloaded}
+                onDownload={handleDownload}
+              />
+            }
           />
         </div>
 
-        <div className="mt-6">
+        <div className="hidden md:block mt-6">
           <PrepActions
             canDownload={canDownload}
             canContinue={canContinue}

@@ -1,10 +1,16 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Check, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import type { StepStatus, PrepState } from "@/hooks/use-prep-workflow";
+import { StepCircle } from "@/components/ui/StepCircle";
+import {
+  MobileInstructionCarousel,
+  type CarouselStep,
+} from "@/components/ui/mobile-instruction-carousel";
 import { ControlsPanel } from "./controls-panel";
+import { Button } from "../ui/Button";
 
 type InstructionStepsProps = {
   stepStatuses: readonly StepStatus[];
@@ -18,38 +24,11 @@ type InstructionStepsProps = {
   onUpdateScale: (scale: number) => void;
   onUpdateRotation: (rotation: number) => void;
   onMarkPositioned: () => void;
+  onReposition: () => void;
+  prepAction: React.ReactNode;
 };
 
-function StepCircle({
-  status,
-  number,
-}: {
-  status: StepStatus;
-  number: number;
-}) {
-  if (status === "completed") {
-    return (
-      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-status-success-dark">
-        <Check className="size-3 text-white" strokeWidth={3} />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn(
-        "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium",
-        status === "active" && "bg-accent-blue text-white",
-        status === "upcoming" &&
-          "border border-surface-muted bg-transparent text-text-tertiary",
-      )}
-    >
-      {number}
-    </div>
-  );
-}
-
-export function InstructionSteps({
+export const InstructionSteps = ({
   stepStatuses,
   state,
   onUploadImage,
@@ -57,7 +36,9 @@ export function InstructionSteps({
   onUpdateScale,
   onUpdateRotation,
   onMarkPositioned,
-}: InstructionStepsProps) {
+  onReposition,
+  prepAction,
+}: InstructionStepsProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = useCallback(
@@ -86,6 +67,106 @@ export function InstructionSteps({
   const step2Status = stepStatuses[1];
   const step3Status = stepStatuses[2];
 
+  const mobileSteps: CarouselStep[] = [
+    {
+      number: 1,
+      title: "Upload your card art",
+      status: step1Status,
+      content: (
+        <>
+          {step1Status === "active" && (
+            <>
+              <p className="text-xs leading-normal text-text-secondary">
+                Upload your card scan from Scryfall or browse your files.
+              </p>
+              <button
+                type="button"
+                onClick={handleUploadClick}
+                className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-accent-blue text-sm font-medium text-white"
+              >
+                <Upload className="size-3.5" />
+                Upload Now
+              </button>
+            </>
+          )}
+          {step1Status === "completed" && (
+            <div className="flex items-center justify-between">
+              <p className="text-xs leading-normal text-text-secondary">
+                {state.fileName} uploaded
+              </p>
+              <button
+                type="button"
+                onClick={handleUploadClick}
+                className="flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-surface-subtle px-2.5 text-xs text-text-secondary"
+              >
+                <Upload className="size-2.5" />
+                Change
+              </button>
+            </div>
+          )}
+        </>
+      ),
+    },
+    {
+      number: 2,
+      title: "Position & frame",
+      status: step2Status,
+      content: (
+        <>
+          {step2Status === "active" && (
+            <>
+              <p className="text-xs leading-normal text-text-secondary">
+                Resize, position your art and select the overlay frame.
+              </p>
+              <div className="mt-3">
+                <ControlsPanel
+                  scale={state.scale}
+                  selectedOverlays={state.selectedOverlays}
+                  rotation={state.rotation}
+                  onUpdateScale={onUpdateScale}
+                  onToggleOverlay={onToggleOverlay}
+                  onUpdateRotation={onUpdateRotation}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={onMarkPositioned}
+                className="mt-3 flex h-9 w-full items-center justify-center rounded-lg bg-status-success-dark text-sm font-medium text-white"
+              >
+                I&apos;m Done
+              </button>
+            </>
+          )}
+          {step2Status === "completed" && (
+            <p className="text-xs leading-normal text-text-secondary">
+              Positioned and framed
+            </p>
+          )}
+        </>
+      ),
+    },
+    {
+      number: 3,
+      title: "Download prepared image",
+      status: step3Status,
+      content: (
+        <>
+          {step3Status === "upcoming" && (
+            <p className="text-xs leading-normal text-text-tertiary">
+              Export your positioned card as a PNG for Gemini outpainting.
+            </p>
+          )}
+          {step3Status === "active" && (
+            <p className="text-xs leading-normal text-text-secondary">
+              Your PNG is ready. Download it or continue to outpainting.
+            </p>
+          )}
+          {prepAction}
+        </>
+      ),
+    },
+  ];
+
   return (
     <aside aria-label="Instructions">
       <input
@@ -97,7 +178,14 @@ export function InstructionSteps({
         data-testid="file-input"
       />
 
-      <div className="flex flex-col gap-7">
+      {/* Mobile carousel */}
+      <MobileInstructionCarousel
+        steps={mobileSteps}
+        currentStepIndex={state.currentStep - 1}
+      />
+
+      {/* Desktop stacked layout */}
+      <div className="hidden md:flex md:flex-col md:gap-7">
         {/* Step 1 — Upload your card art */}
         <div
           className={cn(
@@ -117,16 +205,6 @@ export function InstructionSteps({
             >
               Upload your card art
             </p>
-            {step1Status === "completed" && (
-              <button
-                type="button"
-                onClick={handleUploadClick}
-                className="ml-auto flex h-7 shrink-0 items-center gap-1.5 rounded-md border border-surface-subtle px-2.5 text-xs text-text-secondary md:hidden"
-              >
-                <Upload className="size-2.5" />
-                Change
-              </button>
-            )}
           </div>
 
           {step1Status === "active" && (
@@ -153,7 +231,7 @@ export function InstructionSteps({
               <button
                 type="button"
                 onClick={handleUploadClick}
-                className="ml-8.5 hidden h-8 items-center justify-center gap-1.5 rounded-md border border-surface-subtle text-sm text-text-secondary md:flex"
+                className="ml-8.5 flex h-8 items-center justify-center gap-1.5 rounded-md border border-surface-subtle text-sm text-text-secondary"
               >
                 <Upload className="size-3" />
                 Change Image
@@ -207,9 +285,18 @@ export function InstructionSteps({
           )}
 
           {step2Status === "completed" && (
-            <p className="pl-8.5 text-xs leading-normal text-text-secondary">
-              Positioned and framed
-            </p>
+            <>
+              <p className="pl-8.5 text-xs leading-normal text-text-secondary">
+                Positioned and framed
+              </p>
+              <button
+                type="button"
+                onClick={onReposition}
+                className="ml-8.5 flex h-8 items-center justify-center gap-1.5 rounded-md border border-surface-subtle text-sm text-text-secondary"
+              >
+                Reposition again
+              </button>
+            </>
           )}
         </div>
 
@@ -249,4 +336,4 @@ export function InstructionSteps({
       </div>
     </aside>
   );
-}
+};

@@ -2,8 +2,13 @@
 
 import { useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
-import { Check, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import type { StepStatus, MergerState } from "@/hooks/use-merger-workflow";
+import { StepCircle } from "@/components/ui/StepCircle";
+import {
+  MobileInstructionCarousel,
+  type CarouselStep,
+} from "@/components/ui/mobile-instruction-carousel";
 
 type MergerStepsProps = {
   stepStatuses: readonly StepStatus[];
@@ -24,35 +29,6 @@ type MergerStepsProps = {
     fileName: string,
     fileSize: number,
   ) => void;
-};
-
-const StepCircle = ({
-  status,
-  number,
-}: {
-  status: StepStatus;
-  number: number;
-}) => {
-  if (status === "completed") {
-    return (
-      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-status-success-dark">
-        <Check className="size-3 text-white" strokeWidth={3} />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={cn(
-        "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium",
-        status === "active" && "bg-accent-blue text-white",
-        status === "upcoming" &&
-          "border border-surface-muted bg-transparent text-text-tertiary",
-      )}
-    >
-      {number}
-    </div>
-  );
 };
 
 const formatFileSize = (bytes: number): string => {
@@ -164,6 +140,97 @@ export const MergerSteps = ({
   const step2Status = stepStatuses[1];
   const step3Status = stepStatuses[2];
 
+  const mobileSteps: CarouselStep[] = [
+    {
+      number: 1,
+      title: "Upload original card",
+      status: step1Status,
+      content: (
+        <>
+          {step1Status === "active" && (
+            <>
+              <p className="text-xs leading-normal text-text-secondary">
+                The high-res card scan from Scryfall.
+              </p>
+              <button
+                type="button"
+                onClick={ogTriggerUpload}
+                className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-accent-blue text-sm font-medium text-accent-blue"
+              >
+                <Upload className="size-3.5" />
+                Choose file
+              </button>
+            </>
+          )}
+          {step1Status === "completed" && (
+            <p className="text-xs leading-normal text-text-secondary">
+              {state.ogFileName}{" "}
+              <span className="text-text-tertiary">
+                ({formatFileSize(state.ogFileSize ?? 0)})
+              </span>
+            </p>
+          )}
+        </>
+      ),
+    },
+    {
+      number: 2,
+      title: "Upload guide image",
+      status: step2Status,
+      content: (
+        <>
+          {step2Status === "active" && (
+            <>
+              <p className="text-xs leading-normal text-text-secondary">
+                The gray-bordered image from Step 1.
+              </p>
+              <button
+                type="button"
+                onClick={guideTriggerUpload}
+                className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-accent-blue text-sm font-medium text-accent-blue"
+              >
+                <Upload className="size-3.5" />
+                Choose file
+              </button>
+            </>
+          )}
+          {step2Status === "completed" && (
+            <p className="text-xs leading-normal text-text-secondary">
+              {state.guideFileName}{" "}
+              <span className="text-text-tertiary">
+                ({formatFileSize(state.guideFileSize ?? 0)})
+              </span>
+            </p>
+          )}
+        </>
+      ),
+    },
+    {
+      number: 3,
+      title: "Upload outpaint result",
+      status: step3Status,
+      content: (
+        <>
+          {step3Status === "active" && (
+            <>
+              <p className="text-xs leading-normal text-text-secondary">
+                The outpainted image from Gemini.
+              </p>
+              <button
+                type="button"
+                onClick={outpaintTriggerUpload}
+                className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-accent-blue text-sm font-medium text-accent-blue"
+              >
+                <Upload className="size-3.5" />
+                Choose file
+              </button>
+            </>
+          )}
+        </>
+      ),
+    },
+  ];
+
   return (
     <aside aria-label="Merger Steps">
       <input
@@ -191,7 +258,15 @@ export const MergerSteps = ({
         data-testid="outpaint-file-input"
       />
 
-      <div className="flex flex-col gap-7">
+      {/* Mobile carousel */}
+      <MobileInstructionCarousel
+        steps={mobileSteps}
+        currentStepIndex={state.currentStep - 1}
+        ariaLabel="Merger Steps"
+      />
+
+      {/* Desktop stacked layout */}
+      <div className="hidden md:flex md:flex-col md:gap-7">
         {/* Step 1 — Upload original card */}
         <div
           className={cn(

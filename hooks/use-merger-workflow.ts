@@ -5,7 +5,7 @@ import { analyzeGuide, type GuideAnalysis } from "@/lib/merger-utils";
 
 export type MergerStep = 1 | 2 | 3;
 
-export type StepStatus = "active" | "completed" | "upcoming";
+export type { StepStatus } from "@/lib/step-types";
 
 export type MergerState = {
   currentStep: MergerStep;

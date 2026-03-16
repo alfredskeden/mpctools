@@ -1,19 +1,32 @@
 "use client";
 
 import { useReducer, useCallback } from "react";
-import { calculateInitialScale, CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
+import {
+  calculateInitialScale,
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
+} from "@/lib/canvas-utils";
+import { StepStatus } from "./use-merger-workflow";
 
 export const OVERLAY_OPTIONS = [
   { id: "normal", label: "Normal", filename: "normal.png" },
   { id: "medium", label: "Medium", filename: "medium.png" },
   { id: "short", label: "Short", filename: "short.png" },
-  { id: "tall_normal", label: "Tall Normal", filename: "tall_normal_mtg_box_size.png" },
-  { id: "black_bottom", label: "Black Bottom", filename: "black_bottom_border.png" },
+  {
+    id: "tall_normal",
+    label: "Tall Normal",
+    filename: "tall_normal_mtg_box_size.png",
+  },
+  {
+    id: "black_bottom",
+    label: "Black Bottom",
+    filename: "black_bottom_border.png",
+  },
 ] as const;
 
 export type PrepStep = 1 | 2 | 3;
 
-export type StepStatus = "active" | "completed" | "upcoming";
+export type { StepStatus } from "@/lib/step-types";
 
 export type PrepState = {
   currentStep: PrepStep;
@@ -30,7 +43,10 @@ export type PrepState = {
 };
 
 type PrepAction =
-  | { type: "UPLOAD_IMAGE"; payload: { dataUrl: string; element: HTMLImageElement; fileName: string } }
+  | {
+      type: "UPLOAD_IMAGE";
+      payload: { dataUrl: string; element: HTMLImageElement; fileName: string };
+    }
   | { type: "UPDATE_POSITION"; payload: { x: number; y: number } }
   | { type: "UPDATE_SCALE"; payload: number }
   | { type: "UPDATE_ROTATION"; payload: number }
@@ -64,10 +80,10 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         imageElement: action.payload.element,
         fileName: action.payload.fileName,
         position: { x: 0, y: 0 },
-        scale: calculateInitialScale(
-          action.payload.element,
-          { width: CANVAS_WIDTH, height: CANVAS_HEIGHT },
-        ),
+        scale: calculateInitialScale(action.payload.element, {
+          width: CANVAS_WIDTH,
+          height: CANVAS_HEIGHT,
+        }),
         rotation: 0,
         isPositioned: false,
         isDownloaded: false,
@@ -131,7 +147,10 @@ export function usePrepWorkflow() {
 
   const uploadImage = useCallback(
     (dataUrl: string, element: HTMLImageElement, fileName: string) => {
-      dispatch({ type: "UPLOAD_IMAGE", payload: { dataUrl, element, fileName } });
+      dispatch({
+        type: "UPLOAD_IMAGE",
+        payload: { dataUrl, element, fileName },
+      });
     },
     [],
   );

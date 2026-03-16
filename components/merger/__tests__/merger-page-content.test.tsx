@@ -73,9 +73,9 @@ describe(MergerPageContent.name, () => {
   it("shows all step titles", () => {
     render(<MergerPageContent />);
 
-    expect(screen.getByText("Upload original card")).toBeDefined();
-    expect(screen.getByText("Upload guide image")).toBeDefined();
-    expect(screen.getByText("Upload outpaint result")).toBeDefined();
+    expect(screen.getAllByText("Upload original card").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Upload guide image").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Upload outpaint result").length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows download button", () => {

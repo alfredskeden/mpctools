@@ -38,20 +38,20 @@ describe("InstructionSteps", () => {
   it("renders step titles", () => {
     render(<InstructionSteps {...defaultProps} />);
 
-    expect(screen.getByText("Upload your card art")).toBeDefined();
-    expect(screen.getByText("Position & frame")).toBeDefined();
-    expect(screen.getByText("Download prepared image")).toBeDefined();
+    expect(screen.getAllByText("Upload your card art").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Position & frame").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Download prepared image").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders upload button when step 1 is active", () => {
     render(<InstructionSteps {...defaultProps} />);
 
-    expect(screen.getByText("Upload Now")).toBeDefined();
+    expect(screen.getAllByText("Upload Now").length).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByText(
+      screen.getAllByText(
         "Upload your card scan from Scryfall or browse your files.",
-      ),
-    ).toBeDefined();
+      ).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("renders file input for upload", () => {
@@ -74,24 +74,29 @@ describe("InstructionSteps", () => {
 
     render(<InstructionSteps {...props} />);
 
-    expect(screen.getByText("lightning_bolt.png uploaded")).toBeDefined();
+    expect(screen.getAllByText("lightning_bolt.png uploaded").length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders numbered circles for non-completed steps", () => {
     const { container } = render(<InstructionSteps {...defaultProps} />);
 
+    // Desktop layout has 3 circles, mobile has 1 visible at a time
     const circles = container.querySelectorAll(".rounded-full");
-    expect(circles[0].textContent).toBe("1");
-    expect(circles[1].textContent).toBe("2");
-    expect(circles[2].textContent).toBe("3");
+    const circleTexts = Array.from(circles).map((c) => c.textContent);
+    expect(circleTexts).toContain("1");
+    expect(circleTexts).toContain("2");
+    expect(circleTexts).toContain("3");
   });
 
   it("applies active styling to the active step circle", () => {
     const { container } = render(<InstructionSteps {...defaultProps} />);
 
     const circles = container.querySelectorAll(".rounded-full");
-    expect(circles[0].className).toContain("bg-accent-blue");
-    expect(circles[0].className).toContain("text-white");
+    const activeCircles = Array.from(circles).filter((c) =>
+      c.className.includes("bg-accent-blue"),
+    );
+    expect(activeCircles.length).toBeGreaterThanOrEqual(1);
+    expect(activeCircles[0].className).toContain("text-white");
   });
 
   it("applies completed styling with green checkmark", () => {
@@ -109,15 +114,21 @@ describe("InstructionSteps", () => {
     const { container } = render(<InstructionSteps {...props} />);
 
     const circles = container.querySelectorAll(".rounded-full");
-    expect(circles[0].className).toContain("bg-status-success-dark");
+    const completedCircles = Array.from(circles).filter((c) =>
+      c.className.includes("bg-status-success-dark"),
+    );
+    expect(completedCircles.length).toBeGreaterThanOrEqual(1);
   });
 
   it("applies upcoming styling to upcoming step circles", () => {
     const { container } = render(<InstructionSteps {...defaultProps} />);
 
     const circles = container.querySelectorAll(".rounded-full");
-    expect(circles[2].className).toContain("border-surface-muted");
-    expect(circles[2].className).toContain("text-text-tertiary");
+    const upcomingCircles = Array.from(circles).filter((c) =>
+      c.className.includes("border-surface-muted"),
+    );
+    expect(upcomingCircles.length).toBeGreaterThanOrEqual(1);
+    expect(upcomingCircles[0].className).toContain("text-text-tertiary");
   });
 
   it("shows controls panel when step 2 is active", () => {
@@ -134,15 +145,15 @@ describe("InstructionSteps", () => {
 
     render(<InstructionSteps {...props} />);
 
-    expect(screen.getByRole("group", { name: "Controls" })).toBeDefined();
-    expect(screen.getByText("Scale")).toBeDefined();
+    expect(screen.getAllByRole("group", { name: "Controls" }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Scale").length).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByRole("button", { name: "Decrease scale" }),
-    ).toBeDefined();
+      screen.getAllByRole("button", { name: "Decrease scale" }).length,
+    ).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByRole("button", { name: "Increase scale" }),
-    ).toBeDefined();
-    expect(screen.getByText("Frame Overlay")).toBeDefined();
+      screen.getAllByRole("button", { name: "Increase scale" }).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Frame Overlay").length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows positioned summary when step 2 is completed", () => {
@@ -160,14 +171,15 @@ describe("InstructionSteps", () => {
 
     render(<InstructionSteps {...props} />);
 
-    expect(screen.getByText("Positioned and framed")).toBeDefined();
+    expect(screen.getAllByText("Positioned and framed").length).toBeGreaterThanOrEqual(1);
   });
 
   it("applies opacity to upcoming steps", () => {
     const { container } = render(<InstructionSteps {...defaultProps} />);
 
     const steps = container.querySelectorAll(".opacity-35");
-    expect(steps.length).toBe(2);
+    // Desktop has 2 upcoming steps with opacity, mobile content area may also have opacity
+    expect(steps.length).toBeGreaterThanOrEqual(2);
   });
 
   it("shows step 3 description for active state", () => {
@@ -186,10 +198,10 @@ describe("InstructionSteps", () => {
     render(<InstructionSteps {...props} />);
 
     expect(
-      screen.getByText(
+      screen.getAllByText(
         "Your PNG is ready. Download it or continue to outpainting.",
-      ),
-    ).toBeDefined();
+      ).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("shows I'm Done button when step 2 is active", () => {
@@ -206,7 +218,7 @@ describe("InstructionSteps", () => {
 
     render(<InstructionSteps {...props} />);
 
-    expect(screen.getByText("I'm Done")).toBeDefined();
+    expect(screen.getAllByText("I'm Done").length).toBeGreaterThanOrEqual(1);
   });
 
   it("calls onMarkPositioned when I'm Done is clicked", () => {
@@ -225,7 +237,7 @@ describe("InstructionSteps", () => {
 
     render(<InstructionSteps {...props} />);
 
-    fireEvent.click(screen.getByText("I'm Done"));
+    fireEvent.click(screen.getAllByText("I'm Done")[0]);
     expect(onMarkPositioned).toHaveBeenCalledOnce();
   });
 
@@ -311,7 +323,7 @@ describe("InstructionSteps", () => {
     const input = screen.getByTestId("file-input");
     const clickSpy = vi.spyOn(input, "click");
 
-    fireEvent.click(screen.getByText("Upload Now"));
+    fireEvent.click(screen.getAllByText("Upload Now")[0]);
     expect(clickSpy).toHaveBeenCalledOnce();
   });
 
@@ -323,18 +335,18 @@ describe("InstructionSteps", () => {
 
     const { container } = render(<InstructionSteps {...props} />);
 
-    // All three steps should be upcoming with opacity
+    // All three desktop steps should be upcoming with opacity, plus mobile content
     const steps = container.querySelectorAll(".opacity-35");
-    expect(steps.length).toBe(3);
+    expect(steps.length).toBeGreaterThanOrEqual(3);
   });
 
   it("shows step 3 description for upcoming state", () => {
     render(<InstructionSteps {...defaultProps} />);
 
     expect(
-      screen.getByText(
+      screen.getAllByText(
         "Export your positioned card as a PNG for Gemini outpainting.",
-      ),
-    ).toBeDefined();
+      ).length,
+    ).toBeGreaterThanOrEqual(1);
   });
 });

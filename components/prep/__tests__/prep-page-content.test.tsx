@@ -80,15 +80,15 @@ describe("PrepPageContent", () => {
   it("shows upload button initially", () => {
     render(<PrepPageContent />);
 
-    expect(screen.getByText("Upload Now")).toBeDefined();
+    expect(screen.getAllByText("Upload Now").length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows instruction steps", () => {
     render(<PrepPageContent />);
 
-    expect(screen.getByText("Upload your card art")).toBeDefined();
-    expect(screen.getByText("Position & frame")).toBeDefined();
-    expect(screen.getByText("Download prepared image")).toBeDefined();
+    expect(screen.getAllByText("Upload your card art").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Position & frame").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Download prepared image").length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows action buttons", () => {
@@ -130,15 +130,15 @@ describe("PrepPageContent", () => {
       uploadFile();
     });
 
-    expect(screen.getByRole("group", { name: "Controls" })).toBeDefined();
-    expect(screen.getByText("Scale")).toBeDefined();
+    expect(screen.getAllByRole("group", { name: "Controls" }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Scale").length).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByRole("button", { name: "Decrease scale" }),
-    ).toBeDefined();
+      screen.getAllByRole("button", { name: "Decrease scale" }).length,
+    ).toBeGreaterThanOrEqual(1);
     expect(
-      screen.getByRole("button", { name: "Increase scale" }),
-    ).toBeDefined();
-    expect(screen.getByText("Frame Overlay")).toBeDefined();
+      screen.getAllByRole("button", { name: "Increase scale" }).length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Frame Overlay").length).toBeGreaterThanOrEqual(1);
 
     mocks.restore();
   });
@@ -151,7 +151,7 @@ describe("PrepPageContent", () => {
       uploadFile();
     });
 
-    expect(screen.getByText("card.png uploaded")).toBeDefined();
+    expect(screen.getAllByText("card.png uploaded").length).toBeGreaterThanOrEqual(1);
 
     mocks.restore();
   });
@@ -164,7 +164,7 @@ describe("PrepPageContent", () => {
       uploadFile();
     });
 
-    expect(screen.getByText("I'm Done")).toBeDefined();
+    expect(screen.getAllByText("I'm Done").length).toBeGreaterThanOrEqual(1);
 
     mocks.restore();
   });
@@ -183,7 +183,7 @@ describe("PrepPageContent", () => {
 
     // Mark as positioned
     act(() => {
-      fireEvent.click(screen.getByText("I'm Done"));
+      fireEvent.click(screen.getAllByText("I'm Done")[0]);
     });
 
     // Download button should be enabled

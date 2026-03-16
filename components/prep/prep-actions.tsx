@@ -10,12 +10,12 @@ type PrepActionsProps = {
   onDownload: () => void;
 };
 
-export function PrepActions({
+export const PrepActions = ({
   canDownload,
   canContinue,
   isDownloaded,
   onDownload,
-}: PrepActionsProps) {
+}: PrepActionsProps) => {
   return (
     <footer className="flex flex-col gap-2.5">
       {isDownloaded ? (
@@ -55,4 +55,4 @@ export function PrepActions({
       </Link>
     </footer>
   );
-}
+};

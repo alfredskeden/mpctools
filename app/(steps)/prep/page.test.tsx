@@ -13,6 +13,6 @@ describe("PrepPage", () => {
   it("shows the upload button initially", () => {
     render(<PrepPage />);
 
-    expect(screen.getByText("Upload Now")).toBeDefined();
+    expect(screen.getAllByText("Upload Now").length).toBeGreaterThanOrEqual(1);
   });
 });
