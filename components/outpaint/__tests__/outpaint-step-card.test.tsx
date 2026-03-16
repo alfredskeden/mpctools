@@ -45,10 +45,10 @@ describe("OutpaintStepCard", () => {
     expect(onCopy).toHaveBeenCalledOnce();
   });
 
-  it("hides Copy button when inactive", () => {
+  it("shows Copy button even when inactive", () => {
     render(<OutpaintStepCard {...defaultProps} isActive={false} />);
 
-    expect(screen.queryByRole("button", { name: "Copy" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Copy" })).toBeDefined();
   });
 
   it("applies opacity when inactive", () => {
@@ -135,7 +135,7 @@ describe("OutpaintStepCard", () => {
   it("shows gradient overlay when collapsed", () => {
     const { container } = render(<OutpaintStepCard {...defaultProps} />);
 
-    const gradient = container.querySelector(".bg-gradient-to-t");
+    const gradient = container.querySelector(".bg-linear-to-t");
     expect(gradient).not.toBeNull();
   });
 
@@ -163,7 +163,7 @@ describe("OutpaintStepCard", () => {
 
     await userEvent.click(screen.getByRole("button", { name: /show more/i }));
 
-    const gradient = container.querySelector(".bg-gradient-to-t");
+    const gradient = container.querySelector(".bg-linear-to-t");
     expect(gradient).toBeNull();
   });
 

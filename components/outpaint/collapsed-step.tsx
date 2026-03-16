@@ -5,7 +5,7 @@ type CollapsedStepProps = {
   onToggle: () => void;
 };
 
-export function CollapsedStep({ title, onToggle }: CollapsedStepProps) {
+export const CollapsedStep = ({ title, onToggle }: CollapsedStepProps) => {
   return (
     <button
       type="button"
@@ -47,4 +47,4 @@ export function CollapsedStep({ title, onToggle }: CollapsedStepProps) {
       </svg>
     </button>
   );
-}
+};

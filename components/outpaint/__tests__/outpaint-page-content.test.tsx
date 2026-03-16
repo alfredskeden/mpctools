@@ -16,12 +16,11 @@ describe("OutpaintPageContent", () => {
     expect(screen.getByText("OUTPAINT COMMAND")).toBeDefined();
   });
 
-  it("shows handshake card as active initially", () => {
+  it("shows both copy buttons initially", () => {
     render(<OutpaintPageContent />);
 
-    // Handshake has a Copy button (active), outpaint command does not (inactive)
     const copyButtons = screen.getAllByRole("button", { name: /copy/i });
-    expect(copyButtons).toHaveLength(1);
+    expect(copyButtons).toHaveLength(2);
   });
 
   it("shows handshake button initially", () => {
@@ -86,30 +85,27 @@ describe("OutpaintPageContent", () => {
 
     // Now handshake is expanded (not collapsed), showing as inactive card
     expect(screen.queryByText("Sent")).toBeNull();
-    // Both cards visible, but handshake is inactive (no copy button for it)
-    // Command is active with a copy button
-    expect(screen.getByRole("button", { name: /copy/i })).toBeDefined();
+    // Both cards visible with copy buttons
+    const copyButtons = screen.getAllByRole("button", { name: /copy/i });
+    expect(copyButtons).toHaveLength(2);
   });
 
-  it("copies handshake prompt when copy is clicked", async () => {
+  it("copies handshake prompt when first copy is clicked", async () => {
     render(<OutpaintPageContent />);
 
-    await userEvent.click(screen.getByRole("button", { name: /copy/i }));
+    const copyButtons = screen.getAllByRole("button", { name: /copy/i });
+    await userEvent.click(copyButtons[0]);
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
       expect.stringContaining("High-Fidelity Neutral Photo Extender"),
     );
   });
 
-  it("copies outpaint command when copy is clicked after handshake", async () => {
+  it("copies outpaint command when second copy is clicked", async () => {
     render(<OutpaintPageContent />);
 
-    // Send handshake first
-    await userEvent.click(
-      screen.getByRole("button", { name: /I've sent the handshake/i }),
-    );
-
-    await userEvent.click(screen.getByRole("button", { name: /copy/i }));
+    const copyButtons = screen.getAllByRole("button", { name: /copy/i });
+    await userEvent.click(copyButtons[1]);
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
       expect.stringContaining("NEW PROJECT / MEMORY FLUSH"),

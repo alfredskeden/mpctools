@@ -8,9 +8,10 @@ import {
 import { useCopyToClipboard } from "@/hooks/use-clipboard";
 import { OutpaintStepCard } from "./outpaint-step-card";
 import { CollapsedStep } from "./collapsed-step";
-import { OutpaintActions } from "./outpaint-actions";
+import Link from "next/link";
+import { cn } from "@/lib/utils";
 
-export function OutpaintPageContent() {
+export const OutpaintPageContent = () => {
   const { state, sendHandshake, toggleHandshakeCollapse, canContinueToMerge } =
     useOutpaintWorkflow();
   const handshakeClipboard = useCopyToClipboard();
@@ -35,6 +36,29 @@ export function OutpaintPageContent() {
             copied={handshakeClipboard.copied}
           />
         )}
+        {!canContinueToMerge && (
+          <button
+            type="button"
+            onClick={sendHandshake}
+            className="flex items-center justify-center h-10.5 rounded-lg gap-2 border-1.5 border-accent-blue"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              className="text-accent-blue"
+              aria-hidden="true"
+            >
+              <path d="M20 6L9 17l-5-5" />
+            </svg>
+            <span className="text-label text-accent-blue font-semibold">
+              I&apos;ve sent the handshake
+            </span>
+          </button>
+        )}
         <OutpaintStepCard
           stepNumber={2}
           title="OUTPAINT COMMAND"
@@ -44,11 +68,19 @@ export function OutpaintPageContent() {
           onCopy={() => commandClipboard.copy(OUTPAINT_COMMAND)}
           copied={commandClipboard.copied}
         />
-        <OutpaintActions
-          handshakeSent={canContinueToMerge}
-          onSendHandshake={sendHandshake}
-        />
+        <Link
+          href="/merger"
+          aria-disabled={!canContinueToMerge}
+          className={cn(
+            "flex items-center justify-center h-10.5 rounded-lg text-label font-semibold",
+            canContinueToMerge
+              ? "border border-surface-border text-text-primary hover:bg-surface-overlay"
+              : "opacity-40 border border-surface-border text-text-tertiary pointer-events-none",
+          )}
+        >
+          Continue to Merge
+        </Link>
       </div>
     </div>
   );
-}
+};
