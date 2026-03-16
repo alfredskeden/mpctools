@@ -67,6 +67,7 @@
   --letter-spacing-extra-wide: 0.15em;
   --letter-spacing-display: -0.03em;
   --letter-spacing-wide: 0.03em;
+  --letter-spacing-label: 0.08em;
 
   /* Custom spacing */
   --spacing-13: 3.25rem;

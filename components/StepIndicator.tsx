@@ -73,24 +73,24 @@ export const StepIndicator = ({
         className,
       )}
     >
-      <ol className="flex items-center gap-8 list-none m-0 p-0">
+      <ol className="flex items-center gap-0 list-none m-0 p-0">
         {steps.map((step, i) => (
-          <li key={step.label} className="flex items-center gap-8">
+          <li key={step.label} className="flex items-center gap-0">
             <div className="flex items-center gap-2">
               <div
                 aria-hidden="true"
                 className={cn(
-                  "size-2 rounded-full",
+                  "size-1.5 shrink-0 rounded-full",
                   step.active ? "bg-accent-blue" : "bg-surface-subtle",
                 )}
               />
               <span
                 aria-current={step.active ? "step" : undefined}
                 className={cn(
-                  "text-xs leading-4 hidden sm:inline",
+                  "text-caption hidden font-medium leading-3.5 sm:inline",
                   step.active
-                    ? "font-medium text-accent-blue"
-                    : "font-normal text-text-tertiary",
+                    ? "text-accent-blue"
+                    : "font-normal text-text-disabled",
                 )}
               >
                 {step.label}
@@ -100,7 +100,7 @@ export const StepIndicator = ({
               <div
                 role="separator"
                 aria-hidden="true"
-                className="h-px w-8 bg-surface-subtle"
+                className="h-px w-5 shrink-0 bg-surface-border sm:w-8"
               />
             )}
           </li>

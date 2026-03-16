@@ -45,7 +45,7 @@ describe("StepIndicator", () => {
     render(<StepIndicator steps={steps} />);
 
     expect(screen.getByText("Outpaint").className).toContain(
-      "text-text-tertiary",
+      "text-text-disabled",
     );
     expect(screen.getByText("Outpaint").className).toContain("font-normal");
   });

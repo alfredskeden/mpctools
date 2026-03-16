@@ -24,14 +24,17 @@ export function Header({ currentStep, stepStatuses }: HeaderProps) {
 
   return (
     <header className="flex h-11 shrink-0 items-center justify-between border-b border-surface-border bg-surface-header px-4">
-      <div className="flex items-center gap-2">
-        <span className="text-label font-semibold text-accent-blue">
-          STEP {currentStep}
+      <div className="flex items-center gap-2.5">
+        <span className="text-caption font-semibold uppercase tracking-label text-accent-blue">
+          Step {currentStep}
         </span>
-        <span className="text-text-faint" aria-hidden="true">
+        <span className="hidden text-text-faint sm:inline" aria-hidden="true">
           |
         </span>
-        <span className="text-label font-medium text-text-primary">
+        <span className="text-label font-medium text-text-primary sm:hidden">
+          {STEP_LABELS[currentStep - 1]}
+        </span>
+        <span className="hidden text-label font-medium text-text-primary sm:inline">
           {STEP_TITLES[currentStep]}
         </span>
       </div>

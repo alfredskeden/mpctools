@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import StepsLayout from "./layout";
 
 const mockUsePathname = vi.fn();
@@ -16,7 +16,7 @@ describe("StepsLayout", () => {
     render(<StepsLayout><div>child</div></StepsLayout>);
 
     expect(screen.getByRole("banner")).toBeDefined();
-    expect(screen.getByText("STEP 1")).toBeDefined();
+    expect(screen.getByText("Step 1")).toBeDefined();
   });
 
   it("renders children", () => {
@@ -37,7 +37,7 @@ describe("StepsLayout", () => {
     mockUsePathname.mockReturnValue("/prep");
     render(<StepsLayout><div>child</div></StepsLayout>);
 
-    expect(screen.getByText("STEP 1")).toBeDefined();
+    expect(screen.getByText("Step 1")).toBeDefined();
     expect(screen.getByText("Prepare Image")).toBeDefined();
   });
 
@@ -45,7 +45,7 @@ describe("StepsLayout", () => {
     mockUsePathname.mockReturnValue("/outpaint");
     render(<StepsLayout><div>child</div></StepsLayout>);
 
-    expect(screen.getByText("STEP 2")).toBeDefined();
+    expect(screen.getByText("Step 2")).toBeDefined();
     expect(screen.getByText("Outpaint with Gemini")).toBeDefined();
   });
 
@@ -53,7 +53,7 @@ describe("StepsLayout", () => {
     mockUsePathname.mockReturnValue("/merger");
     render(<StepsLayout><div>child</div></StepsLayout>);
 
-    expect(screen.getByText("STEP 3")).toBeDefined();
+    expect(screen.getByText("Step 3")).toBeDefined();
     expect(screen.getByText("Merge Result")).toBeDefined();
   });
 
@@ -61,15 +61,17 @@ describe("StepsLayout", () => {
     mockUsePathname.mockReturnValue("/outpaint");
     render(<StepsLayout><div>child</div></StepsLayout>);
 
-    expect(screen.getByText("Prep").getAttribute("aria-current")).toBe("step");
-    expect(screen.getByText("Outpaint").getAttribute("aria-current")).toBe("step");
-    expect(screen.getByText("Merge").getAttribute("aria-current")).toBeNull();
+    const nav = screen.getByRole("navigation", { name: "Build steps" });
+    const indicator = within(nav);
+    expect(indicator.getByText("Prep").getAttribute("aria-current")).toBe("step");
+    expect(indicator.getByText("Outpaint").getAttribute("aria-current")).toBe("step");
+    expect(indicator.getByText("Merge").getAttribute("aria-current")).toBeNull();
   });
 
   it("defaults to step 1 for unknown routes", () => {
     mockUsePathname.mockReturnValue("/unknown");
     render(<StepsLayout><div>child</div></StepsLayout>);
 
-    expect(screen.getByText("STEP 1")).toBeDefined();
+    expect(screen.getByText("Step 1")).toBeDefined();
   });
 });

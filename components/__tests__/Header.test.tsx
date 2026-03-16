@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { Header } from "../Header";
 
 describe("Header", () => {
@@ -10,7 +10,7 @@ describe("Header", () => {
       />,
     );
 
-    expect(screen.getByText("STEP 1")).toBeDefined();
+    expect(screen.getByText("Step 1")).toBeDefined();
   });
 
   it("renders step 2 when on outpaint", () => {
@@ -21,7 +21,7 @@ describe("Header", () => {
       />,
     );
 
-    expect(screen.getByText("STEP 2")).toBeDefined();
+    expect(screen.getByText("Step 2")).toBeDefined();
   });
 
   it("renders step 3 when on merger", () => {
@@ -32,7 +32,7 @@ describe("Header", () => {
       />,
     );
 
-    expect(screen.getByText("STEP 3")).toBeDefined();
+    expect(screen.getByText("Step 3")).toBeDefined();
   });
 
   it("renders the page title for step 1", () => {
@@ -89,11 +89,17 @@ describe("Header", () => {
       />,
     );
 
-    expect(screen.getByText("Prep").getAttribute("aria-current")).toBe("step");
-    expect(screen.getByText("Outpaint").getAttribute("aria-current")).toBe(
+    const nav = screen.getByRole("navigation", { name: "Build steps" });
+    const indicator = within(nav);
+    expect(indicator.getByText("Prep").getAttribute("aria-current")).toBe(
       "step",
     );
-    expect(screen.getByText("Merge").getAttribute("aria-current")).toBeNull();
+    expect(indicator.getByText("Outpaint").getAttribute("aria-current")).toBe(
+      "step",
+    );
+    expect(
+      indicator.getByText("Merge").getAttribute("aria-current"),
+    ).toBeNull();
   });
 
   it("renders as a dark top bar with correct height", () => {
@@ -118,9 +124,10 @@ describe("Header", () => {
       />,
     );
 
-    const stepLabel = screen.getByText("STEP 1");
+    const stepLabel = screen.getByText("Step 1");
     expect(stepLabel.className).toContain("text-accent-blue");
     expect(stepLabel.className).toContain("font-semibold");
+    expect(stepLabel.className).toContain("uppercase");
   });
 
   it("overrides default absolute positioning on StepIndicator", () => {
