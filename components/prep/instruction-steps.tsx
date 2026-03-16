@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Upload } from "lucide-react";
 import type { StepStatus, PrepState } from "@/hooks/use-prep-workflow";
@@ -10,7 +10,6 @@ import {
   type CarouselStep,
 } from "@/components/ui/mobile-instruction-carousel";
 import { ControlsPanel } from "./controls-panel";
-import { Button } from "../ui/Button";
 
 type InstructionStepsProps = {
   stepStatuses: readonly StepStatus[];

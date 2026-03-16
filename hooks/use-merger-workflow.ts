@@ -2,6 +2,7 @@
 
 import { useReducer, useCallback } from "react";
 import { analyzeGuide, type GuideAnalysis } from "@/lib/merger-utils";
+import { StepStatus } from "./use-prep-workflow";
 
 export type MergerStep = 1 | 2 | 3;
 
