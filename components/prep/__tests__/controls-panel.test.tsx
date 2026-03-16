@@ -37,7 +37,8 @@ describe("ControlsPanel", () => {
     const onUpdateScale = vi.fn();
     render(<ControlsPanel {...defaultProps} onUpdateScale={onUpdateScale} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Decrease scale" }));
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Decrease scale" }));
+    fireEvent.pointerUp(screen.getByRole("button", { name: "Decrease scale" }));
 
     expect(onUpdateScale).toHaveBeenCalledWith(0.99);
   });
@@ -46,7 +47,8 @@ describe("ControlsPanel", () => {
     const onUpdateScale = vi.fn();
     render(<ControlsPanel {...defaultProps} onUpdateScale={onUpdateScale} />);
 
-    fireEvent.click(screen.getByRole("button", { name: "Increase scale" }));
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Increase scale" }));
+    fireEvent.pointerUp(screen.getByRole("button", { name: "Increase scale" }));
 
     expect(onUpdateScale).toHaveBeenCalledWith(1.01);
   });
@@ -75,7 +77,8 @@ describe("ControlsPanel", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Decrease scale" }));
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Decrease scale" }));
+    fireEvent.pointerUp(screen.getByRole("button", { name: "Decrease scale" }));
 
     expect(onUpdateScale).toHaveBeenCalledWith(0.5);
   });
@@ -90,7 +93,8 @@ describe("ControlsPanel", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: "Increase scale" }));
+    fireEvent.pointerDown(screen.getByRole("button", { name: "Increase scale" }));
+    fireEvent.pointerUp(screen.getByRole("button", { name: "Increase scale" }));
 
     expect(onUpdateScale).toHaveBeenCalledWith(3);
   });

@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useRef } from "react";
 import {
   Minus,
   Plus,
@@ -9,6 +10,7 @@ import {
   RotateCw,
 } from "lucide-react";
 import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
+import { useRepeatOnHold } from "@/hooks/use-repeat-on-hold";
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
@@ -34,15 +36,25 @@ export function ControlsPanel({
   const scalePercent = Math.round(scale * 100);
   const rotationDisplay = Math.round(rotation);
 
-  const handleScaleDown = () => {
-    const newScale = Math.max(MIN_SCALE, scale - SCALE_STEP);
-    onUpdateScale(Math.round(newScale * 100) / 100);
-  };
+  const scaleRef = useRef(scale);
+  useEffect(() => {
+    scaleRef.current = scale;
+  }, [scale]);
 
-  const handleScaleUp = () => {
-    const newScale = Math.min(MAX_SCALE, scale + SCALE_STEP);
+  const handleScaleDown = useCallback(() => {
+    const current = scaleRef.current;
+    const newScale = Math.max(MIN_SCALE, current - SCALE_STEP);
     onUpdateScale(Math.round(newScale * 100) / 100);
-  };
+  }, [onUpdateScale]);
+
+  const handleScaleUp = useCallback(() => {
+    const current = scaleRef.current;
+    const newScale = Math.min(MAX_SCALE, current + SCALE_STEP);
+    onUpdateScale(Math.round(newScale * 100) / 100);
+  }, [onUpdateScale]);
+
+  const scaleDownHold = useRepeatOnHold(handleScaleDown);
+  const scaleUpHold = useRepeatOnHold(handleScaleUp);
 
   return (
     <div
@@ -59,10 +71,10 @@ export function ControlsPanel({
         <div className="flex items-center overflow-hidden rounded-lg border border-surface-border bg-surface-ground">
           <button
             type="button"
-            onClick={handleScaleDown}
             disabled={scale <= MIN_SCALE}
             className="flex size-9 items-center justify-center text-text-primary disabled:text-text-disabled"
             aria-label="Decrease scale"
+            {...scaleDownHold}
           >
             <Minus className="size-4" />
           </button>
@@ -73,10 +85,10 @@ export function ControlsPanel({
           <div className="h-5 w-px bg-surface-border" />
           <button
             type="button"
-            onClick={handleScaleUp}
             disabled={scale >= MAX_SCALE}
             className="flex size-9 items-center justify-center text-text-primary disabled:text-text-disabled"
             aria-label="Increase scale"
+            {...scaleUpHold}
           >
             <Plus className="size-4" />
           </button>
