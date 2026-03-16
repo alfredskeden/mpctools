@@ -55,10 +55,19 @@ export function MergerPageContent() {
             onUploadOg={uploadOg}
             onUploadGuide={uploadGuide}
             onUploadOutpaint={uploadOutpaint}
+            mergerAction={
+              <MergerActions
+                canDownload={canDownload}
+                isDownloaded={state.isDownloaded}
+                featherStrength={state.featherStrength}
+                onDownload={handleDownload}
+                onFeatherChange={setFeather}
+              />
+            }
           />
         </div>
 
-        <div className="mt-6">
+        <div className="hidden md:block mt-6">
           <MergerActions
             canDownload={canDownload}
             isDownloaded={state.isDownloaded}

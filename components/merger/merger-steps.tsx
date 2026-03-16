@@ -29,6 +29,7 @@ type MergerStepsProps = {
     fileName: string,
     fileSize: number,
   ) => void;
+  mergerAction: React.ReactNode;
 };
 
 const formatFileSize = (bytes: number): string => {
@@ -94,6 +95,7 @@ export const MergerSteps = ({
   onUploadOg,
   onUploadGuide,
   onUploadOutpaint,
+  mergerAction,
 }: MergerStepsProps) => {
   const {
     inputRef: ogInputRef,
@@ -219,11 +221,12 @@ export const MergerSteps = ({
               <button
                 type="button"
                 onClick={outpaintTriggerUpload}
-                className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-accent-blue text-sm font-medium text-accent-blue"
+                className="my-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-accent-blue text-sm font-medium text-accent-blue"
               >
                 <Upload className="size-3.5" />
                 Choose file
               </button>
+              {mergerAction}
             </>
           )}
         </>

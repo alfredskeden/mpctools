@@ -117,10 +117,11 @@ describe(MergerPageContent.name, () => {
     });
 
     // Download should be enabled
-    const downloadBtn = screen.getByRole("button", {
+    const downloadBtns = screen.getAllByRole("button", {
       name: /download merged/i,
     });
-    expect(downloadBtn).not.toBeDisabled();
+    expect(downloadBtns.length).toBeGreaterThanOrEqual(1);
+    expect(downloadBtns[0]).not.toBeDisabled();
 
     mocks.restore();
   });
@@ -153,10 +154,10 @@ describe(MergerPageContent.name, () => {
       uploadFile("outpaint-file-input", "outpaint.png");
     });
 
-    const downloadBtn = screen.getByRole("button", {
+    const downloadBtns = screen.getAllByRole("button", {
       name: /download merged/i,
     });
-    fireEvent.click(downloadBtn);
+    fireEvent.click(downloadBtns[0]);
 
     expect(downloadCanvasAsBlob).toHaveBeenCalledWith(
       expect.any(HTMLCanvasElement),
