@@ -60,11 +60,11 @@ describe("ControlsPanel", () => {
     expect(btn).toBeDisabled();
   });
 
-  it("disables increase button at maximum scale", () => {
+  it("does not disable increase button at high scale", () => {
     render(<ControlsPanel {...defaultProps} scale={3} />);
 
     const btn = screen.getByRole("button", { name: "Increase scale" });
-    expect(btn).toBeDisabled();
+    expect(btn).not.toBeDisabled();
   });
 
   it("clamps scale down to minimum", () => {
@@ -83,7 +83,7 @@ describe("ControlsPanel", () => {
     expect(onUpdateScale).toHaveBeenCalledWith(0.5);
   });
 
-  it("clamps scale up to maximum", () => {
+  it("increments scale without upper cap", () => {
     const onUpdateScale = vi.fn();
     render(
       <ControlsPanel
@@ -96,7 +96,7 @@ describe("ControlsPanel", () => {
     fireEvent.pointerDown(screen.getByRole("button", { name: "Increase scale" }));
     fireEvent.pointerUp(screen.getByRole("button", { name: "Increase scale" }));
 
-    expect(onUpdateScale).toHaveBeenCalledWith(3);
+    expect(onUpdateScale).toHaveBeenCalledWith(3.01);
   });
 
   it("renders Frame Overlay section", () => {

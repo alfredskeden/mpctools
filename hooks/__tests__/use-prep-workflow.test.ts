@@ -30,6 +30,7 @@ const initialState: PrepState = {
   overlayOpacities: {},
   keepAspectRatio: true,
   algorithm: "detail-preserving",
+  overlayNativeDimensions: null,
 };
 
 describe("prepReducer", () => {
@@ -253,6 +254,7 @@ describe("prepReducer", () => {
       overlayOpacities: { normal: 80 },
       keepAspectRatio: true,
       algorithm: "detail-preserving",
+      overlayNativeDimensions: null,
     };
 
     const result = prepReducer(state, { type: "REPOSITION" });
@@ -289,6 +291,7 @@ describe("prepReducer", () => {
       overlayOpacities: { normal: 80 },
       keepAspectRatio: false,
       algorithm: "standard",
+      overlayNativeDimensions: { width: 3072, height: 4096 },
     };
 
     const result = prepReducer(state, { type: "RESET" });
@@ -435,42 +438,110 @@ describe("prepReducer", () => {
     expect(result.scale).toBe(1);
   });
 
-  it("handles SET_VERTICAL_PRESET", () => {
+  it("handles SET_VERTICAL_PRESET using overlay-aware conversion", () => {
     const image = { width: 200, height: 300 } as HTMLImageElement;
-    const state: PrepState = { ...initialState, imageElement: image, scale: 2 };
+    const overlayDims = { width: 3072, height: 4096 };
+    const state: PrepState = {
+      ...initialState,
+      imageElement: image,
+      scale: 2,
+      overlayNativeDimensions: overlayDims,
+    };
     const result = prepReducer(state, {
       type: "SET_VERTICAL_PRESET",
       payload: "short",
     });
 
-    // imgH = 300 * 2 = 600, y = 2836 - 600/2 = 2536
-    expect(result.position.y).toBe(
-      VERTICAL_PRESET_CENTERS.short - 300,
-    );
+    // scaleFactor = 3520 / 3072, yOriginal = 4096 - 2836 = 1260
+    // yCanvas = round(1260 * 3520/3072) = round(1443.75) = 1444
+    // imgH = 300 * 2 = 600, newY = round(1444 - 300) = 1144
+    // clampedY = max(0, min(1144, 4800 - 600)) = 1144
+    const scaleFactor = CANVAS_WIDTH / overlayDims.width;
+    const yOriginal = overlayDims.height - VERTICAL_PRESET_CENTERS.short;
+    const yCanvas = Math.round(yOriginal * scaleFactor);
+    const imgH = 300 * 2;
+    const expectedY = Math.round(yCanvas - imgH / 2);
+    expect(result.position.y).toBe(expectedY);
   });
 
   it("handles SET_VERTICAL_PRESET preserving x position", () => {
     const image = { width: 200, height: 300 } as HTMLImageElement;
-    const state: PrepState = { ...initialState, imageElement: image, scale: 2, position: { x: 50, y: 0 } };
+    const overlayDims = { width: 3072, height: 4096 };
+    const state: PrepState = {
+      ...initialState,
+      imageElement: image,
+      scale: 2,
+      position: { x: 50, y: 0 },
+      overlayNativeDimensions: overlayDims,
+    };
     const result = prepReducer(state, {
       type: "SET_VERTICAL_PRESET",
       payload: "tall",
     });
 
     expect(result.position.x).toBe(50);
-    // imgH = 300 * 2 = 600, y = 3143 - 600/2 = 2843
-    expect(result.position.y).toBe(
-      VERTICAL_PRESET_CENTERS.tall - 300,
-    );
+    const scaleFactor = CANVAS_WIDTH / overlayDims.width;
+    const yOriginal = overlayDims.height - VERTICAL_PRESET_CENTERS.tall;
+    const yCanvas = Math.round(yOriginal * scaleFactor);
+    const imgH = 300 * 2;
+    const expectedY = Math.round(yCanvas - imgH / 2);
+    expect(result.position.y).toBe(expectedY);
   });
 
   it("handles SET_VERTICAL_PRESET with no image as no-op", () => {
-    const result = prepReducer(initialState, {
+    const state: PrepState = {
+      ...initialState,
+      overlayNativeDimensions: { width: 3072, height: 4096 },
+    };
+    const result = prepReducer(state, {
       type: "SET_VERTICAL_PRESET",
       payload: "short",
     });
 
     expect(result.position).toEqual(initialState.position);
+  });
+
+  it("handles SET_VERTICAL_PRESET with no overlay dimensions as no-op", () => {
+    const image = { width: 200, height: 300 } as HTMLImageElement;
+    const state: PrepState = {
+      ...initialState,
+      imageElement: image,
+      scale: 2,
+    };
+    const result = prepReducer(state, {
+      type: "SET_VERTICAL_PRESET",
+      payload: "short",
+    });
+
+    expect(result.position).toEqual(initialState.position);
+  });
+
+  it("handles SET_VERTICAL_PRESET clamping Y to canvas bounds", () => {
+    const image = { width: 200, height: 100 } as HTMLImageElement;
+    const overlayDims = { width: 3072, height: 4096 };
+    const state: PrepState = {
+      ...initialState,
+      imageElement: image,
+      scale: 0.5,
+      overlayNativeDimensions: overlayDims,
+    };
+    const result = prepReducer(state, {
+      type: "SET_VERTICAL_PRESET",
+      payload: "short",
+    });
+
+    const imgH = 100 * 0.5;
+    expect(result.position.y).toBeGreaterThanOrEqual(0);
+    expect(result.position.y).toBeLessThanOrEqual(CANVAS_HEIGHT - imgH);
+  });
+
+  it("handles SET_OVERLAY_NATIVE_DIMENSIONS", () => {
+    const result = prepReducer(initialState, {
+      type: "SET_OVERLAY_NATIVE_DIMENSIONS",
+      payload: { width: 3072, height: 4096 },
+    });
+
+    expect(result.overlayNativeDimensions).toEqual({ width: 3072, height: 4096 });
   });
 });
 
@@ -863,7 +934,7 @@ describe("usePrepWorkflow", () => {
     expect(result.current.state.position.y).toBe(0);
   });
 
-  it("sets vertical preset", () => {
+  it("sets vertical preset with overlay dimensions", () => {
     const { result } = renderHook(() => usePrepWorkflow());
     const image = { width: 200, height: 300 } as HTMLImageElement;
 
@@ -871,13 +942,28 @@ describe("usePrepWorkflow", () => {
       result.current.uploadImage("data:test", image, "test.png");
     });
     act(() => {
+      result.current.setOverlayNativeDimensions({ width: 3072, height: 4096 });
+    });
+    act(() => {
       result.current.setVerticalPreset("normal");
     });
 
     const scale = result.current.state.scale;
+    const scaleFactor = CANVAS_WIDTH / 3072;
+    const yOriginal = 4096 - VERTICAL_PRESET_CENTERS.normal;
+    const yCanvas = Math.round(yOriginal * scaleFactor);
     const imgH = 300 * scale;
-    expect(result.current.state.position.y).toBe(
-      VERTICAL_PRESET_CENTERS.normal - imgH / 2,
-    );
+    const expectedY = Math.max(0, Math.min(Math.round(yCanvas - imgH / 2), CANVAS_HEIGHT - imgH));
+    expect(result.current.state.position.y).toBe(expectedY);
+  });
+
+  it("sets overlay native dimensions", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.setOverlayNativeDimensions({ width: 3072, height: 4096 });
+    });
+
+    expect(result.current.state.overlayNativeDimensions).toEqual({ width: 3072, height: 4096 });
   });
 });

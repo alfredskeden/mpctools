@@ -30,6 +30,7 @@ export function PrepPageContent() {
     fitWidth,
     fitHeight,
     setVerticalPreset,
+    setOverlayNativeDimensions,
     canDownload,
     canContinue,
     stepStatuses,
@@ -98,6 +99,7 @@ export function PrepPageContent() {
           onScaleChange={updateScale}
           onRotationChange={updateRotation}
           onExport={setCanvasDataUrl}
+          onOverlayNativeDimensions={setOverlayNativeDimensions}
         />
       </div>
 

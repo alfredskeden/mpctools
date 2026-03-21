@@ -280,7 +280,7 @@ describe("TransformCanvas", () => {
     expect(onScaleChange).toHaveBeenCalled();
   });
 
-  it("clamps zoom to MIN_SCALE and MAX_SCALE", () => {
+  it("clamps zoom to MIN_SCALE but has no upper cap", () => {
     const onScaleChange = vi.fn();
 
     // Test min clamp

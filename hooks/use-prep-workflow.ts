@@ -67,6 +67,7 @@ export type PrepState = {
   overlayOpacities: Record<string, number>;
   keepAspectRatio: boolean;
   algorithm: Algorithm;
+  overlayNativeDimensions: { width: number; height: number } | null;
 };
 
 type PrepAction =
@@ -93,7 +94,11 @@ type PrepAction =
   | { type: "CENTER_VERTICAL" }
   | { type: "FIT_WIDTH" }
   | { type: "FIT_HEIGHT" }
-  | { type: "SET_VERTICAL_PRESET"; payload: VerticalPreset };
+  | { type: "SET_VERTICAL_PRESET"; payload: VerticalPreset }
+  | {
+      type: "SET_OVERLAY_NATIVE_DIMENSIONS";
+      payload: { width: number; height: number };
+    };
 
 const initialState: PrepState = {
   currentStep: 1,
@@ -113,6 +118,7 @@ const initialState: PrepState = {
   overlayOpacities: {},
   keepAspectRatio: true,
   algorithm: "detail-preserving",
+  overlayNativeDimensions: null,
 };
 
 export function prepReducer(state: PrepState, action: PrepAction): PrepState {
@@ -282,17 +288,29 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
       };
     }
     case "SET_VERTICAL_PRESET": {
-      if (!state.imageElement) return state;
-      const targetY = VERTICAL_PRESET_CENTERS[action.payload];
+      if (!state.imageElement || !state.overlayNativeDimensions) return state;
+      const pixelFromBottom = VERTICAL_PRESET_CENTERS[action.payload];
+      const overlayW = state.overlayNativeDimensions.width;
+      const overlayH = state.overlayNativeDimensions.height;
+      const scaleFactor = state.canvasWidth / overlayW;
+      const yOriginal = overlayH - pixelFromBottom;
+      const yCanvas = Math.round(yOriginal * scaleFactor);
       const imgH = state.imageElement.height * state.scale;
+      const newY = Math.round(yCanvas - imgH / 2);
+      const clampedY = Math.max(0, Math.min(newY, state.canvasHeight - imgH));
       return {
         ...state,
         position: {
           ...state.position,
-          y: targetY - imgH / 2,
+          y: clampedY,
         },
       };
     }
+    case "SET_OVERLAY_NATIVE_DIMENSIONS":
+      return {
+        ...state,
+        overlayNativeDimensions: action.payload,
+      };
     default:
       return state;
   }
@@ -399,6 +417,13 @@ export function usePrepWorkflow() {
     dispatch({ type: "SET_VERTICAL_PRESET", payload: preset });
   }, []);
 
+  const setOverlayNativeDimensions = useCallback(
+    (dims: { width: number; height: number }) => {
+      dispatch({ type: "SET_OVERLAY_NATIVE_DIMENSIONS", payload: dims });
+    },
+    [],
+  );
+
   const canDownload = state.isPositioned;
   const canContinue = state.isDownloaded;
   const stepStatuses = getStepStatuses(state.currentStep);
@@ -426,6 +451,7 @@ export function usePrepWorkflow() {
     fitWidth,
     fitHeight,
     setVerticalPreset,
+    setOverlayNativeDimensions,
     canDownload,
     canContinue,
     stepStatuses,

@@ -13,7 +13,6 @@ import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 import { useRepeatOnHold } from "@/hooks/use-repeat-on-hold";
 
 const MIN_SCALE = 0.5;
-const MAX_SCALE = 3;
 const SCALE_STEP = 0.01;
 
 type ControlsPanelProps = {
@@ -49,7 +48,7 @@ export function ControlsPanel({
 
   const handleScaleUp = useCallback(() => {
     const current = scaleRef.current;
-    const newScale = Math.min(MAX_SCALE, current + SCALE_STEP);
+    const newScale = current + SCALE_STEP;
     onUpdateScale(Math.round(newScale * 100) / 100);
   }, [onUpdateScale]);
 
@@ -85,7 +84,6 @@ export function ControlsPanel({
           <div className="h-5 w-px bg-surface-border" />
           <button
             type="button"
-            disabled={scale >= MAX_SCALE}
             className="flex size-9 items-center justify-center text-text-primary disabled:text-text-disabled"
             aria-label="Increase scale"
             {...scaleUpHold}

@@ -6,7 +6,6 @@ import { useRepeatOnHold } from "@/hooks/use-repeat-on-hold";
 import type { PrepState, Algorithm, VerticalPreset } from "@/hooks/use-prep-workflow";
 
 const MIN_SCALE = 0.5;
-const MAX_SCALE = 3;
 const SCALE_STEP = 0.01;
 
 const VERTICAL_PRESETS: VerticalPreset[] = ["short", "medium", "normal", "tall"];
@@ -63,7 +62,7 @@ export function ImageControlsPanel({
 
   const handleScaleUp = useCallback(() => {
     const current = scaleRef.current;
-    const newScale = Math.min(MAX_SCALE, current + SCALE_STEP);
+    const newScale = current + SCALE_STEP;
     onUpdateScale(Math.round(newScale * 100) / 100);
   }, [onUpdateScale]);
 
@@ -227,7 +226,6 @@ export function ImageControlsPanel({
           </button>
           <button
             type="button"
-            disabled={scale >= MAX_SCALE}
             className="rounded border border-surface-border bg-surface-ground px-3 py-1.5 text-xs text-text-primary hover:bg-surface-overlay disabled:text-text-disabled"
             aria-label="Scale up"
             {...scaleUpHold}

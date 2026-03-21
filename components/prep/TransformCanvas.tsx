@@ -6,7 +6,6 @@ import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 import { renderPrepScene } from "@/lib/prep-renderer";
 const EXPORT_DEBOUNCE_MS = 150;
 const MIN_SCALE = 0.5;
-const MAX_SCALE = 3;
 const PREVIEW_SCALE = 0.25;
 
 // Module-level cache for overlay images
@@ -31,6 +30,7 @@ type TransformCanvasProps = {
   onScaleChange: (scale: number) => void;
   onRotationChange: (rotation: number) => void;
   onExport: (dataUrl: string) => void;
+  onOverlayNativeDimensions?: (dims: { width: number; height: number }) => void;
 };
 
 export const TransformCanvas = ({
@@ -46,6 +46,7 @@ export const TransformCanvas = ({
   onScaleChange,
   onRotationChange: _onRotationChange,
   onExport,
+  onOverlayNativeDimensions,
 }: TransformCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [display, setDisplay] = useState<DisplayState>({
@@ -104,6 +105,19 @@ export const TransformCanvas = ({
       (entry): entry is { option: (typeof OVERLAY_OPTIONS)[number]; image: HTMLImageElement } =>
         entry.image !== null,
     );
+
+  // Report native dimensions of the first loaded overlay to parent (once per dimension change)
+  const reportedDimsRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (overlayImages.length > 0 && onOverlayNativeDimensions) {
+      const first = overlayImages[0].image;
+      const key = `${first.width}x${first.height}`;
+      if (reportedDimsRef.current !== key) {
+        reportedDimsRef.current = key;
+        onOverlayNativeDimensions({ width: first.width, height: first.height });
+      }
+    }
+  }, [overlayImages, onOverlayNativeDimensions]);
 
   const stageReady = display.width > 0;
 
@@ -236,10 +250,7 @@ export const TransformCanvas = ({
       if (!image) return;
       e.preventDefault();
       const delta = -e.deltaY * 0.001;
-      const newScale = Math.max(
-        MIN_SCALE,
-        Math.min(MAX_SCALE, imageScale + delta),
-      );
+      const newScale = Math.max(MIN_SCALE, imageScale + delta);
       onScaleChange(newScale);
     },
     [image, imageScale, onScaleChange],
@@ -267,9 +278,9 @@ export const TransformCanvas = ({
             width: display.width,
             height: display.height,
             position: "relative",
-            overflow: "hidden",
             borderRadius: 4,
             boxShadow: "0 2px 12px rgba(0,0,0,0.15)",
+            border: "1px dashed rgba(255,255,255,0.2)",
           }}
         >
           <div
@@ -302,6 +313,7 @@ export const TransformCanvas = ({
                   top: 0,
                   width: image.width * imageScale * display.scale,
                   height: image.height * imageScale * display.scale,
+                  maxWidth: "none",
                   transform: `translate(${position.x * display.scale}px, ${position.y * display.scale}px) rotate(${rotation}deg)`,
                   transformOrigin: "center",
                   willChange: "transform",
