@@ -8,16 +8,34 @@ type MergerActionsProps = {
   canDownload: boolean;
   isDownloaded: boolean;
   featherStrength: number;
+  irregMagnitude: number;
+  irregDensity: number;
+  irregRadius: number;
+  irregBlur: number;
   onDownload: () => void;
   onFeatherChange: (value: number) => void;
+  onIrregMagnitudeChange: (value: number) => void;
+  onIrregDensityChange: (value: number) => void;
+  onIrregRadiusChange: (value: number) => void;
+  onIrregBlurChange: (value: number) => void;
+  onReseed: () => void;
 };
 
 export function MergerActions({
   canDownload,
   isDownloaded,
   featherStrength,
+  irregMagnitude,
+  irregDensity,
+  irregRadius,
+  irregBlur,
   onDownload,
   onFeatherChange,
+  onIrregMagnitudeChange,
+  onIrregDensityChange,
+  onIrregRadiusChange,
+  onIrregBlurChange,
+  onReseed,
 }: MergerActionsProps) {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -85,6 +103,101 @@ export function MergerActions({
               className="w-full"
             />
           </div>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="irreg-magnitude-slider"
+                className="text-xs text-text-secondary"
+              >
+                Magnitude
+              </label>
+              <span className="text-xs text-text-tertiary">
+                {irregMagnitude}px
+              </span>
+            </div>
+            <input
+              id="irreg-magnitude-slider"
+              type="range"
+              min={0}
+              max={300}
+              value={irregMagnitude}
+              onChange={(e) => onIrregMagnitudeChange(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="irreg-density-slider"
+                className="text-xs text-text-secondary"
+              >
+                Density
+              </label>
+              <span className="text-xs text-text-tertiary">
+                {irregDensity}%
+              </span>
+            </div>
+            <input
+              id="irreg-density-slider"
+              type="range"
+              min={0}
+              max={100}
+              value={irregDensity}
+              onChange={(e) => onIrregDensityChange(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="irreg-radius-slider"
+                className="text-xs text-text-secondary"
+              >
+                Irreg Radius
+              </label>
+              <span className="text-xs text-text-tertiary">
+                {irregRadius}px
+              </span>
+            </div>
+            <input
+              id="irreg-radius-slider"
+              type="range"
+              min={0}
+              max={500}
+              value={irregRadius}
+              onChange={(e) => onIrregRadiusChange(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <label
+                htmlFor="irreg-blur-slider"
+                className="text-xs text-text-secondary"
+              >
+                Edge Blur
+              </label>
+              <span className="text-xs text-text-tertiary">
+                {irregBlur}px
+              </span>
+            </div>
+            <input
+              id="irreg-blur-slider"
+              type="range"
+              min={0}
+              max={100}
+              value={irregBlur}
+              onChange={(e) => onIrregBlurChange(Number(e.target.value))}
+              className="w-full"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={onReseed}
+            className="h-8 w-full rounded-md border border-surface-border bg-surface-base text-xs font-medium text-text-secondary transition-colors hover:bg-surface-overlay"
+          >
+            Reseed
+          </button>
           <div className="flex items-center justify-between">
             <span className="text-xs text-text-secondary">Layer Toggles</span>
             <span className="font-mono text-xs text-text-tertiary">OG + Outpaint</span>

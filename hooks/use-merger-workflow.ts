@@ -23,6 +23,11 @@ export type MergerState = {
   canvasH: number;
   ogPosition: { x: number; y: number; w: number; h: number };
   featherStrength: number;
+  irregMagnitude: number;
+  irregDensity: number;
+  irregRadius: number;
+  irregBlur: number;
+  irregSeed: number;
   isDownloaded: boolean;
 };
 
@@ -53,6 +58,11 @@ type MergerAction =
       };
     }
   | { type: "SET_FEATHER"; payload: number }
+  | { type: "SET_IRREG_MAGNITUDE"; payload: number }
+  | { type: "SET_IRREG_DENSITY"; payload: number }
+  | { type: "SET_IRREG_RADIUS"; payload: number }
+  | { type: "SET_IRREG_BLUR"; payload: number }
+  | { type: "SET_IRREG_SEED"; payload: number }
   | { type: "MARK_DOWNLOADED" }
   | { type: "RESET" };
 
@@ -71,6 +81,11 @@ export const initialState: MergerState = {
   canvasH: 0,
   ogPosition: { x: 0, y: 0, w: 0, h: 0 },
   featherStrength: 40,
+  irregMagnitude: 100,
+  irregDensity: 100,
+  irregRadius: 0,
+  irregBlur: 12,
+  irregSeed: 42,
   isDownloaded: false,
 };
 
@@ -138,6 +153,16 @@ export function mergerReducer(
         ...state,
         featherStrength: action.payload,
       };
+    case "SET_IRREG_MAGNITUDE":
+      return { ...state, irregMagnitude: action.payload };
+    case "SET_IRREG_DENSITY":
+      return { ...state, irregDensity: action.payload };
+    case "SET_IRREG_RADIUS":
+      return { ...state, irregRadius: action.payload };
+    case "SET_IRREG_BLUR":
+      return { ...state, irregBlur: action.payload };
+    case "SET_IRREG_SEED":
+      return { ...state, irregSeed: action.payload };
     case "MARK_DOWNLOADED":
       return {
         ...state,
@@ -205,6 +230,29 @@ export function useMergerWorkflow() {
     dispatch({ type: "SET_FEATHER", payload: value });
   }, []);
 
+  const setIrregMagnitude = useCallback((value: number) => {
+    dispatch({ type: "SET_IRREG_MAGNITUDE", payload: value });
+  }, []);
+
+  const setIrregDensity = useCallback((value: number) => {
+    dispatch({ type: "SET_IRREG_DENSITY", payload: value });
+  }, []);
+
+  const setIrregRadius = useCallback((value: number) => {
+    dispatch({ type: "SET_IRREG_RADIUS", payload: value });
+  }, []);
+
+  const setIrregBlur = useCallback((value: number) => {
+    dispatch({ type: "SET_IRREG_BLUR", payload: value });
+  }, []);
+
+  const reseed = useCallback(() => {
+    dispatch({
+      type: "SET_IRREG_SEED",
+      payload: Math.floor(Math.random() * 100000),
+    });
+  }, []);
+
   const markDownloaded = useCallback(() => {
     dispatch({ type: "MARK_DOWNLOADED" });
   }, []);
@@ -225,6 +273,11 @@ export function useMergerWorkflow() {
     uploadGuide,
     uploadOutpaint,
     setFeather,
+    setIrregMagnitude,
+    setIrregDensity,
+    setIrregRadius,
+    setIrregBlur,
+    reseed,
     markDownloaded,
     reset,
     canDownload,

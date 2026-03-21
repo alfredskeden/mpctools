@@ -15,6 +15,11 @@ export function MergerPageContent() {
     uploadGuide,
     uploadOutpaint,
     setFeather,
+    setIrregMagnitude,
+    setIrregDensity,
+    setIrregRadius,
+    setIrregBlur,
+    reseed,
     markDownloaded,
     canDownload,
     stepStatuses,
@@ -60,8 +65,17 @@ export function MergerPageContent() {
                 canDownload={canDownload}
                 isDownloaded={state.isDownloaded}
                 featherStrength={state.featherStrength}
+                irregMagnitude={state.irregMagnitude}
+                irregDensity={state.irregDensity}
+                irregRadius={state.irregRadius}
+                irregBlur={state.irregBlur}
                 onDownload={handleDownload}
                 onFeatherChange={setFeather}
+                onIrregMagnitudeChange={setIrregMagnitude}
+                onIrregDensityChange={setIrregDensity}
+                onIrregRadiusChange={setIrregRadius}
+                onIrregBlurChange={setIrregBlur}
+                onReseed={reseed}
               />
             }
           />
@@ -72,8 +86,17 @@ export function MergerPageContent() {
             canDownload={canDownload}
             isDownloaded={state.isDownloaded}
             featherStrength={state.featherStrength}
+            irregMagnitude={state.irregMagnitude}
+            irregDensity={state.irregDensity}
+            irregRadius={state.irregRadius}
+            irregBlur={state.irregBlur}
             onDownload={handleDownload}
             onFeatherChange={setFeather}
+            onIrregMagnitudeChange={setIrregMagnitude}
+            onIrregDensityChange={setIrregDensity}
+            onIrregRadiusChange={setIrregRadius}
+            onIrregBlurChange={setIrregBlur}
+            onReseed={reseed}
           />
         </div>
       </div>

@@ -183,6 +183,46 @@ describe("mergerReducer", () => {
     expect(result.featherStrength).toBe(80);
   });
 
+  it("handles SET_IRREG_MAGNITUDE", () => {
+    const result = mergerReducer(initialState, {
+      type: "SET_IRREG_MAGNITUDE",
+      payload: 200,
+    });
+    expect(result.irregMagnitude).toBe(200);
+  });
+
+  it("handles SET_IRREG_DENSITY", () => {
+    const result = mergerReducer(initialState, {
+      type: "SET_IRREG_DENSITY",
+      payload: 50,
+    });
+    expect(result.irregDensity).toBe(50);
+  });
+
+  it("handles SET_IRREG_RADIUS", () => {
+    const result = mergerReducer(initialState, {
+      type: "SET_IRREG_RADIUS",
+      payload: 250,
+    });
+    expect(result.irregRadius).toBe(250);
+  });
+
+  it("handles SET_IRREG_BLUR", () => {
+    const result = mergerReducer(initialState, {
+      type: "SET_IRREG_BLUR",
+      payload: 30,
+    });
+    expect(result.irregBlur).toBe(30);
+  });
+
+  it("handles SET_IRREG_SEED", () => {
+    const result = mergerReducer(initialState, {
+      type: "SET_IRREG_SEED",
+      payload: 99999,
+    });
+    expect(result.irregSeed).toBe(99999);
+  });
+
   it("handles MARK_DOWNLOADED", () => {
     const result = mergerReducer(initialState, { type: "MARK_DOWNLOADED" });
     expect(result.isDownloaded).toBe(true);
@@ -341,6 +381,62 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.featherStrength).toBe(80);
+  });
+
+  it("updates irregular edge magnitude", () => {
+    const { result } = renderHook(() => useMergerWorkflow());
+
+    act(() => {
+      result.current.setIrregMagnitude(200);
+    });
+
+    expect(result.current.state.irregMagnitude).toBe(200);
+  });
+
+  it("updates irregular edge density", () => {
+    const { result } = renderHook(() => useMergerWorkflow());
+
+    act(() => {
+      result.current.setIrregDensity(50);
+    });
+
+    expect(result.current.state.irregDensity).toBe(50);
+  });
+
+  it("updates irregular edge radius", () => {
+    const { result } = renderHook(() => useMergerWorkflow());
+
+    act(() => {
+      result.current.setIrregRadius(250);
+    });
+
+    expect(result.current.state.irregRadius).toBe(250);
+  });
+
+  it("updates irregular edge blur", () => {
+    const { result } = renderHook(() => useMergerWorkflow());
+
+    act(() => {
+      result.current.setIrregBlur(30);
+    });
+
+    expect(result.current.state.irregBlur).toBe(30);
+  });
+
+  it("reseeds irregular edge with new random value", () => {
+    const { result } = renderHook(() => useMergerWorkflow());
+    const originalSeed = result.current.state.irregSeed;
+
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+
+    act(() => {
+      result.current.reseed();
+    });
+
+    expect(result.current.state.irregSeed).toBe(50000);
+    expect(result.current.state.irregSeed).not.toBe(originalSeed);
+
+    vi.restoreAllMocks();
   });
 
   it("marks as downloaded", () => {

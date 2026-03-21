@@ -50,11 +50,11 @@ export function drawMergerScene(
       h,
       state.featherStrength,
       10,
-      0,
-      42,
-      10,
-      50,
-      2,
+      state.irregMagnitude,
+      state.irregSeed,
+      state.irregRadius,
+      state.irregDensity,
+      state.irregBlur,
     );
   }
 
