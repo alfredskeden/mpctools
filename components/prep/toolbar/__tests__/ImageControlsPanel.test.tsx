@@ -152,18 +152,14 @@ describe("ImageControlsPanel", () => {
 
   it("calls onFitWidth when Fit W is clicked", async () => {
     const onFitWidth = vi.fn();
-    render(
-      <ImageControlsPanel {...defaultProps} onFitWidth={onFitWidth} />,
-    );
+    render(<ImageControlsPanel {...defaultProps} onFitWidth={onFitWidth} />);
     await userEvent.click(screen.getByText("Fit W"));
     expect(onFitWidth).toHaveBeenCalledTimes(1);
   });
 
   it("calls onFitHeight when Fit H is clicked", async () => {
     const onFitHeight = vi.fn();
-    render(
-      <ImageControlsPanel {...defaultProps} onFitHeight={onFitHeight} />,
-    );
+    render(<ImageControlsPanel {...defaultProps} onFitHeight={onFitHeight} />);
     await userEvent.click(screen.getByText("Fit H"));
     expect(onFitHeight).toHaveBeenCalledTimes(1);
   });
@@ -198,7 +194,10 @@ describe("ImageControlsPanel", () => {
     render(
       <ImageControlsPanel {...defaultProps} onSetAlgorithm={onSetAlgorithm} />,
     );
-    await userEvent.selectOptions(screen.getByLabelText("Algorithm"), "standard");
+    await userEvent.selectOptions(
+      screen.getByLabelText("Algorithm"),
+      "standard",
+    );
     expect(onSetAlgorithm).toHaveBeenCalledWith("standard");
   });
 
@@ -215,10 +214,7 @@ describe("ImageControlsPanel", () => {
 
   it("renders scale percentage for scale 1.0", () => {
     render(
-      <ImageControlsPanel
-        {...defaultProps}
-        state={makeState({ scale: 1 })}
-      />,
+      <ImageControlsPanel {...defaultProps} state={makeState({ scale: 1 })} />,
     );
     expect(screen.getByText("100%")).toBeInTheDocument();
   });

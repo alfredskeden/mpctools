@@ -6,7 +6,11 @@ const makeImage = () => {
   const img = new window.Image();
   Object.defineProperty(img, "width", { value: 400, configurable: true });
   Object.defineProperty(img, "height", { value: 600, configurable: true });
-  Object.defineProperty(img, "src", { value: "test.png", configurable: true, writable: true });
+  Object.defineProperty(img, "src", {
+    value: "test.png",
+    configurable: true,
+    writable: true,
+  });
   return img;
 };
 
@@ -102,14 +106,20 @@ describe("TransformCanvas", () => {
   it("calls onExport with data URL after debounce when image is provided", () => {
     const onExport = vi.fn();
     render(
-      <TransformCanvas {...defaultProps} image={makeImage()} onExport={onExport} />,
+      <TransformCanvas
+        {...defaultProps}
+        image={makeImage()}
+        onExport={onExport}
+      />,
     );
 
     act(() => {
       vi.advanceTimersByTime(150);
     });
 
-    expect(onExport).toHaveBeenCalledWith(expect.stringContaining("data:image/png"));
+    expect(onExport).toHaveBeenCalledWith(
+      expect.stringContaining("data:image/png"),
+    );
   });
 
   it("does not export when image is null", () => {
@@ -126,7 +136,11 @@ describe("TransformCanvas", () => {
   it("re-exports when position changes", () => {
     const onExport = vi.fn();
     const { rerender } = render(
-      <TransformCanvas {...defaultProps} image={makeImage()} onExport={onExport} />,
+      <TransformCanvas
+        {...defaultProps}
+        image={makeImage()}
+        onExport={onExport}
+      />,
     );
 
     act(() => {
@@ -165,8 +179,16 @@ describe("TransformCanvas", () => {
     // Mock setPointerCapture
     surface.setPointerCapture = vi.fn();
 
-    fireEvent.pointerDown(surface, { clientX: 100, clientY: 100, pointerId: 1 });
-    fireEvent.pointerMove(surface, { clientX: 150, clientY: 130, pointerId: 1 });
+    fireEvent.pointerDown(surface, {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(surface, {
+      clientX: 150,
+      clientY: 130,
+      pointerId: 1,
+    });
 
     expect(onPositionChange).toHaveBeenCalled();
   });
@@ -184,12 +206,20 @@ describe("TransformCanvas", () => {
     const surface = screen.getByTestId("transform-canvas-interaction");
     surface.setPointerCapture = vi.fn();
 
-    fireEvent.pointerDown(surface, { clientX: 100, clientY: 100, pointerId: 1 });
+    fireEvent.pointerDown(surface, {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 1,
+    });
     fireEvent.pointerUp(surface, { pointerId: 1 });
 
     onPositionChange.mockClear();
 
-    fireEvent.pointerMove(surface, { clientX: 150, clientY: 130, pointerId: 1 });
+    fireEvent.pointerMove(surface, {
+      clientX: 150,
+      clientY: 130,
+      pointerId: 1,
+    });
     expect(onPositionChange).not.toHaveBeenCalled();
   });
 
@@ -207,18 +237,34 @@ describe("TransformCanvas", () => {
     surface.setPointerCapture = vi.fn();
 
     // First finger down
-    fireEvent.pointerDown(surface, { clientX: 100, clientY: 100, pointerId: 1 });
+    fireEvent.pointerDown(surface, {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 1,
+    });
     // Second finger down — should be ignored
-    fireEvent.pointerDown(surface, { clientX: 200, clientY: 200, pointerId: 2 });
+    fireEvent.pointerDown(surface, {
+      clientX: 200,
+      clientY: 200,
+      pointerId: 2,
+    });
 
     onPositionChange.mockClear();
 
     // Movement from second finger should be ignored
-    fireEvent.pointerMove(surface, { clientX: 250, clientY: 250, pointerId: 2 });
+    fireEvent.pointerMove(surface, {
+      clientX: 250,
+      clientY: 250,
+      pointerId: 2,
+    });
     expect(onPositionChange).not.toHaveBeenCalled();
 
     // Movement from first finger should still work
-    fireEvent.pointerMove(surface, { clientX: 120, clientY: 110, pointerId: 1 });
+    fireEvent.pointerMove(surface, {
+      clientX: 120,
+      clientY: 110,
+      pointerId: 1,
+    });
     expect(onPositionChange).toHaveBeenCalled();
   });
 
@@ -235,31 +281,44 @@ describe("TransformCanvas", () => {
     const surface = screen.getByTestId("transform-canvas-interaction");
     surface.setPointerCapture = vi.fn();
 
-    fireEvent.pointerDown(surface, { clientX: 100, clientY: 100, pointerId: 1 });
+    fireEvent.pointerDown(surface, {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 1,
+    });
     // Lifting a different pointer should not stop drag
     fireEvent.pointerUp(surface, { pointerId: 2 });
 
     onPositionChange.mockClear();
 
     // First pointer should still drag
-    fireEvent.pointerMove(surface, { clientX: 120, clientY: 110, pointerId: 1 });
+    fireEvent.pointerMove(surface, {
+      clientX: 120,
+      clientY: 110,
+      pointerId: 1,
+    });
     expect(onPositionChange).toHaveBeenCalled();
   });
 
   it("does not start drag when image is null", () => {
     const onPositionChange = vi.fn();
     render(
-      <TransformCanvas
-        {...defaultProps}
-        onPositionChange={onPositionChange}
-      />,
+      <TransformCanvas {...defaultProps} onPositionChange={onPositionChange} />,
     );
 
     const surface = screen.getByTestId("transform-canvas-interaction");
     surface.setPointerCapture = vi.fn();
 
-    fireEvent.pointerDown(surface, { clientX: 100, clientY: 100, pointerId: 1 });
-    fireEvent.pointerMove(surface, { clientX: 150, clientY: 130, pointerId: 1 });
+    fireEvent.pointerDown(surface, {
+      clientX: 100,
+      clientY: 100,
+      pointerId: 1,
+    });
+    fireEvent.pointerMove(surface, {
+      clientX: 150,
+      clientY: 130,
+      pointerId: 1,
+    });
 
     expect(onPositionChange).not.toHaveBeenCalled();
   });
@@ -301,9 +360,7 @@ describe("TransformCanvas", () => {
 
   it("does not zoom when image is null", () => {
     const onScaleChange = vi.fn();
-    render(
-      <TransformCanvas {...defaultProps} onScaleChange={onScaleChange} />,
-    );
+    render(<TransformCanvas {...defaultProps} onScaleChange={onScaleChange} />);
 
     const surface = screen.getByTestId("transform-canvas-interaction");
     fireEvent.wheel(surface, { deltaY: -100 });
@@ -540,7 +597,11 @@ describe("TransformCanvas", () => {
   it("cleans up export timer on unmount", () => {
     const onExport = vi.fn();
     const { unmount } = render(
-      <TransformCanvas {...defaultProps} image={makeImage()} onExport={onExport} />,
+      <TransformCanvas
+        {...defaultProps}
+        image={makeImage()}
+        onExport={onExport}
+      />,
     );
 
     // Unmount before timer fires
@@ -555,9 +616,7 @@ describe("TransformCanvas", () => {
   });
 
   it("cleans up without error when no timer is set", () => {
-    const { unmount, rerender } = render(
-      <TransformCanvas {...defaultProps} />,
-    );
+    const { unmount, rerender } = render(<TransformCanvas {...defaultProps} />);
 
     // Rerender to trigger effect cleanup with no timer
     rerender(<TransformCanvas {...defaultProps} image={makeImage()} />);
@@ -617,7 +676,11 @@ describe("TransformCanvas", () => {
   it("adapts aspect ratio to custom canvas dimensions", () => {
     // Square canvas (1:1) should produce a square display area
     const { container } = render(
-      <TransformCanvas {...defaultProps} canvasWidth={2048} canvasHeight={2048} />,
+      <TransformCanvas
+        {...defaultProps}
+        canvasWidth={2048}
+        canvasHeight={2048}
+      />,
     );
 
     const displayWrapper = container.querySelector(
@@ -644,6 +707,8 @@ describe("TransformCanvas", () => {
       vi.advanceTimersByTime(150);
     });
 
-    expect(onExport).toHaveBeenCalledWith(expect.stringContaining("data:image/png"));
+    expect(onExport).toHaveBeenCalledWith(
+      expect.stringContaining("data:image/png"),
+    );
   });
 });

@@ -12,7 +12,11 @@ export function OverlaySelector({
   onToggleOverlay,
 }: OverlaySelectorProps) {
   return (
-    <div className="flex flex-wrap gap-2" role="group" aria-label="Overlay options">
+    <div
+      className="flex flex-wrap gap-2"
+      role="group"
+      aria-label="Overlay options"
+    >
       {OVERLAY_OPTIONS.map((option) => {
         const checked = selectedOverlays.includes(option.id);
         return (
@@ -28,9 +32,7 @@ export function OverlaySelector({
             />
             <span
               className={
-                checked
-                  ? "text-primary-foreground"
-                  : "text-foreground"
+                checked ? "text-primary-foreground" : "text-foreground"
               }
             >
               {option.label}

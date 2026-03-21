@@ -61,9 +61,15 @@ describe("InstructionSteps", () => {
   it("renders step titles", () => {
     render(<InstructionSteps {...defaultProps} />);
 
-    expect(screen.getAllByText("Upload your card art").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Position & frame").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Download prepared image").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Upload your card art").length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Position & frame").length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Download prepared image").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("renders upload button when step 1 is active", () => {
@@ -97,7 +103,9 @@ describe("InstructionSteps", () => {
 
     render(<InstructionSteps {...props} />);
 
-    expect(screen.getAllByText("lightning_bolt.png uploaded").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("lightning_bolt.png uploaded").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("renders numbered circles for non-completed steps", () => {
@@ -168,7 +176,9 @@ describe("InstructionSteps", () => {
 
     render(<InstructionSteps {...props} />);
 
-    expect(screen.getAllByRole("group", { name: "Controls" }).length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByRole("group", { name: "Controls" }).length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Scale").length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getAllByRole("button", { name: "Decrease scale" }).length,
@@ -176,7 +186,9 @@ describe("InstructionSteps", () => {
     expect(
       screen.getAllByRole("button", { name: "Increase scale" }).length,
     ).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Frame Overlay").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Frame Overlay").length).toBeGreaterThanOrEqual(
+      1,
+    );
   });
 
   it("shows positioned summary when step 2 is completed", () => {
@@ -194,7 +206,9 @@ describe("InstructionSteps", () => {
 
     render(<InstructionSteps {...props} />);
 
-    expect(screen.getAllByText("Positioned and framed").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Positioned and framed").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("applies opacity to upcoming steps", () => {
@@ -387,7 +401,9 @@ describe("InstructionSteps", () => {
 
     render(<InstructionSteps {...props} />);
 
-    expect(screen.getAllByText("Advanced options").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Advanced options").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("does not show mobile advanced options when step 2 is not active", () => {

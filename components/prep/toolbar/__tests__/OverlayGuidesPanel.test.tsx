@@ -43,7 +43,10 @@ describe("OverlayGuidesPanel", () => {
   it("calls onToggleOverlay when checkbox is clicked", async () => {
     const onToggleOverlay = vi.fn();
     render(
-      <OverlayGuidesPanel {...defaultProps} onToggleOverlay={onToggleOverlay} />,
+      <OverlayGuidesPanel
+        {...defaultProps}
+        onToggleOverlay={onToggleOverlay}
+      />,
     );
     await userEvent.click(screen.getByRole("checkbox", { name: /^Medium$/i }));
     expect(onToggleOverlay).toHaveBeenCalledWith("medium");

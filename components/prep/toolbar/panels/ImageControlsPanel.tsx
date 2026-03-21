@@ -3,12 +3,21 @@
 import { useCallback, useEffect, useRef } from "react";
 import { Minus, Plus, RotateCw } from "lucide-react";
 import { useRepeatOnHold } from "@/hooks/use-repeat-on-hold";
-import type { PrepState, Algorithm, VerticalPreset } from "@/hooks/use-prep-workflow";
+import type {
+  PrepState,
+  Algorithm,
+  VerticalPreset,
+} from "@/hooks/use-prep-workflow";
 
 const MIN_SCALE = 0.5;
 const SCALE_STEP = 0.01;
 
-const VERTICAL_PRESETS: VerticalPreset[] = ["short", "medium", "normal", "tall"];
+const VERTICAL_PRESETS: VerticalPreset[] = [
+  "short",
+  "medium",
+  "normal",
+  "tall",
+];
 
 type ImageControlsPanelProps = {
   state: PrepState;
@@ -39,12 +48,16 @@ export function ImageControlsPanel({
   onFitHeight,
   onSetVerticalPreset,
 }: ImageControlsPanelProps) {
-  const { position, scale, rotation, imageElement, keepAspectRatio, algorithm } =
-    state;
+  const {
+    position,
+    scale,
+    rotation,
+    imageElement,
+    keepAspectRatio,
+    algorithm,
+  } = state;
 
-  const imageWidth = imageElement
-    ? Math.round(imageElement.width * scale)
-    : 0;
+  const imageWidth = imageElement ? Math.round(imageElement.width * scale) : 0;
   const imageHeight = imageElement
     ? Math.round(imageElement.height * scale)
     : 0;

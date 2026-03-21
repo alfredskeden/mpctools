@@ -53,7 +53,9 @@ describe("MobileAdvancedOptions", () => {
 
   it("does not show sections when collapsed", () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    expect(screen.queryByTestId("mobile-advanced-sections")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("mobile-advanced-sections"),
+    ).not.toBeInTheDocument();
   });
 
   it("shows sections when expanded", async () => {
@@ -72,7 +74,9 @@ describe("MobileAdvancedOptions", () => {
     expect(screen.getByTestId("mobile-advanced-sections")).toBeInTheDocument();
 
     await userEvent.click(screen.getByText("Advanced options"));
-    expect(screen.queryByTestId("mobile-advanced-sections")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("mobile-advanced-sections"),
+    ).not.toBeInTheDocument();
   });
 
   it("sets aria-expanded on main toggle", async () => {
@@ -98,7 +102,9 @@ describe("MobileAdvancedOptions", () => {
     await userEvent.click(screen.getByText("Overlay Guides"));
 
     expect(
-      screen.getByText("Overlays are visual-only and will not be included in downloads."),
+      screen.getByText(
+        "Overlays are visual-only and will not be included in downloads.",
+      ),
     ).toBeInTheDocument();
   });
 

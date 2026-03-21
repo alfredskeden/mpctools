@@ -18,7 +18,9 @@ describe("OverlaySelector", () => {
     for (const option of OVERLAY_OPTIONS) {
       expect(screen.getByText(option.label)).toBeDefined();
     }
-    expect(screen.getAllByRole("checkbox")).toHaveLength(OVERLAY_OPTIONS.length);
+    expect(screen.getAllByRole("checkbox")).toHaveLength(
+      OVERLAY_OPTIONS.length,
+    );
   });
 
   it("renders with group role", () => {

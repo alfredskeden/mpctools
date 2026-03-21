@@ -2,7 +2,8 @@ import { renderHook } from "@testing-library/react";
 import { useRef } from "react";
 import { useClickOutside } from "../use-click-outside";
 
-function createPointerEvent(target: EventTarget) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function createPointerEvent(_: EventTarget) {
   return new PointerEvent("pointerdown", {
     bubbles: true,
     cancelable: true,

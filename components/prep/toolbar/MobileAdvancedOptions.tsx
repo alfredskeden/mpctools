@@ -7,7 +7,11 @@ import { ImageControlsPanel } from "./panels/ImageControlsPanel";
 import { OverlayGuidesPanel } from "./panels/OverlayGuidesPanel";
 import { CanvasSizePanel } from "./panels/CanvasSizePanel";
 import { DpiOverridePanel } from "./panels/DpiOverridePanel";
-import type { PrepState, Algorithm, VerticalPreset } from "@/hooks/use-prep-workflow";
+import type {
+  PrepState,
+  Algorithm,
+  VerticalPreset,
+} from "@/hooks/use-prep-workflow";
 
 type MobileAdvancedOptionsProps = {
   state: PrepState;
@@ -56,7 +60,9 @@ export function MobileAdvancedOptions({
   onSetVerticalPreset,
 }: MobileAdvancedOptionsProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [expandedSection, setExpandedSection] = useState<SectionId | null>(null);
+  const [expandedSection, setExpandedSection] = useState<SectionId | null>(
+    null,
+  );
 
   const toggleSection = (id: SectionId) => {
     setExpandedSection((current) => (current === id ? null : id));
@@ -80,7 +86,10 @@ export function MobileAdvancedOptions({
       </button>
 
       {isOpen && (
-        <div className="mt-2 flex flex-col gap-1" data-testid="mobile-advanced-sections">
+        <div
+          className="mt-2 flex flex-col gap-1"
+          data-testid="mobile-advanced-sections"
+        >
           {SECTIONS.map((section) => (
             <div key={section.id}>
               <button

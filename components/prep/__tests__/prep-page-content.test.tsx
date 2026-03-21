@@ -61,8 +61,15 @@ describe("PrepPageContent", () => {
     originalGetBCR = Element.prototype.getBoundingClientRect;
     Element.prototype.getBoundingClientRect = function () {
       return {
-        width: 700, height: 1000, top: 0, left: 0,
-        bottom: 1000, right: 700, x: 0, y: 0, toJSON: () => ({}),
+        width: 700,
+        height: 1000,
+        top: 0,
+        left: 0,
+        bottom: 1000,
+        right: 700,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
       };
     };
   });
@@ -86,9 +93,15 @@ describe("PrepPageContent", () => {
   it("shows instruction steps", () => {
     render(<PrepPageContent />);
 
-    expect(screen.getAllByText("Upload your card art").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Position & frame").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Download prepared image").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Upload your card art").length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Position & frame").length,
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("Download prepared image").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("shows action buttons", () => {
@@ -130,7 +143,9 @@ describe("PrepPageContent", () => {
       uploadFile();
     });
 
-    expect(screen.getAllByRole("group", { name: "Controls" }).length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByRole("group", { name: "Controls" }).length,
+    ).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Scale").length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getAllByRole("button", { name: "Decrease scale" }).length,
@@ -138,7 +153,9 @@ describe("PrepPageContent", () => {
     expect(
       screen.getAllByRole("button", { name: "Increase scale" }).length,
     ).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Frame Overlay").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Frame Overlay").length).toBeGreaterThanOrEqual(
+      1,
+    );
 
     mocks.restore();
   });
@@ -151,7 +168,9 @@ describe("PrepPageContent", () => {
       uploadFile();
     });
 
-    expect(screen.getAllByText("card.png uploaded").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByText("card.png uploaded").length,
+    ).toBeGreaterThanOrEqual(1);
 
     mocks.restore();
   });
@@ -179,7 +198,9 @@ describe("PrepPageContent", () => {
     });
 
     // Advance past export debounce so canvasDataUrl is set
-    act(() => { vi.advanceTimersByTime(150); });
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
 
     // Mark as positioned
     act(() => {
@@ -187,7 +208,9 @@ describe("PrepPageContent", () => {
     });
 
     // Download button should be enabled (rendered in both mobile and desktop, pick first)
-    const downloadBtn = screen.getAllByRole("button", { name: /download png/i })[0];
+    const downloadBtn = screen.getAllByRole("button", {
+      name: /download png/i,
+    })[0];
     expect(downloadBtn).not.toBeDisabled();
 
     // Mock link.click and capture download name

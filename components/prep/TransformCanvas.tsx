@@ -102,8 +102,12 @@ export const TransformCanvas = ({
       image: overlayImageCache.get(option.filename) ?? null,
     }))
     .filter(
-      (entry): entry is { option: (typeof OVERLAY_OPTIONS)[number]; image: HTMLImageElement } =>
-        entry.image !== null,
+      (
+        entry,
+      ): entry is {
+        option: (typeof OVERLAY_OPTIONS)[number];
+        image: HTMLImageElement;
+      } => entry.image !== null,
     );
 
   // Report native dimensions of the first loaded overlay to parent (once per dimension change)
@@ -160,7 +164,16 @@ export const TransformCanvas = ({
       }
     };
     /* v8 ignore stop */
-  }, [image, position, imageScale, rotation, onExport, stageReady, canvasWidth, canvasHeight]);
+  }, [
+    image,
+    position,
+    imageScale,
+    rotation,
+    onExport,
+    stageReady,
+    canvasWidth,
+    canvasHeight,
+  ]);
 
   const aspectRatio = canvasWidth / canvasHeight;
 

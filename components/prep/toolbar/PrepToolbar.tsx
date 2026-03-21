@@ -9,7 +9,11 @@ import { ImageControlsPanel } from "./panels/ImageControlsPanel";
 import { OverlayGuidesPanel } from "./panels/OverlayGuidesPanel";
 import { CanvasSizePanel } from "./panels/CanvasSizePanel";
 import { DpiOverridePanel } from "./panels/DpiOverridePanel";
-import type { PrepState, Algorithm, VerticalPreset } from "@/hooks/use-prep-workflow";
+import type {
+  PrepState,
+  Algorithm,
+  VerticalPreset,
+} from "@/hooks/use-prep-workflow";
 
 export type ToolbarPanel = "image" | "overlays" | "canvas" | "dpi";
 
@@ -40,7 +44,12 @@ const PANELS: {
   title: string;
 }[] = [
   { id: "image", icon: Move, label: "Image Controls", title: "Image Controls" },
-  { id: "overlays", icon: Layers, label: "Overlay Guides", title: "Overlay Guides" },
+  {
+    id: "overlays",
+    icon: Layers,
+    label: "Overlay Guides",
+    title: "Overlay Guides",
+  },
   { id: "canvas", icon: Square, label: "Canvas Size", title: "Canvas Size" },
   { id: "dpi", icon: Clock, label: "DPI Override", title: "DPI Override" },
 ];

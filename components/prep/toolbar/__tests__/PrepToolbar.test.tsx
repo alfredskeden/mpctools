@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PrepToolbar } from "../PrepToolbar";
 import type { PrepState } from "@/hooks/use-prep-workflow";
@@ -73,54 +73,76 @@ describe("PrepToolbar", () => {
   it("opens Image Controls panel when clicking Image Controls button", async () => {
     render(<PrepToolbar {...defaultProps} />);
     await userEvent.click(screen.getByLabelText("Image Controls"));
-    expect(screen.getByText("Image Controls", { selector: "h3" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Image Controls", { selector: "h3" }),
+    ).toBeInTheDocument();
   });
 
   it("opens Overlay Guides panel when clicking Overlay Guides button", async () => {
     render(<PrepToolbar {...defaultProps} />);
     await userEvent.click(screen.getByLabelText("Overlay Guides"));
-    expect(screen.getByText("Overlay Guides", { selector: "h3" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Overlay Guides", { selector: "h3" }),
+    ).toBeInTheDocument();
   });
 
   it("opens Canvas Size panel when clicking Canvas Size button", async () => {
     render(<PrepToolbar {...defaultProps} />);
     await userEvent.click(screen.getByLabelText("Canvas Size"));
-    expect(screen.getByText("Canvas Size", { selector: "h3" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Canvas Size", { selector: "h3" }),
+    ).toBeInTheDocument();
   });
 
   it("opens DPI Override panel when clicking DPI Override button", async () => {
     render(<PrepToolbar {...defaultProps} />);
     await userEvent.click(screen.getByLabelText("DPI Override"));
-    expect(screen.getByText("DPI Override", { selector: "h3" })).toBeInTheDocument();
+    expect(
+      screen.getByText("DPI Override", { selector: "h3" }),
+    ).toBeInTheDocument();
   });
 
   it("closes panel when clicking the same icon again", async () => {
     render(<PrepToolbar {...defaultProps} />);
     await userEvent.click(screen.getByLabelText("Image Controls"));
-    expect(screen.getByText("Image Controls", { selector: "h3" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Image Controls", { selector: "h3" }),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByLabelText("Image Controls"));
-    expect(screen.queryByText("Image Controls", { selector: "h3" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Image Controls", { selector: "h3" }),
+    ).not.toBeInTheDocument();
   });
 
   it("switches panel when clicking a different icon", async () => {
     render(<PrepToolbar {...defaultProps} />);
     await userEvent.click(screen.getByLabelText("Image Controls"));
-    expect(screen.getByText("Image Controls", { selector: "h3" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Image Controls", { selector: "h3" }),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByLabelText("Canvas Size"));
-    expect(screen.queryByText("Image Controls", { selector: "h3" })).not.toBeInTheDocument();
-    expect(screen.getByText("Canvas Size", { selector: "h3" })).toBeInTheDocument();
+    expect(
+      screen.queryByText("Image Controls", { selector: "h3" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Canvas Size", { selector: "h3" }),
+    ).toBeInTheDocument();
   });
 
   it("closes panel on click outside", async () => {
-    const { container } = render(
+    render(
       <div>
         <div data-testid="outside">Outside</div>
         <PrepToolbar {...defaultProps} />
       </div>,
     );
     await userEvent.click(screen.getByLabelText("Image Controls"));
-    expect(screen.getByText("Image Controls", { selector: "h3" })).toBeInTheDocument();
+    expect(
+      screen.getByText("Image Controls", { selector: "h3" }),
+    ).toBeInTheDocument();
     await userEvent.click(screen.getByTestId("outside"));
-    expect(screen.queryByText("Image Controls", { selector: "h3" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Image Controls", { selector: "h3" }),
+    ).not.toBeInTheDocument();
   });
 });

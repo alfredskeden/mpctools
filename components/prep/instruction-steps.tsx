@@ -3,7 +3,12 @@
 import { useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Upload } from "lucide-react";
-import type { StepStatus, PrepState, Algorithm, VerticalPreset } from "@/hooks/use-prep-workflow";
+import type {
+  StepStatus,
+  PrepState,
+  Algorithm,
+  VerticalPreset,
+} from "@/hooks/use-prep-workflow";
 import { StepCircle } from "@/components/ui/StepCircle";
 import {
   MobileInstructionCarousel,
