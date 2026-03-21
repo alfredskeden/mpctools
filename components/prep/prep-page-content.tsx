@@ -6,6 +6,7 @@ import { exportFullResolution } from "@/lib/prep-renderer";
 import { InstructionSteps } from "./instruction-steps";
 import { PrepActions } from "./prep-actions";
 import { TransformCanvas } from "./TransformCanvas";
+import { PrepToolbar } from "./toolbar/PrepToolbar";
 export function PrepPageContent() {
   const {
     state,
@@ -18,6 +19,17 @@ export function PrepPageContent() {
     setCanvasDataUrl,
     toggleOverlay,
     resetWorkflow,
+    setCanvasSize,
+    setDpiOverride,
+    setOverlayOpacity,
+    setKeepAspectRatio,
+    setAlgorithm,
+    setImageDimensions,
+    centerHorizontal,
+    centerVertical,
+    fitWidth,
+    fitHeight,
+    setVerticalPreset,
     canDownload,
     canContinue,
     stepStatuses,
@@ -51,10 +63,30 @@ export function PrepPageContent() {
   return (
     <div className="flex min-h-0 flex-1 flex-col md:flex-row">
       {/* Canvas area */}
-      <div className="flex min-h-7/12 flex-1 items-center justify-center bg-surface-ground p-4 md:min-h-0 md:p-6">
+      <div className="relative flex min-h-7/12 flex-1 items-center justify-center bg-surface-ground p-4 md:min-h-0 md:p-6">
+        <PrepToolbar
+          disabled={state.currentStep < 2}
+          state={state}
+          onUpdatePosition={updatePosition}
+          onUpdateScale={updateScale}
+          onUpdateRotation={updateRotation}
+          onToggleOverlay={toggleOverlay}
+          onSetOverlayOpacity={setOverlayOpacity}
+          onSetCanvasSize={setCanvasSize}
+          onSetDpiOverride={setDpiOverride}
+          onSetKeepAspectRatio={setKeepAspectRatio}
+          onSetAlgorithm={setAlgorithm}
+          onSetImageDimensions={setImageDimensions}
+          onCenterHorizontal={centerHorizontal}
+          onCenterVertical={centerVertical}
+          onFitWidth={fitWidth}
+          onFitHeight={fitHeight}
+          onSetVerticalPreset={setVerticalPreset}
+        />
         <TransformCanvas
           image={state.imageElement}
           selectedOverlays={state.selectedOverlays}
+          overlayOpacities={state.overlayOpacities}
           scale={state.scale}
           position={state.position}
           rotation={state.rotation}
@@ -77,6 +109,18 @@ export function PrepPageContent() {
             onUpdateRotation={updateRotation}
             onMarkPositioned={markPositioned}
             onReposition={resetWorkflow}
+            onUpdatePosition={updatePosition}
+            onSetOverlayOpacity={setOverlayOpacity}
+            onSetCanvasSize={setCanvasSize}
+            onSetDpiOverride={setDpiOverride}
+            onSetKeepAspectRatio={setKeepAspectRatio}
+            onSetAlgorithm={setAlgorithm}
+            onSetImageDimensions={setImageDimensions}
+            onCenterHorizontal={centerHorizontal}
+            onCenterVertical={centerVertical}
+            onFitWidth={fitWidth}
+            onFitHeight={fitHeight}
+            onSetVerticalPreset={setVerticalPreset}
             prepAction={
               <PrepActions
                 canDownload={canDownload}

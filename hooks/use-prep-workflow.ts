@@ -28,6 +28,27 @@ export type PrepStep = 1 | 2 | 3;
 
 export type { StepStatus } from "@/lib/step-types";
 
+export type Algorithm = "detail-preserving" | "standard";
+
+export type VerticalPreset = "short" | "medium" | "normal" | "tall";
+
+export const VERTICAL_PRESET_CENTERS: Record<VerticalPreset, number> = {
+  short: 2836,
+  medium: 2947,
+  normal: 3044,
+  tall: 3143,
+};
+
+export const CANVAS_SIZE_PRESETS = [
+  { label: "Default", width: 3520, height: 4800 },
+  { label: "Classic borderless", width: 3712, height: 4608 },
+  { label: "1:1", width: 2048, height: 2048 },
+  { label: "4:3", width: 3264, height: 2448 },
+  { label: "16:9", width: 3264, height: 1836 },
+  { label: "3:4", width: 2448, height: 3264 },
+  { label: "9:16", width: 1836, height: 3264 },
+] as const;
+
 export type PrepState = {
   currentStep: PrepStep;
   uploadedImage: string | null;
@@ -40,6 +61,12 @@ export type PrepState = {
   isDownloaded: boolean;
   selectedOverlays: string[];
   canvasDataUrl: string | null;
+  canvasWidth: number;
+  canvasHeight: number;
+  dpiOverride: number | null;
+  overlayOpacities: Record<string, number>;
+  keepAspectRatio: boolean;
+  algorithm: Algorithm;
 };
 
 type PrepAction =
@@ -55,7 +82,18 @@ type PrepAction =
   | { type: "TOGGLE_OVERLAY"; payload: string }
   | { type: "SET_CANVAS_DATA_URL"; payload: string }
   | { type: "RESET" }
-  | { type: "REPOSITION" };
+  | { type: "REPOSITION" }
+  | { type: "SET_CANVAS_SIZE"; payload: { width: number; height: number } }
+  | { type: "SET_DPI_OVERRIDE"; payload: number | null }
+  | { type: "SET_OVERLAY_OPACITY"; payload: { id: string; opacity: number } }
+  | { type: "SET_KEEP_ASPECT_RATIO"; payload: boolean }
+  | { type: "SET_ALGORITHM"; payload: Algorithm }
+  | { type: "SET_IMAGE_DIMENSIONS"; payload: { width: number; height: number } }
+  | { type: "CENTER_HORIZONTAL" }
+  | { type: "CENTER_VERTICAL" }
+  | { type: "FIT_WIDTH" }
+  | { type: "FIT_HEIGHT" }
+  | { type: "SET_VERTICAL_PRESET"; payload: VerticalPreset };
 
 const initialState: PrepState = {
   currentStep: 1,
@@ -69,11 +107,22 @@ const initialState: PrepState = {
   isDownloaded: false,
   selectedOverlays: [],
   canvasDataUrl: null,
+  canvasWidth: CANVAS_WIDTH,
+  canvasHeight: CANVAS_HEIGHT,
+  dpiOverride: null,
+  overlayOpacities: {},
+  keepAspectRatio: true,
+  algorithm: "detail-preserving",
 };
 
 export function prepReducer(state: PrepState, action: PrepAction): PrepState {
   switch (action.type) {
-    case "UPLOAD_IMAGE":
+    case "UPLOAD_IMAGE": {
+      const defaultOverlays = ["tall_normal", "black_bottom"];
+      const opacities: Record<string, number> = {};
+      for (const id of defaultOverlays) {
+        opacities[id] = 100;
+      }
       return {
         ...state,
         currentStep: 2,
@@ -82,14 +131,16 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         fileName: action.payload.fileName,
         position: { x: 0, y: 0 },
         scale: calculateInitialScale(action.payload.element, {
-          width: CANVAS_WIDTH,
-          height: CANVAS_HEIGHT,
+          width: state.canvasWidth,
+          height: state.canvasHeight,
         }),
         rotation: 0,
         isPositioned: false,
         isDownloaded: false,
-        selectedOverlays: ["tall_normal", "black_bottom"],
+        selectedOverlays: defaultOverlays,
+        overlayOpacities: opacities,
       };
+    }
     case "UPDATE_POSITION":
       return {
         ...state,
@@ -116,13 +167,20 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         ...state,
         isDownloaded: true,
       };
-    case "TOGGLE_OVERLAY":
+    case "TOGGLE_OVERLAY": {
+      const isAdding = !state.selectedOverlays.includes(action.payload);
+      const newOpacities = { ...state.overlayOpacities };
+      if (isAdding && !(action.payload in newOpacities)) {
+        newOpacities[action.payload] = 100;
+      }
       return {
         ...state,
-        selectedOverlays: state.selectedOverlays.includes(action.payload)
-          ? state.selectedOverlays.filter((id) => id !== action.payload)
-          : [...state.selectedOverlays, action.payload],
+        selectedOverlays: isAdding
+          ? [...state.selectedOverlays, action.payload]
+          : state.selectedOverlays.filter((id) => id !== action.payload),
+        overlayOpacities: newOpacities,
       };
+    }
     case "SET_CANVAS_DATA_URL":
       return {
         ...state,
@@ -137,6 +195,77 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         isPositioned: false,
         isDownloaded: false,
       };
+    case "SET_CANVAS_SIZE":
+      return {
+        ...state,
+        canvasWidth: action.payload.width,
+        canvasHeight: action.payload.height,
+      };
+    case "SET_DPI_OVERRIDE":
+      return {
+        ...state,
+        dpiOverride: action.payload,
+      };
+    case "SET_OVERLAY_OPACITY":
+      return {
+        ...state,
+        overlayOpacities: {
+          ...state.overlayOpacities,
+          [action.payload.id]: action.payload.opacity,
+        },
+      };
+    case "SET_KEEP_ASPECT_RATIO":
+      return {
+        ...state,
+        keepAspectRatio: action.payload,
+      };
+    case "SET_ALGORITHM":
+      return {
+        ...state,
+        algorithm: action.payload,
+      };
+    case "SET_IMAGE_DIMENSIONS": {
+      if (!state.imageElement) return state;
+      const newScale = action.payload.width / state.imageElement.width;
+      return {
+        ...state,
+        scale: newScale,
+      };
+    }
+    case "CENTER_HORIZONTAL":
+      return {
+        ...state,
+        position: { ...state.position, x: 0 },
+      };
+    case "CENTER_VERTICAL":
+      return {
+        ...state,
+        position: { ...state.position, y: 0 },
+      };
+    case "FIT_WIDTH": {
+      if (!state.imageElement) return state;
+      return {
+        ...state,
+        scale: state.canvasWidth / state.imageElement.width,
+      };
+    }
+    case "FIT_HEIGHT": {
+      if (!state.imageElement) return state;
+      return {
+        ...state,
+        scale: state.canvasHeight / state.imageElement.height,
+      };
+    }
+    case "SET_VERTICAL_PRESET": {
+      const targetY = VERTICAL_PRESET_CENTERS[action.payload];
+      return {
+        ...state,
+        position: {
+          ...state.position,
+          y: targetY - state.canvasHeight / 2,
+        },
+      };
+    }
     default:
       return state;
   }
@@ -199,6 +328,50 @@ export function usePrepWorkflow() {
     dispatch({ type: "REPOSITION" });
   }, []);
 
+  const setCanvasSize = useCallback((width: number, height: number) => {
+    dispatch({ type: "SET_CANVAS_SIZE", payload: { width, height } });
+  }, []);
+
+  const setDpiOverride = useCallback((dpi: number | null) => {
+    dispatch({ type: "SET_DPI_OVERRIDE", payload: dpi });
+  }, []);
+
+  const setOverlayOpacity = useCallback((id: string, opacity: number) => {
+    dispatch({ type: "SET_OVERLAY_OPACITY", payload: { id, opacity } });
+  }, []);
+
+  const setKeepAspectRatio = useCallback((keep: boolean) => {
+    dispatch({ type: "SET_KEEP_ASPECT_RATIO", payload: keep });
+  }, []);
+
+  const setAlgorithm = useCallback((algorithm: Algorithm) => {
+    dispatch({ type: "SET_ALGORITHM", payload: algorithm });
+  }, []);
+
+  const setImageDimensions = useCallback((width: number, height: number) => {
+    dispatch({ type: "SET_IMAGE_DIMENSIONS", payload: { width, height } });
+  }, []);
+
+  const centerHorizontal = useCallback(() => {
+    dispatch({ type: "CENTER_HORIZONTAL" });
+  }, []);
+
+  const centerVertical = useCallback(() => {
+    dispatch({ type: "CENTER_VERTICAL" });
+  }, []);
+
+  const fitWidth = useCallback(() => {
+    dispatch({ type: "FIT_WIDTH" });
+  }, []);
+
+  const fitHeight = useCallback(() => {
+    dispatch({ type: "FIT_HEIGHT" });
+  }, []);
+
+  const setVerticalPreset = useCallback((preset: VerticalPreset) => {
+    dispatch({ type: "SET_VERTICAL_PRESET", payload: preset });
+  }, []);
+
   const canDownload = state.isPositioned;
   const canContinue = state.isDownloaded;
   const stepStatuses = getStepStatuses(state.currentStep);
@@ -215,6 +388,17 @@ export function usePrepWorkflow() {
     setCanvasDataUrl,
     reset,
     resetWorkflow,
+    setCanvasSize,
+    setDpiOverride,
+    setOverlayOpacity,
+    setKeepAspectRatio,
+    setAlgorithm,
+    setImageDimensions,
+    centerHorizontal,
+    centerVertical,
+    fitWidth,
+    fitHeight,
+    setVerticalPreset,
     canDownload,
     canContinue,
     stepStatuses,

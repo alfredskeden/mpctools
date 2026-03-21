@@ -23,6 +23,7 @@ type DisplayState = {
 type TransformCanvasProps = {
   image: HTMLImageElement | null;
   selectedOverlays: string[];
+  overlayOpacities?: Record<string, number>;
   scale: number;
   position: { x: number; y: number };
   rotation: number;
@@ -35,6 +36,7 @@ type TransformCanvasProps = {
 export const TransformCanvas = ({
   image,
   selectedOverlays,
+  overlayOpacities,
   scale: imageScale,
   position,
   rotation,
@@ -318,6 +320,7 @@ export const TransformCanvas = ({
                   width: "100%",
                   height: "100%",
                   pointerEvents: "none",
+                  opacity: (overlayOpacities?.[option.id] ?? 100) / 100,
                 }}
               />
             ))}

@@ -444,6 +444,80 @@ describe("TransformCanvas", () => {
     vi.stubGlobal("Image", OriginalImage);
   });
 
+  it("applies overlay opacity from overlayOpacities prop", () => {
+    const OriginalImage = globalThis.Image;
+
+    vi.stubGlobal("Image", function MockImage(this: HTMLImageElement) {
+      const img = new OriginalImage();
+      const originalSrcDescriptor = Object.getOwnPropertyDescriptor(
+        HTMLImageElement.prototype,
+        "src",
+      );
+      Object.defineProperty(img, "src", {
+        get() {
+          return originalSrcDescriptor?.get?.call(img) ?? "";
+        },
+        set(val: string) {
+          originalSrcDescriptor?.set?.call(img, val);
+          img.onload?.(new Event("load"));
+        },
+        configurable: true,
+      });
+      return img;
+    });
+
+    render(
+      <TransformCanvas
+        {...defaultProps}
+        image={makeImage()}
+        selectedOverlays={["tall_normal"]}
+        overlayOpacities={{ tall_normal: 50 }}
+      />,
+    );
+
+    const overlay = screen.getByTestId("transform-canvas-overlay");
+    expect(overlay.style.opacity).toBe("0.5");
+
+    vi.stubGlobal("Image", OriginalImage);
+  });
+
+  it("defaults overlay opacity to 1 when not specified in overlayOpacities", () => {
+    const OriginalImage = globalThis.Image;
+
+    vi.stubGlobal("Image", function MockImage(this: HTMLImageElement) {
+      const img = new OriginalImage();
+      const originalSrcDescriptor = Object.getOwnPropertyDescriptor(
+        HTMLImageElement.prototype,
+        "src",
+      );
+      Object.defineProperty(img, "src", {
+        get() {
+          return originalSrcDescriptor?.get?.call(img) ?? "";
+        },
+        set(val: string) {
+          originalSrcDescriptor?.set?.call(img, val);
+          img.onload?.(new Event("load"));
+        },
+        configurable: true,
+      });
+      return img;
+    });
+
+    render(
+      <TransformCanvas
+        {...defaultProps}
+        image={makeImage()}
+        selectedOverlays={["tall_normal"]}
+        overlayOpacities={{}}
+      />,
+    );
+
+    const overlay = screen.getByTestId("transform-canvas-overlay");
+    expect(overlay.style.opacity).toBe("1");
+
+    vi.stubGlobal("Image", OriginalImage);
+  });
+
   it("clears overlay for unknown overlay id", () => {
     render(
       <TransformCanvas

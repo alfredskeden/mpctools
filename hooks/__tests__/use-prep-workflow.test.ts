@@ -4,8 +4,11 @@ import {
   getStepStatuses,
   usePrepWorkflow,
   OVERLAY_OPTIONS,
+  VERTICAL_PRESET_CENTERS,
+  CANVAS_SIZE_PRESETS,
   type PrepState,
 } from "../use-prep-workflow";
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
 
 const makeImage = () => ({ width: 100, height: 100 }) as HTMLImageElement;
 
@@ -21,6 +24,12 @@ const initialState: PrepState = {
   isDownloaded: false,
   selectedOverlays: [],
   canvasDataUrl: null,
+  canvasWidth: CANVAS_WIDTH,
+  canvasHeight: CANVAS_HEIGHT,
+  dpiOverride: null,
+  overlayOpacities: {},
+  keepAspectRatio: true,
+  algorithm: "detail-preserving",
 };
 
 describe("prepReducer", () => {
@@ -139,6 +148,7 @@ describe("prepReducer", () => {
     });
 
     expect(result.selectedOverlays).toEqual(["normal"]);
+    expect(result.overlayOpacities.normal).toBe(100);
   });
 
   it("handles TOGGLE_OVERLAY to remove an overlay", () => {
@@ -149,6 +159,20 @@ describe("prepReducer", () => {
     });
 
     expect(result.selectedOverlays).toEqual(["short"]);
+  });
+
+  it("preserves existing opacity when toggling overlay back on", () => {
+    const state: PrepState = {
+      ...initialState,
+      selectedOverlays: [],
+      overlayOpacities: { normal: 75 },
+    };
+    const result = prepReducer(state, {
+      type: "TOGGLE_OVERLAY",
+      payload: "normal",
+    });
+
+    expect(result.overlayOpacities.normal).toBe(75);
   });
 
   it("sets selectedOverlays to tall_normal and black_bottom on UPLOAD_IMAGE", () => {
@@ -163,6 +187,41 @@ describe("prepReducer", () => {
     });
 
     expect(result.selectedOverlays).toEqual(["tall_normal", "black_bottom"]);
+  });
+
+  it("initializes overlayOpacities to 100 for default overlays on UPLOAD_IMAGE", () => {
+    const result = prepReducer(initialState, {
+      type: "UPLOAD_IMAGE",
+      payload: {
+        dataUrl: "data:new",
+        element: makeImage(),
+        fileName: "new.png",
+      },
+    });
+
+    expect(result.overlayOpacities).toEqual({
+      tall_normal: 100,
+      black_bottom: 100,
+    });
+  });
+
+  it("uses current canvasWidth/canvasHeight for initial scale on UPLOAD_IMAGE", () => {
+    const state: PrepState = {
+      ...initialState,
+      canvasWidth: 2048,
+      canvasHeight: 2048,
+    };
+    const largeImage = { width: 4000, height: 3000 } as HTMLImageElement;
+    const result = prepReducer(state, {
+      type: "UPLOAD_IMAGE",
+      payload: {
+        dataUrl: "data:large",
+        element: largeImage,
+        fileName: "large.png",
+      },
+    });
+
+    expect(result.scale).toBe((2048 * 0.8) / 4000);
   });
 
   it("handles SET_CANVAS_DATA_URL", () => {
@@ -187,6 +246,12 @@ describe("prepReducer", () => {
       isDownloaded: true,
       canvasDataUrl: "data:image/png;base64,xyz",
       selectedOverlays: ["normal"],
+      canvasWidth: CANVAS_WIDTH,
+      canvasHeight: CANVAS_HEIGHT,
+      dpiOverride: null,
+      overlayOpacities: { normal: 80 },
+      keepAspectRatio: true,
+      algorithm: "detail-preserving",
     };
 
     const result = prepReducer(state, { type: "REPOSITION" });
@@ -217,10 +282,156 @@ describe("prepReducer", () => {
       isDownloaded: true,
       canvasDataUrl: null,
       selectedOverlays: ["normal"],
+      canvasWidth: 2048,
+      canvasHeight: 2048,
+      dpiOverride: 300,
+      overlayOpacities: { normal: 80 },
+      keepAspectRatio: false,
+      algorithm: "standard",
     };
 
     const result = prepReducer(state, { type: "RESET" });
     expect(result).toEqual(initialState);
+  });
+
+  it("handles SET_CANVAS_SIZE", () => {
+    const result = prepReducer(initialState, {
+      type: "SET_CANVAS_SIZE",
+      payload: { width: 2048, height: 2048 },
+    });
+
+    expect(result.canvasWidth).toBe(2048);
+    expect(result.canvasHeight).toBe(2048);
+  });
+
+  it("handles SET_DPI_OVERRIDE with a number", () => {
+    const result = prepReducer(initialState, {
+      type: "SET_DPI_OVERRIDE",
+      payload: 300,
+    });
+
+    expect(result.dpiOverride).toBe(300);
+  });
+
+  it("handles SET_DPI_OVERRIDE with null", () => {
+    const state: PrepState = { ...initialState, dpiOverride: 300 };
+    const result = prepReducer(state, {
+      type: "SET_DPI_OVERRIDE",
+      payload: null,
+    });
+
+    expect(result.dpiOverride).toBeNull();
+  });
+
+  it("handles SET_OVERLAY_OPACITY", () => {
+    const result = prepReducer(initialState, {
+      type: "SET_OVERLAY_OPACITY",
+      payload: { id: "normal", opacity: 50 },
+    });
+
+    expect(result.overlayOpacities.normal).toBe(50);
+  });
+
+  it("handles SET_KEEP_ASPECT_RATIO", () => {
+    const result = prepReducer(initialState, {
+      type: "SET_KEEP_ASPECT_RATIO",
+      payload: false,
+    });
+
+    expect(result.keepAspectRatio).toBe(false);
+  });
+
+  it("handles SET_ALGORITHM", () => {
+    const result = prepReducer(initialState, {
+      type: "SET_ALGORITHM",
+      payload: "standard",
+    });
+
+    expect(result.algorithm).toBe("standard");
+  });
+
+  it("handles SET_IMAGE_DIMENSIONS by computing scale from width", () => {
+    const image = { width: 200, height: 300 } as HTMLImageElement;
+    const state: PrepState = { ...initialState, imageElement: image, scale: 1 };
+    const result = prepReducer(state, {
+      type: "SET_IMAGE_DIMENSIONS",
+      payload: { width: 400, height: 600 },
+    });
+
+    expect(result.scale).toBe(2);
+  });
+
+  it("handles SET_IMAGE_DIMENSIONS with no image as no-op", () => {
+    const result = prepReducer(initialState, {
+      type: "SET_IMAGE_DIMENSIONS",
+      payload: { width: 400, height: 600 },
+    });
+
+    expect(result.scale).toBe(1);
+  });
+
+  it("handles CENTER_HORIZONTAL", () => {
+    const state: PrepState = { ...initialState, position: { x: 50, y: 100 } };
+    const result = prepReducer(state, { type: "CENTER_HORIZONTAL" });
+
+    expect(result.position).toEqual({ x: 0, y: 100 });
+  });
+
+  it("handles CENTER_VERTICAL", () => {
+    const state: PrepState = { ...initialState, position: { x: 50, y: 100 } };
+    const result = prepReducer(state, { type: "CENTER_VERTICAL" });
+
+    expect(result.position).toEqual({ x: 50, y: 0 });
+  });
+
+  it("handles FIT_WIDTH by scaling image to canvas width", () => {
+    const image = { width: 200, height: 300 } as HTMLImageElement;
+    const state: PrepState = { ...initialState, imageElement: image };
+    const result = prepReducer(state, { type: "FIT_WIDTH" });
+
+    expect(result.scale).toBe(CANVAS_WIDTH / 200);
+  });
+
+  it("handles FIT_WIDTH with no image as no-op", () => {
+    const result = prepReducer(initialState, { type: "FIT_WIDTH" });
+    expect(result.scale).toBe(1);
+  });
+
+  it("handles FIT_HEIGHT by scaling image to canvas height", () => {
+    const image = { width: 200, height: 300 } as HTMLImageElement;
+    const state: PrepState = { ...initialState, imageElement: image };
+    const result = prepReducer(state, { type: "FIT_HEIGHT" });
+
+    expect(result.scale).toBe(CANVAS_HEIGHT / 300);
+  });
+
+  it("handles FIT_HEIGHT with no image as no-op", () => {
+    const result = prepReducer(initialState, { type: "FIT_HEIGHT" });
+    expect(result.scale).toBe(1);
+  });
+
+  it("handles SET_VERTICAL_PRESET", () => {
+    const result = prepReducer(initialState, {
+      type: "SET_VERTICAL_PRESET",
+      payload: "short",
+    });
+
+    expect(result.position.y).toBe(
+      VERTICAL_PRESET_CENTERS.short - CANVAS_HEIGHT / 2,
+    );
+  });
+
+  it("handles SET_VERTICAL_PRESET preserving x position", () => {
+    const state: PrepState = { ...initialState, position: { x: 50, y: 0 } };
+    const result = prepReducer(state, {
+      type: "SET_VERTICAL_PRESET",
+      payload: "tall",
+    });
+
+    expect(result.position.x).toBe(50);
+    expect(result.position.y).toBe(
+      VERTICAL_PRESET_CENTERS.tall - CANVAS_HEIGHT / 2,
+    );
   });
 });
 
@@ -246,6 +457,35 @@ describe("OVERLAY_OPTIONS", () => {
       expect(option).toHaveProperty("label");
       expect(option).toHaveProperty("filename");
     }
+  });
+});
+
+describe("CANVAS_SIZE_PRESETS", () => {
+  it("contains presets with label, width, and height", () => {
+    expect(CANVAS_SIZE_PRESETS.length).toBeGreaterThan(0);
+    for (const preset of CANVAS_SIZE_PRESETS) {
+      expect(preset).toHaveProperty("label");
+      expect(preset).toHaveProperty("width");
+      expect(preset).toHaveProperty("height");
+      expect(preset.width).toBeGreaterThan(0);
+      expect(preset.height).toBeGreaterThan(0);
+    }
+  });
+
+  it("has Default preset matching CANVAS_WIDTH and CANVAS_HEIGHT", () => {
+    const defaultPreset = CANVAS_SIZE_PRESETS.find((p) => p.label === "Default");
+    expect(defaultPreset).toBeDefined();
+    expect(defaultPreset!.width).toBe(CANVAS_WIDTH);
+    expect(defaultPreset!.height).toBe(CANVAS_HEIGHT);
+  });
+});
+
+describe("VERTICAL_PRESET_CENTERS", () => {
+  it("has entries for all four presets", () => {
+    expect(VERTICAL_PRESET_CENTERS).toHaveProperty("short");
+    expect(VERTICAL_PRESET_CENTERS).toHaveProperty("medium");
+    expect(VERTICAL_PRESET_CENTERS).toHaveProperty("normal");
+    expect(VERTICAL_PRESET_CENTERS).toHaveProperty("tall");
   });
 });
 
@@ -432,5 +672,149 @@ describe("usePrepWorkflow", () => {
     expect(result.current.state.isPositioned).toBe(false);
     expect(result.current.state.isDownloaded).toBe(false);
     expect(result.current.state.uploadedImage).toBe("data:test");
+  });
+
+  it("sets canvas size", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.setCanvasSize(2048, 2048);
+    });
+
+    expect(result.current.state.canvasWidth).toBe(2048);
+    expect(result.current.state.canvasHeight).toBe(2048);
+  });
+
+  it("sets DPI override", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.setDpiOverride(300);
+    });
+
+    expect(result.current.state.dpiOverride).toBe(300);
+  });
+
+  it("clears DPI override", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.setDpiOverride(300);
+    });
+    act(() => {
+      result.current.setDpiOverride(null);
+    });
+
+    expect(result.current.state.dpiOverride).toBeNull();
+  });
+
+  it("sets overlay opacity", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.setOverlayOpacity("normal", 50);
+    });
+
+    expect(result.current.state.overlayOpacities.normal).toBe(50);
+  });
+
+  it("sets keep aspect ratio", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.setKeepAspectRatio(false);
+    });
+
+    expect(result.current.state.keepAspectRatio).toBe(false);
+  });
+
+  it("sets algorithm", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.setAlgorithm("standard");
+    });
+
+    expect(result.current.state.algorithm).toBe("standard");
+  });
+
+  it("sets image dimensions", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+    const image = { width: 200, height: 300 } as HTMLImageElement;
+
+    act(() => {
+      result.current.uploadImage("data:test", image, "test.png");
+    });
+    act(() => {
+      result.current.setImageDimensions(400, 600);
+    });
+
+    expect(result.current.state.scale).toBe(2);
+  });
+
+  it("centers horizontally", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.updatePosition(50, 100);
+    });
+    act(() => {
+      result.current.centerHorizontal();
+    });
+
+    expect(result.current.state.position).toEqual({ x: 0, y: 100 });
+  });
+
+  it("centers vertically", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.updatePosition(50, 100);
+    });
+    act(() => {
+      result.current.centerVertical();
+    });
+
+    expect(result.current.state.position).toEqual({ x: 50, y: 0 });
+  });
+
+  it("fits width", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+    const image = { width: 200, height: 300 } as HTMLImageElement;
+
+    act(() => {
+      result.current.uploadImage("data:test", image, "test.png");
+    });
+    act(() => {
+      result.current.fitWidth();
+    });
+
+    expect(result.current.state.scale).toBe(CANVAS_WIDTH / 200);
+  });
+
+  it("fits height", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+    const image = { width: 200, height: 300 } as HTMLImageElement;
+
+    act(() => {
+      result.current.uploadImage("data:test", image, "test.png");
+    });
+    act(() => {
+      result.current.fitHeight();
+    });
+
+    expect(result.current.state.scale).toBe(CANVAS_HEIGHT / 300);
+  });
+
+  it("sets vertical preset", () => {
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    act(() => {
+      result.current.setVerticalPreset("normal");
+    });
+
+    expect(result.current.state.position.y).toBe(
+      VERTICAL_PRESET_CENTERS.normal - CANVAS_HEIGHT / 2,
+    );
   });
 });

@@ -3,13 +3,14 @@
 import { useCallback, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Upload } from "lucide-react";
-import type { StepStatus, PrepState } from "@/hooks/use-prep-workflow";
+import type { StepStatus, PrepState, Algorithm, VerticalPreset } from "@/hooks/use-prep-workflow";
 import { StepCircle } from "@/components/ui/StepCircle";
 import {
   MobileInstructionCarousel,
   type CarouselStep,
 } from "@/components/ui/mobile-instruction-carousel";
 import { ControlsPanel } from "./controls-panel";
+import { MobileAdvancedOptions } from "./toolbar/MobileAdvancedOptions";
 
 type InstructionStepsProps = {
   stepStatuses: readonly StepStatus[];
@@ -25,6 +26,18 @@ type InstructionStepsProps = {
   onMarkPositioned: () => void;
   onReposition: () => void;
   prepAction: React.ReactNode;
+  onUpdatePosition: (x: number, y: number) => void;
+  onSetOverlayOpacity: (id: string, opacity: number) => void;
+  onSetCanvasSize: (width: number, height: number) => void;
+  onSetDpiOverride: (dpi: number | null) => void;
+  onSetKeepAspectRatio: (keep: boolean) => void;
+  onSetAlgorithm: (algorithm: Algorithm) => void;
+  onSetImageDimensions: (width: number, height: number) => void;
+  onCenterHorizontal: () => void;
+  onCenterVertical: () => void;
+  onFitWidth: () => void;
+  onFitHeight: () => void;
+  onSetVerticalPreset: (preset: VerticalPreset) => void;
 };
 
 export const InstructionSteps = ({
@@ -37,6 +50,18 @@ export const InstructionSteps = ({
   onMarkPositioned,
   onReposition,
   prepAction,
+  onUpdatePosition,
+  onSetOverlayOpacity,
+  onSetCanvasSize,
+  onSetDpiOverride,
+  onSetKeepAspectRatio,
+  onSetAlgorithm,
+  onSetImageDimensions,
+  onCenterHorizontal,
+  onCenterVertical,
+  onFitWidth,
+  onFitHeight,
+  onSetVerticalPreset,
 }: InstructionStepsProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -127,6 +152,24 @@ export const InstructionSteps = ({
                   onUpdateRotation={onUpdateRotation}
                 />
               </div>
+              <MobileAdvancedOptions
+                state={state}
+                onUpdatePosition={onUpdatePosition}
+                onUpdateScale={onUpdateScale}
+                onUpdateRotation={onUpdateRotation}
+                onToggleOverlay={onToggleOverlay}
+                onSetOverlayOpacity={onSetOverlayOpacity}
+                onSetCanvasSize={onSetCanvasSize}
+                onSetDpiOverride={onSetDpiOverride}
+                onSetKeepAspectRatio={onSetKeepAspectRatio}
+                onSetAlgorithm={onSetAlgorithm}
+                onSetImageDimensions={onSetImageDimensions}
+                onCenterHorizontal={onCenterHorizontal}
+                onCenterVertical={onCenterVertical}
+                onFitWidth={onFitWidth}
+                onFitHeight={onFitHeight}
+                onSetVerticalPreset={onSetVerticalPreset}
+              />
               <button
                 type="button"
                 onClick={onMarkPositioned}

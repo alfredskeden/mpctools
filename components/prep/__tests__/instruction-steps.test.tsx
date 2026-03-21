@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { InstructionSteps } from "../instruction-steps";
 import type { PrepState } from "@/hooks/use-prep-workflow";
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
 
 const defaultState: PrepState = {
   currentStep: 1,
@@ -14,7 +15,15 @@ const defaultState: PrepState = {
   isDownloaded: false,
   selectedOverlays: [],
   canvasDataUrl: null,
+  canvasWidth: CANVAS_WIDTH,
+  canvasHeight: CANVAS_HEIGHT,
+  dpiOverride: null,
+  overlayOpacities: {},
+  keepAspectRatio: true,
+  algorithm: "detail-preserving",
 };
+
+const noop = () => {};
 
 const defaultProps = {
   stepStatuses: ["active", "upcoming", "upcoming"] as const,
@@ -24,6 +33,20 @@ const defaultProps = {
   onUpdateScale: vi.fn(),
   onUpdateRotation: vi.fn(),
   onMarkPositioned: vi.fn(),
+  onReposition: noop,
+  prepAction: null,
+  onUpdatePosition: noop,
+  onSetOverlayOpacity: noop,
+  onSetCanvasSize: noop,
+  onSetDpiOverride: noop,
+  onSetKeepAspectRatio: noop,
+  onSetAlgorithm: noop,
+  onSetImageDimensions: noop,
+  onCenterHorizontal: noop,
+  onCenterVertical: noop,
+  onFitWidth: noop,
+  onFitHeight: noop,
+  onSetVerticalPreset: noop,
 };
 
 describe("InstructionSteps", () => {
@@ -348,5 +371,28 @@ describe("InstructionSteps", () => {
         "Export your positioned card as a PNG for Gemini outpainting.",
       ).length,
     ).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows mobile advanced options when step 2 is active", () => {
+    const props = {
+      ...defaultProps,
+      stepStatuses: ["completed", "active", "upcoming"] as const,
+      state: {
+        ...defaultState,
+        currentStep: 2 as const,
+        fileName: "test.png",
+        imageElement: {} as HTMLImageElement,
+      },
+    };
+
+    render(<InstructionSteps {...props} />);
+
+    expect(screen.getAllByText("Advanced options").length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("does not show mobile advanced options when step 2 is not active", () => {
+    render(<InstructionSteps {...defaultProps} />);
+
+    expect(screen.queryByText("Advanced options")).toBeNull();
   });
 });
