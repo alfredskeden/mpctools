@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { TransformCanvas } from "../TransformCanvas";
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
 
 const makeImage = () => {
   const img = new window.Image();
@@ -12,6 +13,8 @@ const makeImage = () => {
 const defaultProps = {
   image: null as HTMLImageElement | null,
   selectedOverlays: [] as string[],
+  canvasWidth: CANVAS_WIDTH,
+  canvasHeight: CANVAS_HEIGHT,
   scale: 1,
   position: { x: 0, y: 0 },
   rotation: 0,
@@ -87,9 +90,13 @@ describe("TransformCanvas", () => {
 
     const img = screen.getByTestId("transform-canvas-image");
     const s = 700 / 3520;
+    // Scale baked into dimensions, no CSS scale() in transform
     expect(img.style.transform).toBe(
-      `translate(${100 * s}px, ${200 * s}px) scale(1.5) rotate(45deg)`,
+      `translate(${100 * s}px, ${200 * s}px) rotate(45deg)`,
     );
+    // Dimensions include imageScale
+    expect(img.style.width).toBe(`${400 * 1.5 * s}px`);
+    expect(img.style.height).toBe(`${600 * 1.5 * s}px`);
   });
 
   it("calls onExport with data URL after debounce when image is provided", () => {
@@ -605,5 +612,38 @@ describe("TransformCanvas", () => {
     const [x, y] = onPositionChange.mock.calls[0];
     expect(x).toBeGreaterThan(10);
     expect(y).toBeGreaterThan(10);
+  });
+
+  it("adapts aspect ratio to custom canvas dimensions", () => {
+    // Square canvas (1:1) should produce a square display area
+    const { container } = render(
+      <TransformCanvas {...defaultProps} canvasWidth={2048} canvasHeight={2048} />,
+    );
+
+    const displayWrapper = container.querySelector(
+      "[style*='box-shadow']",
+    ) as HTMLElement;
+    // With 700x1000 container and 1:1 aspect, width-constrained: 700x700
+    expect(parseFloat(displayWrapper.style.width)).toBeCloseTo(700, 0);
+    expect(parseFloat(displayWrapper.style.height)).toBeCloseTo(700, 0);
+  });
+
+  it("uses custom canvas dimensions for export", () => {
+    const onExport = vi.fn();
+    render(
+      <TransformCanvas
+        {...defaultProps}
+        image={makeImage()}
+        canvasWidth={2048}
+        canvasHeight={2048}
+        onExport={onExport}
+      />,
+    );
+
+    act(() => {
+      vi.advanceTimersByTime(150);
+    });
+
+    expect(onExport).toHaveBeenCalledWith(expect.stringContaining("data:image/png"));
   });
 });

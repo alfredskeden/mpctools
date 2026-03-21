@@ -284,8 +284,7 @@ describe("clampPosition", () => {
 
   it("allows movement when image is smaller than canvas", () => {
     // image 200x200, canvas 400x400
-    // minOffset = 50 - (400 + 200) / 2 = 50 - 300 = -250
-    // maxOffset = (400 + 200) / 2 - 50 = 300 - 50 = 250
+    // minPos = 50 - 200 = -150, maxPos = 400 - 50 = 350
     const result = clampPosition(
       { x: 100, y: 100 },
       { width: 200, height: 200 },
@@ -297,6 +296,8 @@ describe("clampPosition", () => {
   });
 
   it("allows panning when image is larger than canvas", () => {
+    // image 800x800, canvas 400x400
+    // minPos = 50 - 800 = -750, maxPos = 400 - 50 = 350
     const result = clampPosition(
       { x: 50, y: 50 },
       { width: 800, height: 800 },
@@ -309,7 +310,7 @@ describe("clampPosition", () => {
 
   it("clamps to maximum offset at boundary", () => {
     // image 600x600, canvas 400x400
-    // maxOffset = (400 + 600) / 2 - 50 = 500 - 50 = 450
+    // maxPos = 400 - 50 = 350
     const result = clampPosition(
       { x: 500, y: 500 },
       { width: 600, height: 600 },
@@ -317,24 +318,25 @@ describe("clampPosition", () => {
       1,
     );
 
-    expect(result).toEqual({ x: 450, y: 450 });
+    expect(result).toEqual({ x: 350, y: 350 });
   });
 
   it("clamps negative offset at boundary", () => {
-    // minOffset = 50 - (400 + 600) / 2 = 50 - 500 = -450
+    // image 600x600, canvas 400x400
+    // minPos = 50 - 600 = -550
     const result = clampPosition(
-      { x: -500, y: -500 },
+      { x: -600, y: -600 },
       { width: 600, height: 600 },
       { width: 400, height: 400 },
       1,
     );
 
-    expect(result).toEqual({ x: -450, y: -450 });
+    expect(result).toEqual({ x: -550, y: -550 });
   });
 
   it("accounts for scale when clamping", () => {
     // image 300x300 * scale 2 = 600x600, canvas 400x400
-    // maxOffset = (400 + 600) / 2 - 50 = 450
+    // maxPos = 400 - 50 = 350
     const result = clampPosition(
       { x: 500, y: 500 },
       { width: 300, height: 300 },
@@ -342,7 +344,7 @@ describe("clampPosition", () => {
       2,
     );
 
-    expect(result).toEqual({ x: 450, y: 450 });
+    expect(result).toEqual({ x: 350, y: 350 });
   });
 });
 

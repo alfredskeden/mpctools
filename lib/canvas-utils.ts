@@ -197,7 +197,8 @@ export const MIN_VISIBLE = 50;
 
 /**
  * Clamp a position so the image stays at least partially visible on the canvas.
- * Both axes allow free movement as long as MIN_VISIBLE pixels remain on screen.
+ * Uses top-left bounding box coordinates where position is the top-left corner
+ * of the scaled image. Ensures at least MIN_VISIBLE pixels remain on screen.
  */
 export function clampPosition(
   position: Position,
@@ -213,9 +214,9 @@ export function clampPosition(
     scaledImageSize: number,
     canvasSize: number,
   ) => {
-    const minOffset = MIN_VISIBLE - (canvasSize + scaledImageSize) / 2;
-    const maxOffset = (canvasSize + scaledImageSize) / 2 - MIN_VISIBLE;
-    return Math.max(minOffset, Math.min(maxOffset, pos));
+    const minPos = MIN_VISIBLE - scaledImageSize;
+    const maxPos = canvasSize - MIN_VISIBLE;
+    return Math.max(minPos, Math.min(maxPos, pos));
   };
 
   return {

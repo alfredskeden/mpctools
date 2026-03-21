@@ -71,7 +71,7 @@ describe("renderPrepScene", () => {
     expect(ctx.restore).toHaveBeenCalledOnce();
   });
 
-  it("translates to image center based on position and renderScale (not imageScale)", () => {
+  it("translates to scaled image center based on position and imageScale", () => {
     const ctx = createMockCtx();
     const image = createMockImage(400, 600);
 
@@ -83,12 +83,11 @@ describe("renderPrepScene", () => {
       rotation: 0,
     });
 
-    // translate(100*1 + (400*1)/2, 200*1 + (600*1)/2) = translate(300, 500)
-    // imageScale does NOT affect the centering offset
-    expect(ctx.translate).toHaveBeenCalledWith(300, 500);
+    // scaledW=800, scaledH=1200, centerX=(100+400)*1=500, centerY=(200+600)*1=800
+    expect(ctx.translate).toHaveBeenCalledWith(500, 800);
   });
 
-  it("applies renderScale to position and centering offset", () => {
+  it("applies renderScale to center position", () => {
     const ctx = createMockCtx();
     const image = createMockImage(400, 600);
 
@@ -100,7 +99,7 @@ describe("renderPrepScene", () => {
       rotation: 0,
     });
 
-    // translate(100*0.25 + (400*0.25)/2, 200*0.25 + (600*0.25)/2) = translate(75, 125)
+    // scaledW=400, scaledH=600, centerX=(100+200)*0.25=75, centerY=(200+300)*0.25=125
     expect(ctx.translate).toHaveBeenCalledWith(75, 125);
   });
 
@@ -119,7 +118,7 @@ describe("renderPrepScene", () => {
     expect(ctx.rotate).toHaveBeenCalledWith(Math.PI / 2);
   });
 
-  it("applies combined imageScale * renderScale", () => {
+  it("does not call ctx.scale (scale is baked into drawImage)", () => {
     const ctx = createMockCtx();
     const image = createMockImage();
 
@@ -131,25 +130,10 @@ describe("renderPrepScene", () => {
       rotation: 0,
     });
 
-    expect(ctx.scale).toHaveBeenCalledWith(1.5, 1.5);
+    expect(ctx.scale).not.toHaveBeenCalled();
   });
 
-  it("multiplies imageScale and renderScale together for ctx.scale", () => {
-    const ctx = createMockCtx();
-    const image = createMockImage();
-
-    renderPrepScene(ctx, {
-      image,
-      position: { x: 0, y: 0 },
-      imageScale: 2,
-      renderScale: 0.25,
-      rotation: 0,
-    });
-
-    expect(ctx.scale).toHaveBeenCalledWith(0.5, 0.5);
-  });
-
-  it("draws the image centered at origin", () => {
+  it("draws the image centered with scaled dimensions", () => {
     const ctx = createMockCtx();
     const image = createMockImage(400, 600);
 
@@ -161,7 +145,26 @@ describe("renderPrepScene", () => {
       rotation: 0,
     });
 
-    expect(ctx.drawImage).toHaveBeenCalledWith(image, -200, -300);
+    // scaledW=400, scaledH=600, drawImage(img, -200, -300, 400, 600)
+    expect(ctx.drawImage).toHaveBeenCalledWith(image, -200, -300, 400, 600);
+  });
+
+  it("draws with imageScale baked into dimensions", () => {
+    const ctx = createMockCtx();
+    const image = createMockImage(400, 600);
+
+    renderPrepScene(ctx, {
+      image,
+      position: { x: 0, y: 0 },
+      imageScale: 2,
+      renderScale: 0.25,
+      rotation: 0,
+    });
+
+    // scaledW=800, scaledH=1200, rs=0.25
+    // drawImage(img, -800*0.25/2, -1200*0.25/2, 800*0.25, 1200*0.25)
+    // = drawImage(img, -100, -150, 200, 300)
+    expect(ctx.drawImage).toHaveBeenCalledWith(image, -100, -150, 200, 300);
   });
 
   it("handles zero rotation without rotating", () => {
@@ -193,6 +196,22 @@ describe("exportFullResolution", () => {
     const result = exportFullResolution(image, { x: 10, y: 20 }, 1.5, 45);
 
     expect(result).toMatch(/^data:image\/png/);
+  });
+
+  it("uses custom canvas dimensions when provided", () => {
+    const image = createRealImage(400, 600);
+    const createSpy = vi.spyOn(document, "createElement");
+    const result = exportFullResolution(image, { x: 0, y: 0 }, 1, 0, 2048, 2048);
+
+    expect(result).toMatch(/^data:image\/png/);
+    const canvasCall = createSpy.mock.results.find(
+      (r) => r.type === "return" && (r.value as HTMLElement).tagName === "CANVAS",
+    );
+    const canvas = canvasCall?.value as HTMLCanvasElement;
+    expect(canvas.width).toBe(2048);
+    expect(canvas.height).toBe(2048);
+
+    vi.restoreAllMocks();
   });
 
   it("returns empty string when getContext returns null", () => {

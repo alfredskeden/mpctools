@@ -75,8 +75,9 @@ describe("prepReducer", () => {
       },
     });
 
-    expect(result.position).toEqual({ x: 0, y: 0 });
-    expect(result.scale).toBe(1); // 100x100 fits in 816x1110, so scale stays 1
+    // 100x100 image fits at scale 1, centered: (3520-100)/2=1710, (4800-100)/2=2350
+    expect(result.scale).toBe(1);
+    expect(result.position).toEqual({ x: 1710, y: 2350 });
     expect(result.isPositioned).toBe(false);
     expect(result.rotation).toBe(0);
   });
@@ -371,25 +372,46 @@ describe("prepReducer", () => {
   });
 
   it("handles CENTER_HORIZONTAL", () => {
+    const image = { width: 200, height: 300 } as HTMLImageElement;
+    const state: PrepState = { ...initialState, imageElement: image, scale: 2, position: { x: 50, y: 100 } };
+    const result = prepReducer(state, { type: "CENTER_HORIZONTAL" });
+
+    // x = (3520 - 200*2) / 2 = (3520-400)/2 = 1560
+    expect(result.position).toEqual({ x: 1560, y: 100 });
+  });
+
+  it("handles CENTER_HORIZONTAL with no image as no-op", () => {
     const state: PrepState = { ...initialState, position: { x: 50, y: 100 } };
     const result = prepReducer(state, { type: "CENTER_HORIZONTAL" });
 
-    expect(result.position).toEqual({ x: 0, y: 100 });
+    expect(result.position).toEqual({ x: 50, y: 100 });
   });
 
   it("handles CENTER_VERTICAL", () => {
+    const image = { width: 200, height: 300 } as HTMLImageElement;
+    const state: PrepState = { ...initialState, imageElement: image, scale: 2, position: { x: 50, y: 100 } };
+    const result = prepReducer(state, { type: "CENTER_VERTICAL" });
+
+    // y = (4800 - 300*2) / 2 = (4800-600)/2 = 2100
+    expect(result.position).toEqual({ x: 50, y: 2100 });
+  });
+
+  it("handles CENTER_VERTICAL with no image as no-op", () => {
     const state: PrepState = { ...initialState, position: { x: 50, y: 100 } };
     const result = prepReducer(state, { type: "CENTER_VERTICAL" });
 
-    expect(result.position).toEqual({ x: 50, y: 0 });
+    expect(result.position).toEqual({ x: 50, y: 100 });
   });
 
-  it("handles FIT_WIDTH by scaling image to canvas width", () => {
+  it("handles FIT_WIDTH by scaling image to canvas width and centering", () => {
     const image = { width: 200, height: 300 } as HTMLImageElement;
     const state: PrepState = { ...initialState, imageElement: image };
     const result = prepReducer(state, { type: "FIT_WIDTH" });
 
-    expect(result.scale).toBe(CANVAS_WIDTH / 200);
+    const fitScale = CANVAS_WIDTH / 200;
+    expect(result.scale).toBe(fitScale);
+    expect(result.position.x).toBe(0);
+    expect(result.position.y).toBe((CANVAS_HEIGHT - 300 * fitScale) / 2);
   });
 
   it("handles FIT_WIDTH with no image as no-op", () => {
@@ -397,12 +419,15 @@ describe("prepReducer", () => {
     expect(result.scale).toBe(1);
   });
 
-  it("handles FIT_HEIGHT by scaling image to canvas height", () => {
+  it("handles FIT_HEIGHT by scaling image to canvas height and centering", () => {
     const image = { width: 200, height: 300 } as HTMLImageElement;
     const state: PrepState = { ...initialState, imageElement: image };
     const result = prepReducer(state, { type: "FIT_HEIGHT" });
 
-    expect(result.scale).toBe(CANVAS_HEIGHT / 300);
+    const fitScale = CANVAS_HEIGHT / 300;
+    expect(result.scale).toBe(fitScale);
+    expect(result.position.x).toBe((CANVAS_WIDTH - 200 * fitScale) / 2);
+    expect(result.position.y).toBe(0);
   });
 
   it("handles FIT_HEIGHT with no image as no-op", () => {
@@ -411,27 +436,41 @@ describe("prepReducer", () => {
   });
 
   it("handles SET_VERTICAL_PRESET", () => {
-    const result = prepReducer(initialState, {
+    const image = { width: 200, height: 300 } as HTMLImageElement;
+    const state: PrepState = { ...initialState, imageElement: image, scale: 2 };
+    const result = prepReducer(state, {
       type: "SET_VERTICAL_PRESET",
       payload: "short",
     });
 
+    // imgH = 300 * 2 = 600, y = 2836 - 600/2 = 2536
     expect(result.position.y).toBe(
-      VERTICAL_PRESET_CENTERS.short - CANVAS_HEIGHT / 2,
+      VERTICAL_PRESET_CENTERS.short - 300,
     );
   });
 
   it("handles SET_VERTICAL_PRESET preserving x position", () => {
-    const state: PrepState = { ...initialState, position: { x: 50, y: 0 } };
+    const image = { width: 200, height: 300 } as HTMLImageElement;
+    const state: PrepState = { ...initialState, imageElement: image, scale: 2, position: { x: 50, y: 0 } };
     const result = prepReducer(state, {
       type: "SET_VERTICAL_PRESET",
       payload: "tall",
     });
 
     expect(result.position.x).toBe(50);
+    // imgH = 300 * 2 = 600, y = 3143 - 600/2 = 2843
     expect(result.position.y).toBe(
-      VERTICAL_PRESET_CENTERS.tall - CANVAS_HEIGHT / 2,
+      VERTICAL_PRESET_CENTERS.tall - 300,
     );
+  });
+
+  it("handles SET_VERTICAL_PRESET with no image as no-op", () => {
+    const result = prepReducer(initialState, {
+      type: "SET_VERTICAL_PRESET",
+      payload: "short",
+    });
+
+    expect(result.position).toEqual(initialState.position);
   });
 });
 
@@ -754,7 +793,11 @@ describe("usePrepWorkflow", () => {
 
   it("centers horizontally", () => {
     const { result } = renderHook(() => usePrepWorkflow());
+    const image = { width: 200, height: 300 } as HTMLImageElement;
 
+    act(() => {
+      result.current.uploadImage("data:test", image, "test.png");
+    });
     act(() => {
       result.current.updatePosition(50, 100);
     });
@@ -762,12 +805,18 @@ describe("usePrepWorkflow", () => {
       result.current.centerHorizontal();
     });
 
-    expect(result.current.state.position).toEqual({ x: 0, y: 100 });
+    const scale = result.current.state.scale;
+    expect(result.current.state.position.x).toBe((CANVAS_WIDTH - 200 * scale) / 2);
+    expect(result.current.state.position.y).toBe(100);
   });
 
   it("centers vertically", () => {
     const { result } = renderHook(() => usePrepWorkflow());
+    const image = { width: 200, height: 300 } as HTMLImageElement;
 
+    act(() => {
+      result.current.uploadImage("data:test", image, "test.png");
+    });
     act(() => {
       result.current.updatePosition(50, 100);
     });
@@ -775,7 +824,9 @@ describe("usePrepWorkflow", () => {
       result.current.centerVertical();
     });
 
-    expect(result.current.state.position).toEqual({ x: 50, y: 0 });
+    const scale = result.current.state.scale;
+    expect(result.current.state.position.x).toBe(50);
+    expect(result.current.state.position.y).toBe((CANVAS_HEIGHT - 300 * scale) / 2);
   });
 
   it("fits width", () => {
@@ -789,7 +840,10 @@ describe("usePrepWorkflow", () => {
       result.current.fitWidth();
     });
 
-    expect(result.current.state.scale).toBe(CANVAS_WIDTH / 200);
+    const fitScale = CANVAS_WIDTH / 200;
+    expect(result.current.state.scale).toBe(fitScale);
+    expect(result.current.state.position.x).toBe(0);
+    expect(result.current.state.position.y).toBe((CANVAS_HEIGHT - 300 * fitScale) / 2);
   });
 
   it("fits height", () => {
@@ -803,18 +857,27 @@ describe("usePrepWorkflow", () => {
       result.current.fitHeight();
     });
 
-    expect(result.current.state.scale).toBe(CANVAS_HEIGHT / 300);
+    const fitScale = CANVAS_HEIGHT / 300;
+    expect(result.current.state.scale).toBe(fitScale);
+    expect(result.current.state.position.x).toBe((CANVAS_WIDTH - 200 * fitScale) / 2);
+    expect(result.current.state.position.y).toBe(0);
   });
 
   it("sets vertical preset", () => {
     const { result } = renderHook(() => usePrepWorkflow());
+    const image = { width: 200, height: 300 } as HTMLImageElement;
 
+    act(() => {
+      result.current.uploadImage("data:test", image, "test.png");
+    });
     act(() => {
       result.current.setVerticalPreset("normal");
     });
 
+    const scale = result.current.state.scale;
+    const imgH = 300 * scale;
     expect(result.current.state.position.y).toBe(
-      VERTICAL_PRESET_CENTERS.normal - CANVAS_HEIGHT / 2,
+      VERTICAL_PRESET_CENTERS.normal - imgH / 2,
     );
   });
 });

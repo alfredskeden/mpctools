@@ -123,17 +123,22 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
       for (const id of defaultOverlays) {
         opacities[id] = 100;
       }
+      const el = action.payload.element;
+      const newScale = calculateInitialScale(el, {
+        width: state.canvasWidth,
+        height: state.canvasHeight,
+      });
       return {
         ...state,
         currentStep: 2,
         uploadedImage: action.payload.dataUrl,
-        imageElement: action.payload.element,
+        imageElement: el,
         fileName: action.payload.fileName,
-        position: { x: 0, y: 0 },
-        scale: calculateInitialScale(action.payload.element, {
-          width: state.canvasWidth,
-          height: state.canvasHeight,
-        }),
+        position: {
+          x: (state.canvasWidth - el.width * newScale) / 2,
+          y: (state.canvasHeight - el.height * newScale) / 2,
+        },
+        scale: newScale,
         rotation: 0,
         isPositioned: false,
         isDownloaded: false,
@@ -232,37 +237,59 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         scale: newScale,
       };
     }
-    case "CENTER_HORIZONTAL":
-      return {
-        ...state,
-        position: { ...state.position, x: 0 },
-      };
-    case "CENTER_VERTICAL":
-      return {
-        ...state,
-        position: { ...state.position, y: 0 },
-      };
-    case "FIT_WIDTH": {
+    case "CENTER_HORIZONTAL": {
       if (!state.imageElement) return state;
-      return {
-        ...state,
-        scale: state.canvasWidth / state.imageElement.width,
-      };
-    }
-    case "FIT_HEIGHT": {
-      if (!state.imageElement) return state;
-      return {
-        ...state,
-        scale: state.canvasHeight / state.imageElement.height,
-      };
-    }
-    case "SET_VERTICAL_PRESET": {
-      const targetY = VERTICAL_PRESET_CENTERS[action.payload];
       return {
         ...state,
         position: {
           ...state.position,
-          y: targetY - state.canvasHeight / 2,
+          x: (state.canvasWidth - state.imageElement.width * state.scale) / 2,
+        },
+      };
+    }
+    case "CENTER_VERTICAL": {
+      if (!state.imageElement) return state;
+      return {
+        ...state,
+        position: {
+          ...state.position,
+          y: (state.canvasHeight - state.imageElement.height * state.scale) / 2,
+        },
+      };
+    }
+    case "FIT_WIDTH": {
+      if (!state.imageElement) return state;
+      const fitScale = state.canvasWidth / state.imageElement.width;
+      return {
+        ...state,
+        scale: fitScale,
+        position: {
+          x: 0,
+          y: (state.canvasHeight - state.imageElement.height * fitScale) / 2,
+        },
+      };
+    }
+    case "FIT_HEIGHT": {
+      if (!state.imageElement) return state;
+      const fitScale = state.canvasHeight / state.imageElement.height;
+      return {
+        ...state,
+        scale: fitScale,
+        position: {
+          x: (state.canvasWidth - state.imageElement.width * fitScale) / 2,
+          y: 0,
+        },
+      };
+    }
+    case "SET_VERTICAL_PRESET": {
+      if (!state.imageElement) return state;
+      const targetY = VERTICAL_PRESET_CENTERS[action.payload];
+      const imgH = state.imageElement.height * state.scale;
+      return {
+        ...state,
+        position: {
+          ...state.position,
+          y: targetY - imgH / 2,
         },
       };
     }

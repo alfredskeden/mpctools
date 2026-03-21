@@ -45,6 +45,8 @@ export function PrepPageContent() {
       state.position,
       state.scale,
       state.rotation,
+      state.canvasWidth,
+      state.canvasHeight,
     );
     /* v8 ignore start */
     if (!fullResDataUrl) return;
@@ -58,7 +60,7 @@ export function PrepPageContent() {
     link.href = fullResDataUrl;
     link.click();
     markDownloaded();
-  }, [state.imageElement, state.position, state.scale, state.rotation, state.fileName, markDownloaded]);
+  }, [state.imageElement, state.position, state.scale, state.rotation, state.fileName, state.canvasWidth, state.canvasHeight, markDownloaded]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col md:flex-row">
@@ -87,6 +89,8 @@ export function PrepPageContent() {
           image={state.imageElement}
           selectedOverlays={state.selectedOverlays}
           overlayOpacities={state.overlayOpacities}
+          canvasWidth={state.canvasWidth}
+          canvasHeight={state.canvasHeight}
           scale={state.scale}
           position={state.position}
           rotation={state.rotation}

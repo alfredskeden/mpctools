@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { CANVAS_WIDTH, CANVAS_HEIGHT, BG_COLOR } from "@/lib/canvas-utils";
+import { BG_COLOR } from "@/lib/canvas-utils";
 import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 import { renderPrepScene } from "@/lib/prep-renderer";
-
-const ASPECT_RATIO = CANVAS_WIDTH / CANVAS_HEIGHT;
 const EXPORT_DEBOUNCE_MS = 150;
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
@@ -24,6 +22,8 @@ type TransformCanvasProps = {
   image: HTMLImageElement | null;
   selectedOverlays: string[];
   overlayOpacities?: Record<string, number>;
+  canvasWidth: number;
+  canvasHeight: number;
   scale: number;
   position: { x: number; y: number };
   rotation: number;
@@ -37,6 +37,8 @@ export const TransformCanvas = ({
   image,
   selectedOverlays,
   overlayOpacities,
+  canvasWidth,
+  canvasHeight,
   scale: imageScale,
   position,
   rotation,
@@ -114,8 +116,8 @@ export const TransformCanvas = ({
     }
 
     exportTimerRef.current = setTimeout(() => {
-      const previewW = Math.round(CANVAS_WIDTH * PREVIEW_SCALE);
-      const previewH = Math.round(CANVAS_HEIGHT * PREVIEW_SCALE);
+      const previewW = Math.round(canvasWidth * PREVIEW_SCALE);
+      const previewH = Math.round(canvasHeight * PREVIEW_SCALE);
       const offscreen = document.createElement("canvas");
       offscreen.width = previewW;
       offscreen.height = previewH;
@@ -144,7 +146,9 @@ export const TransformCanvas = ({
       }
     };
     /* v8 ignore stop */
-  }, [image, position, imageScale, rotation, onExport, stageReady]);
+  }, [image, position, imageScale, rotation, onExport, stageReady, canvasWidth, canvasHeight]);
+
+  const aspectRatio = canvasWidth / canvasHeight;
 
   // Observe container and compute display scale
   useEffect(() => {
@@ -161,15 +165,15 @@ export const TransformCanvas = ({
       let displayWidth: number;
       let displayHeight: number;
 
-      if (cw / ch > ASPECT_RATIO) {
+      if (cw / ch > aspectRatio) {
         displayHeight = ch;
-        displayWidth = ch * ASPECT_RATIO;
+        displayWidth = ch * aspectRatio;
       } else {
         displayWidth = cw;
-        displayHeight = cw / ASPECT_RATIO;
+        displayHeight = cw / aspectRatio;
       }
 
-      const newScale = displayWidth / CANVAS_WIDTH;
+      const newScale = displayWidth / canvasWidth;
 
       setDisplay({
         scale: newScale,
@@ -189,7 +193,7 @@ export const TransformCanvas = ({
       observer.disconnect();
       window.visualViewport?.removeEventListener("resize", updateScale);
     };
-  }, []);
+  }, [aspectRatio, canvasWidth]);
 
   // Pointer handlers for drag — only track one pointer to prevent pinch chaos
   const handlePointerDown = useCallback(
@@ -296,9 +300,9 @@ export const TransformCanvas = ({
                   position: "absolute",
                   left: 0,
                   top: 0,
-                  width: image.width * display.scale,
-                  height: image.height * display.scale,
-                  transform: `translate(${position.x * display.scale}px, ${position.y * display.scale}px) scale(${imageScale}) rotate(${rotation}deg)`,
+                  width: image.width * imageScale * display.scale,
+                  height: image.height * imageScale * display.scale,
+                  transform: `translate(${position.x * display.scale}px, ${position.y * display.scale}px) rotate(${rotation}deg)`,
                   transformOrigin: "center",
                   willChange: "transform",
                   pointerEvents: "none",

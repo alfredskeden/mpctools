@@ -25,20 +25,23 @@ export function renderPrepScene(
   ctx.fillStyle = BG_COLOR;
   ctx.fillRect(0, 0, w, h);
 
-  // Draw image with transforms
+  // Draw image with transforms (top-left bounding box + center-pivot rotation)
   ctx.save();
   const rs = params.renderScale;
   const is = params.imageScale;
-  ctx.translate(
-    params.position.x * rs + (params.image.width * rs) / 2,
-    params.position.y * rs + (params.image.height * rs) / 2,
-  );
+  const scaledW = params.image.width * is;
+  const scaledH = params.image.height * is;
+  const centerX = (params.position.x + scaledW / 2) * rs;
+  const centerY = (params.position.y + scaledH / 2) * rs;
+
+  ctx.translate(centerX, centerY);
   ctx.rotate((params.rotation * Math.PI) / 180);
-  ctx.scale(is * rs, is * rs);
   ctx.drawImage(
     params.image,
-    -params.image.width / 2,
-    -params.image.height / 2,
+    (-scaledW * rs) / 2,
+    (-scaledH * rs) / 2,
+    scaledW * rs,
+    scaledH * rs,
   );
   ctx.restore();
 }
@@ -51,10 +54,12 @@ export function exportFullResolution(
   position: { x: number; y: number },
   imageScale: number,
   rotation: number,
+  canvasWidth: number = CANVAS_WIDTH,
+  canvasHeight: number = CANVAS_HEIGHT,
 ): string {
   const canvas = document.createElement("canvas");
-  canvas.width = CANVAS_WIDTH;
-  canvas.height = CANVAS_HEIGHT;
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
   const ctx = canvas.getContext("2d");
   if (!ctx) return "";
 
@@ -64,8 +69,8 @@ export function exportFullResolution(
     imageScale,
     renderScale: 1,
     rotation,
-    canvasWidth: CANVAS_WIDTH,
-    canvasHeight: CANVAS_HEIGHT,
+    canvasWidth,
+    canvasHeight,
   });
 
   return canvas.toDataURL("image/png");

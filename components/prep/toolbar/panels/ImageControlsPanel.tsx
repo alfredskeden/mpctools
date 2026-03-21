@@ -213,6 +213,9 @@ export function ImageControlsPanel({
           >
             Fit H
           </button>
+          <span className="col-span-2 text-center font-mono text-xs text-text-secondary">
+            {Math.round(scale * 100)}%
+          </span>
           <button
             type="button"
             disabled={scale <= MIN_SCALE}

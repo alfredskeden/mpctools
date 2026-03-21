@@ -208,6 +208,21 @@ describe("ImageControlsPanel", () => {
     expect(screen.getByText("45°")).toBeInTheDocument();
   });
 
+  it("renders scale percentage", () => {
+    render(<ImageControlsPanel {...defaultProps} />);
+    expect(screen.getByText("150%")).toBeInTheDocument();
+  });
+
+  it("renders scale percentage for scale 1.0", () => {
+    render(
+      <ImageControlsPanel
+        {...defaultProps}
+        state={makeState({ scale: 1 })}
+      />,
+    );
+    expect(screen.getByText("100%")).toBeInTheDocument();
+  });
+
   it("renders scale down and scale up buttons", () => {
     render(<ImageControlsPanel {...defaultProps} />);
     expect(screen.getByLabelText("Scale down")).toBeInTheDocument();
