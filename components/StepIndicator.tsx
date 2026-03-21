@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 type Step = {
   label: string;
   active: boolean;
+  href?: string;
 };
 
 type StepIndicatorProps = {
@@ -10,6 +12,43 @@ type StepIndicatorProps = {
   className?: string;
   variant?: "default" | "landing";
 };
+
+const stepDot = (active: boolean) => (
+  <div
+    aria-hidden="true"
+    className={cn(
+      "size-1.5 shrink-0 rounded-full",
+      active ? "bg-accent-blue" : "bg-surface-subtle",
+    )}
+  />
+);
+
+const stepLabel = (step: Step) => (
+  <span
+    aria-current={step.active ? "step" : undefined}
+    className={cn(
+      "text-caption font-medium leading-3.5",
+      step.active ? "text-accent-blue" : "font-normal text-text-disabled",
+    )}
+  >
+    {step.label}
+  </span>
+);
+
+function StepContent({ step }: { step: Step }) {
+  const content = (
+    <div className="flex items-center gap-2">
+      {stepDot(step.active)}
+      {stepLabel(step)}
+    </div>
+  );
+
+  if (step.href) {
+    return <Link href={step.href}>{content}</Link>;
+  }
+
+  return content;
+}
 
 export const StepIndicator = ({
   steps,
@@ -76,26 +115,7 @@ export const StepIndicator = ({
       <ol className="flex items-center gap-0 list-none m-0 p-0">
         {steps.map((step, i) => (
           <li key={step.label} className="flex items-center gap-0">
-            <div className="flex items-center gap-2">
-              <div
-                aria-hidden="true"
-                className={cn(
-                  "size-1.5 shrink-0 rounded-full",
-                  step.active ? "bg-accent-blue" : "bg-surface-subtle",
-                )}
-              />
-              <span
-                aria-current={step.active ? "step" : undefined}
-                className={cn(
-                  "text-caption hidden font-medium leading-3.5 sm:inline",
-                  step.active
-                    ? "text-accent-blue"
-                    : "font-normal text-text-disabled",
-                )}
-              >
-                {step.label}
-              </span>
-            </div>
+            <StepContent step={step} />
             {i < steps.length - 1 && (
               <div
                 role="separator"

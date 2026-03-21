@@ -130,6 +130,22 @@ describe("Header", () => {
     expect(stepLabel.className).toContain("uppercase");
   });
 
+  it("renders step indicator steps as navigation links", () => {
+    render(
+      <Header
+        currentStep={1}
+        stepStatuses={["active", "upcoming", "upcoming"]}
+      />,
+    );
+
+    const nav = screen.getByRole("navigation", { name: "Build steps" });
+    const links = within(nav).getAllByRole("link");
+    expect(links).toHaveLength(3);
+    expect(links[0].getAttribute("href")).toBe("/prep");
+    expect(links[1].getAttribute("href")).toBe("/outpaint");
+    expect(links[2].getAttribute("href")).toBe("/merger");
+  });
+
   it("overrides default absolute positioning on StepIndicator", () => {
     render(
       <Header

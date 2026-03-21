@@ -50,11 +50,31 @@ describe("StepIndicator", () => {
     expect(screen.getByText("Outpaint").className).toContain("font-normal");
   });
 
-  it("hides labels on mobile with hidden sm:inline", () => {
+  it("always shows labels", () => {
     render(<StepIndicator steps={steps} />);
 
-    expect(screen.getByText("Prep").className).toContain("hidden");
-    expect(screen.getByText("Prep").className).toContain("sm:inline");
+    expect(screen.getByText("Prep").className).not.toContain("hidden");
+  });
+
+  it("renders steps as links when href is provided", () => {
+    const stepsWithHref = [
+      { label: "Prep", active: true, href: "/prep" },
+      { label: "Outpaint", active: false, href: "/outpaint" },
+      { label: "Merge", active: false, href: "/merger" },
+    ];
+    render(<StepIndicator steps={stepsWithHref} />);
+
+    const links = screen.getAllByRole("link");
+    expect(links).toHaveLength(3);
+    expect(links[0].getAttribute("href")).toBe("/prep");
+    expect(links[1].getAttribute("href")).toBe("/outpaint");
+    expect(links[2].getAttribute("href")).toBe("/merger");
+  });
+
+  it("renders steps without links when href is not provided", () => {
+    render(<StepIndicator steps={steps} />);
+
+    expect(screen.queryAllByRole("link")).toHaveLength(0);
   });
 
   it("renders separators between steps but not after the last", () => {

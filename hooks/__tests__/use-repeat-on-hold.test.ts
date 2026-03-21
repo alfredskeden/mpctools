@@ -102,6 +102,17 @@ describe("useRepeatOnHold", () => {
     expect(callback).toHaveBeenCalledTimes(callCount);
   });
 
+  it("handles stop when no pointer down occurred", () => {
+    const callback = vi.fn();
+    const { result } = renderHook(() => useRepeatOnHold(callback));
+
+    act(() => {
+      result.current.onPointerUp();
+    });
+
+    expect(callback).not.toHaveBeenCalled();
+  });
+
   it("does not repeat if released before initial delay", () => {
     const callback = vi.fn();
     const { result } = renderHook(() => useRepeatOnHold(callback));
