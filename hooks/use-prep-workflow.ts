@@ -212,11 +212,28 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         canvasWidth: action.payload.width,
         canvasHeight: action.payload.height,
       };
-    case "SET_DPI_OVERRIDE":
+    case "SET_DPI_OVERRIDE": {
+      const newDpi = action.payload;
+      if (!newDpi || !state.imageElement) {
+        return { ...state, dpiOverride: newDpi };
+      }
+      const newScale = 1200 / newDpi;
+      const currentW = state.imageElement.width * state.scale;
+      const currentH = state.imageElement.height * state.scale;
+      const cx = state.position.x + currentW / 2;
+      const cy = state.position.y + currentH / 2;
+      const newW = state.imageElement.width * newScale;
+      const newH = state.imageElement.height * newScale;
       return {
         ...state,
-        dpiOverride: action.payload,
+        dpiOverride: newDpi,
+        scale: newScale,
+        position: {
+          x: Math.round(cx - newW / 2),
+          y: Math.round(cy - newH / 2),
+        },
       };
+    }
     case "SET_OVERLAY_OPACITY":
       return {
         ...state,

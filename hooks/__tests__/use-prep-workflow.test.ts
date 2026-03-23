@@ -327,6 +327,48 @@ describe("prepReducer", () => {
     expect(result.dpiOverride).toBeNull();
   });
 
+  it("handles SET_DPI_OVERRIDE with a number and an image — applies scale and preserves center", () => {
+    // Image is 100x100, currently at scale 1, position (0, 0)
+    // Center = (50, 50). newScale = 1200/300 = 4. newW = 400, newH = 400.
+    // newX = round(50 - 200) = -150, newY = round(50 - 200) = -150
+    const image = makeImage(); // 100x100
+    const state: PrepState = {
+      ...initialState,
+      imageElement: image,
+      scale: 1,
+      position: { x: 0, y: 0 },
+    };
+
+    const result = prepReducer(state, {
+      type: "SET_DPI_OVERRIDE",
+      payload: 300,
+    });
+
+    expect(result.dpiOverride).toBe(300);
+    expect(result.scale).toBe(4);
+    expect(result.position).toEqual({ x: -150, y: -150 });
+  });
+
+  it("handles SET_DPI_OVERRIDE with null and an image — clears dpiOverride without changing scale or position", () => {
+    const image = makeImage();
+    const state: PrepState = {
+      ...initialState,
+      imageElement: image,
+      scale: 4,
+      position: { x: -150, y: -150 },
+      dpiOverride: 300,
+    };
+
+    const result = prepReducer(state, {
+      type: "SET_DPI_OVERRIDE",
+      payload: null,
+    });
+
+    expect(result.dpiOverride).toBeNull();
+    expect(result.scale).toBe(4);
+    expect(result.position).toEqual({ x: -150, y: -150 });
+  });
+
   it("handles SET_OVERLAY_OPACITY", () => {
     const result = prepReducer(initialState, {
       type: "SET_OVERLAY_OPACITY",
