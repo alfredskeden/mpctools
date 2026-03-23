@@ -64,6 +64,7 @@ const defaultProps = {
   onUploadOg: vi.fn(),
   onUploadGuide: vi.fn(),
   onUploadOutpaint: vi.fn(),
+  mergerAction: null as React.ReactNode,
 };
 
 describe("MergerSteps", () => {

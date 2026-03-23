@@ -22,6 +22,7 @@ const makeState = (overrides: Partial<PrepState> = {}): PrepState => ({
   overlayOpacities: {},
   keepAspectRatio: true,
   algorithm: "detail-preserving",
+  overlayNativeDimensions: null,
   ...overrides,
 });
 

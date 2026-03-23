@@ -24,6 +24,7 @@ const defaultState: PrepState = {
   overlayOpacities: {},
   keepAspectRatio: true,
   algorithm: "detail-preserving",
+  overlayNativeDimensions: null,
 };
 
 const defaultProps = {
