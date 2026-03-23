@@ -323,7 +323,7 @@ describe("TransformCanvas", () => {
     expect(onPositionChange).not.toHaveBeenCalled();
   });
 
-  it("handles wheel zoom", () => {
+  it("does not zoom on wheel event", () => {
     const onScaleChange = vi.fn();
     render(
       <TransformCanvas
@@ -332,35 +332,6 @@ describe("TransformCanvas", () => {
         onScaleChange={onScaleChange}
       />,
     );
-
-    const surface = screen.getByTestId("transform-canvas-interaction");
-    fireEvent.wheel(surface, { deltaY: -100 });
-
-    expect(onScaleChange).toHaveBeenCalled();
-  });
-
-  it("clamps zoom to MIN_SCALE but has no upper cap", () => {
-    const onScaleChange = vi.fn();
-
-    // Test min clamp
-    render(
-      <TransformCanvas
-        {...defaultProps}
-        image={makeImage()}
-        scale={0.5}
-        onScaleChange={onScaleChange}
-      />,
-    );
-
-    const surface = screen.getByTestId("transform-canvas-interaction");
-    fireEvent.wheel(surface, { deltaY: 1000 }); // scroll down = zoom out
-
-    expect(onScaleChange).toHaveBeenCalledWith(0.5); // clamped at MIN_SCALE
-  });
-
-  it("does not zoom when image is null", () => {
-    const onScaleChange = vi.fn();
-    render(<TransformCanvas {...defaultProps} onScaleChange={onScaleChange} />);
 
     const surface = screen.getByTestId("transform-canvas-interaction");
     fireEvent.wheel(surface, { deltaY: -100 });

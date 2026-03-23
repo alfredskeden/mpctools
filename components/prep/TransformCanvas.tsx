@@ -257,18 +257,6 @@ export const TransformCanvas = ({
     activePointerId.current = null;
   }, []);
 
-  // Wheel handler for zoom
-  const handleWheel = useCallback(
-    (e: React.WheelEvent) => {
-      if (!image) return;
-      e.preventDefault();
-      const delta = -e.deltaY * 0.001;
-      const newScale = Math.max(MIN_SCALE, imageScale + delta);
-      onScaleChange(newScale);
-    },
-    [image, imageScale, onScaleChange],
-  );
-
   // Suppress unused rotation callback warning - rotation is controlled via ControlsPanel slider
   void _onRotationChange;
 
@@ -366,7 +354,6 @@ export const TransformCanvas = ({
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
-              onWheel={handleWheel}
             />
           </div>
         </div>
