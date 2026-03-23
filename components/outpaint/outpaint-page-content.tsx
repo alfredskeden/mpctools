@@ -1,10 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import {
   useOutpaintWorkflow,
+  buildHandshakePrompt,
   HANDSHAKE_PROMPT,
   OUTPAINT_COMMAND,
 } from "@/hooks/use-outpaint-workflow";
+import { PREP_CANVAS_SIZE_KEY } from "@/hooks/use-prep-workflow";
 import { useCopyToClipboard } from "@/hooks/use-clipboard";
 import { OutpaintStepCard } from "./outpaint-step-card";
 import { CollapsedStep } from "./collapsed-step";
@@ -16,6 +19,22 @@ export const OutpaintPageContent = () => {
     useOutpaintWorkflow();
   const handshakeClipboard = useCopyToClipboard();
   const commandClipboard = useCopyToClipboard();
+  const [handshakePrompt, setHandshakePrompt] = useState(HANDSHAKE_PROMPT);
+
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem(PREP_CANVAS_SIZE_KEY);
+      if (stored) {
+        const { width, height } = JSON.parse(stored) as {
+          width: number;
+          height: number;
+        };
+        setHandshakePrompt(buildHandshakePrompt(width, height));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   return (
     <div className="flex flex-1 items-center justify-center bg-surface-ground p-6">
@@ -29,10 +48,10 @@ export const OutpaintPageContent = () => {
           <OutpaintStepCard
             stepNumber={1}
             title="THE HANDSHAKE"
-            codeText={HANDSHAKE_PROMPT}
+            codeText={handshakePrompt}
             hintText='Copy this prompt, send it to Gemini, and wait for "Universal Neutral Extension Mode Locked. Ready for any input."'
             isActive={!state.handshakeSent}
-            onCopy={() => handshakeClipboard.copy(HANDSHAKE_PROMPT)}
+            onCopy={() => handshakeClipboard.copy(handshakePrompt)}
             copied={handshakeClipboard.copied}
           />
         )}

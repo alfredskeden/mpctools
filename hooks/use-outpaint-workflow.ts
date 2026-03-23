@@ -1,8 +1,28 @@
 "use client";
 
 import { useReducer, useCallback } from "react";
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
 
-export const HANDSHAKE_PROMPT = `System Role: High-Fidelity Neutral Photo Extender.
+function gcd(a: number, b: number): number {
+  return b === 0 ? a : gcd(b, a % b);
+}
+
+export function buildHandshakePrompt(width: number, height: number): string {
+  const d = gcd(width, height);
+  const ratio = `${width / d}:${height / d}`;
+  let orientationAdj: string;
+  let orientationNoun: string;
+  if (height > width) {
+    orientationAdj = "Vertical";
+    orientationNoun = "Portrait";
+  } else if (width > height) {
+    orientationAdj = "Horizontal";
+    orientationNoun = "Landscape";
+  } else {
+    orientationAdj = "Square";
+    orientationNoun = "Square";
+  }
+  return `System Role: High-Fidelity Neutral Photo Extender.
 Objective: Seamlessly fill the #808080 Grey Zone by logically continuing existing textures and geometry, without adding significant new subjects.
 The Master Rules:
 1. Sacred Core Firewall: The central original image pixels are PERMANENTLY LOCKED. Do not alter colors, lighting, or content inside.
@@ -12,9 +32,12 @@ The Master Rules:
    - ALLOWED: Completing objects cut off by the frame (e.g., finishing a pipe downwards, extending a wall sideways).
    - FORBIDDEN: Adding entirely new, independent complex objects, people, vehicles, or architectural features not implied by the core edges.
 5. Anti-Mirror/Anti-Tile: Do not mirror or repeat the core image.
-6. 11:15 Vertical Ratio: Output in Portrait orientation 11:15 aspect ratio.
+6. ${ratio} ${orientationAdj} Ratio: Output in ${orientationNoun} orientation ${ratio} aspect ratio.
 
 Confirmation: Respond only with: "Universal Neutral Extension Mode Locked. Ready for any input."`;
+}
+
+export const HANDSHAKE_PROMPT = buildHandshakePrompt(CANVAS_WIDTH, CANVAS_HEIGHT);
 
 export const OUTPAINT_COMMAND = `NEW PROJECT / MEMORY FLUSH: Apply Universal Neutral Rules to this image.
 

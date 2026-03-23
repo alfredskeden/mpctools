@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useCallback } from "react";
+import { useReducer, useCallback, useEffect } from "react";
 import {
   calculateInitialScale,
   CANVAS_WIDTH,
@@ -341,8 +341,17 @@ export function getStepStatuses(currentStep: PrepStep): StepStatus[] {
   }) as StepStatus[];
 }
 
+export const PREP_CANVAS_SIZE_KEY = "prep-canvas-size";
+
 export function usePrepWorkflow() {
   const [state, dispatch] = useReducer(prepReducer, initialState);
+
+  useEffect(() => {
+    sessionStorage.setItem(
+      PREP_CANVAS_SIZE_KEY,
+      JSON.stringify({ width: state.canvasWidth, height: state.canvasHeight }),
+    );
+  }, [state.canvasWidth, state.canvasHeight]);
 
   const uploadImage = useCallback(
     (dataUrl: string, element: HTMLImageElement, fileName: string) => {

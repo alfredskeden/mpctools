@@ -1,12 +1,14 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { OutpaintPageContent } from "../outpaint-page-content";
+import { PREP_CANVAS_SIZE_KEY } from "@/hooks/use-prep-workflow";
 
 describe("OutpaintPageContent", () => {
   beforeEach(() => {
     Object.assign(navigator, {
       clipboard: { writeText: vi.fn().mockResolvedValue(undefined) },
     });
+    sessionStorage.clear();
   });
 
   it("renders both step cards initially", () => {
@@ -109,6 +111,46 @@ describe("OutpaintPageContent", () => {
 
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
       expect.stringContaining("NEW PROJECT / MEMORY FLUSH"),
+    );
+  });
+
+  it("uses dynamic aspect ratio from sessionStorage when present", async () => {
+    // Given - landscape 4:3 canvas set from prep step
+    sessionStorage.setItem(
+      PREP_CANVAS_SIZE_KEY,
+      JSON.stringify({ width: 3264, height: 2448 }),
+    );
+
+    // When
+    render(<OutpaintPageContent />);
+
+    const copyButtons = screen.getAllByRole("button", { name: /copy/i });
+    await userEvent.click(copyButtons[0]);
+
+    // Then
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining("4:3 Horizontal Ratio"),
+    );
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining("Landscape orientation 4:3 aspect ratio"),
+    );
+  });
+
+  it("falls back to default 11:15 portrait when sessionStorage is empty", async () => {
+    // Given - no sessionStorage entry
+
+    // When
+    render(<OutpaintPageContent />);
+
+    const copyButtons = screen.getAllByRole("button", { name: /copy/i });
+    await userEvent.click(copyButtons[0]);
+
+    // Then
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining("11:15 Vertical Ratio"),
+    );
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining("Portrait orientation 11:15 aspect ratio"),
     );
   });
 });

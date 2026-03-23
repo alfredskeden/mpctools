@@ -6,6 +6,7 @@ import {
   OVERLAY_OPTIONS,
   VERTICAL_PRESET_CENTERS,
   CANVAS_SIZE_PRESETS,
+  PREP_CANVAS_SIZE_KEY,
   type PrepState,
 } from "../use-prep-workflow";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
@@ -1007,5 +1008,32 @@ describe("usePrepWorkflow", () => {
     });
 
     expect(result.current.state.overlayNativeDimensions).toEqual({ width: 3072, height: 4096 });
+  });
+
+  it("syncs canvas size to sessionStorage on mount with defaults", () => {
+    // Given
+    sessionStorage.clear();
+
+    // When
+    renderHook(() => usePrepWorkflow());
+
+    // Then
+    const stored = sessionStorage.getItem(PREP_CANVAS_SIZE_KEY);
+    expect(JSON.parse(stored!)).toEqual({ width: CANVAS_WIDTH, height: CANVAS_HEIGHT });
+  });
+
+  it("updates sessionStorage when canvas size changes", () => {
+    // Given
+    sessionStorage.clear();
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    // When
+    act(() => {
+      result.current.setCanvasSize(3264, 2448);
+    });
+
+    // Then
+    const stored = sessionStorage.getItem(PREP_CANVAS_SIZE_KEY);
+    expect(JSON.parse(stored!)).toEqual({ width: 3264, height: 2448 });
   });
 });
