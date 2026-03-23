@@ -53,6 +53,8 @@ export const GhostCard = ({
           src={images[currentIndex]}
           alt=""
           fill
+          sizes="224px"
+          priority
           className="object-cover"
         />
         {images.length > 1 && (
@@ -60,6 +62,8 @@ export const GhostCard = ({
             src={images[nextIndex]}
             alt=""
             fill
+            sizes="224px"
+            priority
             className="object-cover"
             style={{
               opacity: isFading ? 1 : 0,
