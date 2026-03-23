@@ -91,10 +91,10 @@ export function PrepToolbar({
   return (
     <div
       ref={toolbarRef}
-      className="absolute left-0 top-0 bottom-0 z-10 hidden md:flex"
+      className="relative z-10 hidden md:flex flex-col"
     >
       {/* Icon strip */}
-      <div className="flex w-11 flex-col items-center gap-1 border-r border-surface-border bg-surface-base pt-2">
+      <div className="flex flex-1 w-11 flex-col items-center gap-1 border-r border-surface-border bg-surface-base pt-2">
         {PANELS.map((panel) => (
           <ToolbarIconButton
             key={panel.id}
@@ -109,6 +109,7 @@ export function PrepToolbar({
 
       {/* Active panel */}
       {activePanel && activePanelConfig && (
+        <div className="absolute left-full top-0 bottom-0 z-10 overflow-y-auto">
         <ToolbarPanelWrapper title={activePanelConfig.title}>
           {activePanel === "image" && (
             <ImageControlsPanel
@@ -148,6 +149,7 @@ export function PrepToolbar({
             />
           )}
         </ToolbarPanelWrapper>
+        </div>
       )}
     </div>
   );

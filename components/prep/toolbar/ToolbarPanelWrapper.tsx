@@ -12,7 +12,7 @@ export function ToolbarPanelWrapper({
   children,
 }: ToolbarPanelWrapperProps) {
   return (
-    <div className="flex w-64 flex-col gap-4 border-r border-surface-border bg-surface-base p-4">
+    <div className="flex min-h-full w-64 flex-col gap-4 border-r border-surface-border bg-surface-base p-4">
       <h3 className="text-xs font-semibold uppercase tracking-label text-text-secondary">
         {title}
       </h3>

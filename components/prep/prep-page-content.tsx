@@ -75,7 +75,7 @@ export function PrepPageContent() {
   return (
     <div className="flex min-h-0 flex-1 flex-col md:flex-row">
       {/* Canvas area */}
-      <div className="relative flex min-h-7/12 flex-1 items-center justify-center bg-surface-ground p-4 md:min-h-0 md:p-6">
+      <div className="flex min-h-7/12 flex-1 md:min-h-0 bg-surface-ground">
         <PrepToolbar
           disabled={state.currentStep < 2}
           state={state}
@@ -95,6 +95,7 @@ export function PrepPageContent() {
           onFitHeight={fitHeight}
           onSetVerticalPreset={setVerticalPreset}
         />
+        <div className="flex flex-1 items-center justify-center p-4 md:p-6">
         <TransformCanvas
           image={state.imageElement}
           selectedOverlays={state.selectedOverlays}
@@ -110,6 +111,7 @@ export function PrepPageContent() {
           onExport={setCanvasDataUrl}
           onOverlayNativeDimensions={setOverlayNativeDimensions}
         />
+        </div>
       </div>
 
       {/* Right panel */}
