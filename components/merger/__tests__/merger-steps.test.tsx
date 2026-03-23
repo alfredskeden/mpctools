@@ -116,6 +116,22 @@ describe("MergerSteps", () => {
     expect(screen.getAllByText("The outpainted image from Gemini.").length).toBeGreaterThanOrEqual(1);
   });
 
+  it("shows de-watermark and upscale tip links when step 3 is active", () => {
+    const props = {
+      ...defaultProps,
+      stepStatuses: ["completed", "completed", "active"] as StepStatus[],
+    };
+    render(<MergerSteps {...props} />);
+
+    const dewatermarkLinks = screen.getAllByRole("link", { name: /de-watermark/i });
+    expect(dewatermarkLinks.length).toBeGreaterThanOrEqual(1);
+    expect(dewatermarkLinks[0]).toHaveAttribute("href", "https://gip.mpcproxy.art/gwr/");
+
+    const upscaleLinks = screen.getAllByRole("link", { name: /upscale with upscayl/i });
+    expect(upscaleLinks.length).toBeGreaterThanOrEqual(1);
+    expect(upscaleLinks[0]).toHaveAttribute("href", "https://upscayl.org/");
+  });
+
   it("shows completed state with filename and filesize", () => {
     const state: MergerState = {
       ...initialState,

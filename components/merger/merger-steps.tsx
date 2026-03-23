@@ -218,6 +218,26 @@ export const MergerSteps = ({
               <p className="text-xs leading-normal text-text-secondary">
                 The outpainted image from Gemini.
               </p>
+              <p className="text-xs leading-normal text-text-tertiary">
+                Before uploading:{" "}
+                <a
+                  href="https://gip.mpcproxy.art/gwr/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-blue"
+                >
+                  De-watermark ↗
+                </a>
+                {" · "}
+                <a
+                  href="https://upscayl.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-blue"
+                >
+                  Upscale with Upscayl ↗
+                </a>
+              </p>
               <button
                 type="button"
                 onClick={outpaintTriggerUpload}
@@ -389,6 +409,26 @@ export const MergerSteps = ({
             <>
               <p className="pl-8.5 text-xs leading-normal text-text-secondary">
                 The outpainted image from Gemini.
+              </p>
+              <p className="pl-8.5 text-xs leading-normal text-text-tertiary">
+                Before uploading:{" "}
+                <a
+                  href="https://gip.mpcproxy.art/gwr/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-blue"
+                >
+                  De-watermark ↗
+                </a>
+                {" · "}
+                <a
+                  href="https://upscayl.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-accent-blue"
+                >
+                  Upscale with Upscayl ↗
+                </a>
               </p>
               <button
                 type="button"
