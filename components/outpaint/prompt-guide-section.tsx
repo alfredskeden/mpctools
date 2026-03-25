@@ -15,42 +15,39 @@ const PROMPT_GUIDE_TIPS: PromptGuideTip[] = [
     description:
       "Navigate to https://gemini.google.com/ or to the gemini app on your phone. If you are using the web app, click on the 'New Chat' button. If you are using the app, click on the 'New Chat' button. ",
     imageSrc: "/images/prompt-guide-01.webp",
-    imageAlt: "Example of a clearly described scene in an outpaint prompt",
+    imageAlt: "Gemini web app new chat button",
   },
   {
     stepNumber: "02",
-    heading: "Name the grey zones",
+    heading: "Paste handshake prompt",
     description:
-      "Reference the grey border areas explicitly. Say 'extend the scene into the grey zones' so Gemini knows exactly where to generate.",
+      "Copy over the handshake prompt from the extension and paste it into the chat input field. Wait for the message 'Universal Neutral Extension Mode Locked. Ready for any input.'",
     imageSrc: "/images/prompt-guide-02.webp",
-    imageAlt: "Canvas with grey border zones highlighted for outpainting",
+    imageAlt: "Gemini chat input field with handshake prompt pasted in",
   },
   {
     stepNumber: "03",
-    heading: "Match the lighting",
+    heading: "Paste the outpaint command",
     description:
-      "Mention the lighting direction and mood. Consistent light sources prevent jarring edges between the original and extended area.",
+      "Copy over the outpaint command from the extension and paste it into the chat input field. Don't forget to paste the image you want to outpaint.",
     imageSrc: "/images/prompt-guide-03.webp",
-    imageAlt:
-      "Side-by-side comparison showing consistent lighting in outpainted result",
+    imageAlt: "Gemini chat input field with outpaint command pasted in",
   },
   {
     stepNumber: "04",
-    heading: "Keep style consistent",
+    heading: "Redo until you're happy",
     description:
-      "Describe the art style — photorealistic, painterly, illustrated. An explicit style tag helps maintain visual coherence across the extension.",
+      "If the first result has seams or odd fills, redo with pro or nb2 as many times as you want.",
     imageSrc: "/images/prompt-guide-04.webp",
-    imageAlt:
-      "Outpainted image showing style-matched extension around original artwork",
+    imageAlt: "Showing the redo process with pro and nb2",
   },
   {
     stepNumber: "05",
-    heading: "Iterate if needed",
+    heading: "Download the result",
     description:
-      "If the first result has seams or odd fills, re-run with more specific wording. Small prompt tweaks make a big difference in blending.",
+      "When you're happy with the result, click on the 'Download full size' button to save the image to your device. Then continue to the merge step.",
     imageSrc: "/images/prompt-guide-05.webp",
-    imageAlt:
-      "Comparison of first and refined outpaint result showing improved blending",
+    imageAlt: "Download full size button in gemini app",
   },
 ];
 
