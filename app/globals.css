@@ -121,6 +121,13 @@
   --height-canvas: 600px;
   --max-width-canvas: 440px;
   --max-height-canvas: 600px;
+
+  /* Sidebar dimensions */
+  --width-sidebar-instructions: 360px;
+
+  /* Instructions panel colors */
+  --color-instructions-panel: var(--instructions-panel);
+  --color-instructions-card: var(--instructions-card);
 }
 
 :root {
@@ -192,6 +199,10 @@
   --brand: oklch(0.68 0.16 253);
   --brand-hover: oklch(0.62 0.15 253);
   --brand-foreground: oklch(1 0 0);
+  /* Instructions panel */
+  --instructions-panel: #14161D;
+  --instructions-card: #1A1C24;
+
   /* Surface scale */
   --surface-ground: #0A0A0A;
   --surface-header: #0F0F0F;

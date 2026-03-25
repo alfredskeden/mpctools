@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   useOutpaintWorkflow,
   buildHandshakePrompt,
@@ -11,6 +11,7 @@ import { PREP_CANVAS_SIZE_KEY } from "@/hooks/use-prep-workflow";
 import { useCopyToClipboard } from "@/hooks/use-clipboard";
 import { OutpaintStepCard } from "./outpaint-step-card";
 import { CollapsedStep } from "./collapsed-step";
+import { PromptGuideSection } from "./prompt-guide-section";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -19,9 +20,7 @@ export const OutpaintPageContent = () => {
     useOutpaintWorkflow();
   const handshakeClipboard = useCopyToClipboard();
   const commandClipboard = useCopyToClipboard();
-  const [handshakePrompt, setHandshakePrompt] = useState(HANDSHAKE_PROMPT);
-
-  useEffect(() => {
+  const [handshakePrompt] = useState(() => {
     try {
       const stored = sessionStorage.getItem(PREP_CANVAS_SIZE_KEY);
       if (stored) {
@@ -29,16 +28,29 @@ export const OutpaintPageContent = () => {
           width: number;
           height: number;
         };
-        setHandshakePrompt(buildHandshakePrompt(width, height));
+        return buildHandshakePrompt(width, height);
       }
     } catch {
       // ignore
     }
-  }, []);
+    return HANDSHAKE_PROMPT;
+  });
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-surface-ground p-6">
-      <div className="flex flex-col gap-4 w-full max-w-content">
+    <div className="flex flex-1 min-h-0 flex-col lg:flex-row bg-surface-ground">
+      <div className="flex-1 min-h-0 overflow-y-auto p-6 pb-96 lg:p-8 lg:pb-8">
+        <h1 className="text-xs font-bold mb-2 uppercase text-accent-blue">
+          Prompt Guide
+        </h1>
+        <PromptGuideSection />
+      </div>
+      <aside
+        aria-label="Instructions"
+        className="fixed bottom-0 inset-x-0 z-10 flex flex-col gap-3 border-t border-white/8 p-4 bg-instructions-panel lg:relative lg:inset-auto lg:z-auto lg:w-sidebar-instructions lg:shrink-0 lg:gap-4 lg:border-t-0 lg:border-l lg:p-5"
+      >
+        <h2 className="sr-only lg:not-sr-only lg:pb-3 lg:border-b lg:border-white/6 text-micro font-bold tracking-extra-wide uppercase text-text-secondary">
+          Instructions
+        </h2>
         {state.handshakeSent && state.handshakeCollapsed ? (
           <CollapsedStep
             title="THE HANDSHAKE"
@@ -59,7 +71,7 @@ export const OutpaintPageContent = () => {
           <button
             type="button"
             onClick={sendHandshake}
-            className="flex items-center justify-center h-10.5 rounded-lg gap-2 border-1.5 border-accent-blue"
+            className="flex items-center justify-center h-10.5 rounded-lg gap-2 bg-accent-blue/6 border-1.5 border-accent-blue"
           >
             <svg
               width="16"
@@ -87,19 +99,20 @@ export const OutpaintPageContent = () => {
           onCopy={() => commandClipboard.copy(OUTPAINT_COMMAND)}
           copied={commandClipboard.copied}
         />
+        <div className="hidden lg:block flex-1" />
         <Link
           href="/merger"
           aria-disabled={!canContinueToMerge}
           className={cn(
             "flex items-center justify-center h-10.5 rounded-lg text-label font-semibold",
             canContinueToMerge
-              ? "border border-surface-border text-text-primary hover:bg-surface-overlay"
-              : "opacity-40 border border-surface-border text-text-tertiary pointer-events-none",
+              ? "border border-white/10 text-text-primary hover:bg-white/5"
+              : "opacity-40 border border-white/10 text-text-tertiary pointer-events-none",
           )}
         >
           Continue to Merge
         </Link>
-      </div>
+      </aside>
     </div>
   );
 };

@@ -136,6 +136,32 @@ describe("OutpaintPageContent", () => {
     );
   });
 
+  it("renders the page heading as an h1", () => {
+    // Given / When
+    render(<OutpaintPageContent />);
+
+    // Then
+    expect(screen.getByRole("heading", { level: 1, name: "Prompt Guide" })).toBeDefined();
+  });
+
+  it("renders the prompt guide section", () => {
+    // Given / When
+    render(<OutpaintPageContent />);
+
+    // Then
+    expect(screen.getByRole("heading", { level: 2, name: "How to prompt Gemini" })).toBeDefined();
+    expect(screen.getByText("5 steps · best results")).toBeDefined();
+  });
+
+  it("renders the instructions aside region with an h2 heading", () => {
+    // Given / When
+    render(<OutpaintPageContent />);
+
+    // Then
+    expect(screen.getByRole("complementary", { name: "Instructions" })).toBeDefined();
+    expect(screen.getByRole("heading", { level: 2, name: "Instructions" })).toBeDefined();
+  });
+
   it("falls back to default 11:15 portrait when sessionStorage is empty", async () => {
     // Given - no sessionStorage entry
 

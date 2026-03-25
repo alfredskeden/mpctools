@@ -9,6 +9,12 @@
 - shadcn/ui components
 - pnpm package manager
 
+## Project Conventions
+
+- TypeScript with strict mode — PascalCase for composable UI components, kebab-case for everything else
+- Tests live alongside source files in `__tests__/` subdirectories
+- Use `pnpm` as the package manager — never `npm` or `yarn`
+
 ## Testing
 
 - **Framework**: Vitest 4
@@ -20,6 +26,7 @@
 - Coverage thresholds are configured in `vitest.config.ts` and will fail the test run if not met
 - Every piece of code must have corresponding tests — no exceptions
 - Test files live alongside source files using the `.test.ts` / `.test.tsx` naming convention
+- **Always run the full test suite after making changes** — do not consider a task complete until all tests pass. Report the test count and pass rate.
 
 ## Project Structure
 
@@ -193,6 +200,23 @@ describe("ComponentName", () => {
 - 100% enforced on all statements, branches, functions, and lines
 - Layout files are excluded from coverage thresholds
 - Run `pnpm test:coverage` to verify before committing
+
+## Debugging
+
+- Before implementing a fix, identify and verify the root cause by tracing the actual code path first — avoid assumptions
+- Common pitfalls to check first:
+  - **Case-sensitivity**: macOS is case-insensitive, Linux is not — file/import casing must match exactly
+  - **Hydration mismatches**: Never read `sessionStorage`, `localStorage`, or browser APIs in `useState` initializers or during SSR
+  - **setState in useEffect**: Causes infinite render loops — always include correct dependency arrays and guard conditions
+
+## Editing
+
+- After applying file edits, use `Read` to confirm the change persisted before moving on — linters or editors can silently revert edits
+
+## MCP Tools
+
+- When using Paper MCP for design work, always take a screenshot after writing HTML to verify the result
+- If Paper crashes during a `write_html` call, retry the call before reporting failure
 
 ## Design Context
 
