@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { GhostCard } from "@/components/GhostCard";
 import { HeroSection } from "@/components/HeroSection";
 import { StepIndicator } from "@/components/StepIndicator";
