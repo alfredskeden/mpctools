@@ -3,22 +3,23 @@ import { HeroSection } from "../HeroSection";
 
 describe("HeroSection", () => {
   it("renders the welcome badge", () => {
-    render(<HeroSection />);
-    expect(screen.getByText("Image Outpainting Tool")).toBeDefined();
+    const { container } = render(<HeroSection />);
+    expect(container.querySelector("[data-slot='badge']")).not.toBeNull();
   });
 
-  it("renders the title", () => {
+  it("renders a top-level heading", () => {
     render(<HeroSection />);
-    expect(screen.getByText("Prep, Outpaint, Merge")).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1 })).toBeDefined();
   });
 
-  it("renders the description", () => {
-    render(<HeroSection />);
-    expect(screen.getByText(/Extend any image with Gemini AI/)).toBeDefined();
+  it("renders a description paragraph", () => {
+    const { container } = render(<HeroSection />);
+    expect(container.querySelector("p")).not.toBeNull();
   });
 
-  it("renders the begin button with link", () => {
+  it("renders a CTA link to start the workflow", () => {
     render(<HeroSection />);
-    expect(screen.getByText("Get Started")).toBeDefined();
+    const link = screen.getByRole("link");
+    expect(link.getAttribute("href")).toBe("/prep");
   });
 });

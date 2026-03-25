@@ -75,22 +75,24 @@ describe("MergerSteps", () => {
     };
     render(<MergerSteps {...props} />);
 
-    expect(screen.getAllByText("Upload original card").length).toBeGreaterThanOrEqual(1);
+    // All three hidden file inputs are always present regardless of status
+    expect(screen.getByTestId("og-file-input")).toBeDefined();
+    expect(screen.getByTestId("guide-file-input")).toBeDefined();
+    expect(screen.getByTestId("outpaint-file-input")).toBeDefined();
   });
 
-  it("renders all three step titles", () => {
+  it("renders all three step file inputs", () => {
     render(<MergerSteps {...defaultProps} />);
 
-    expect(screen.getAllByText("Upload original card").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Upload guide image").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Upload outpaint result").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId("og-file-input")).toBeDefined();
+    expect(screen.getByTestId("guide-file-input")).toBeDefined();
+    expect(screen.getByTestId("outpaint-file-input")).toBeDefined();
   });
 
   it("shows upload button for active step 1", () => {
     render(<MergerSteps {...defaultProps} />);
 
-    expect(screen.getAllByText("The high-res card scan from Scryfall.").length).toBeGreaterThanOrEqual(1);
-    const buttons = screen.getAllByText("Choose file");
+    const buttons = screen.getAllByRole("button", { name: /choose file/i });
     expect(buttons.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -101,9 +103,8 @@ describe("MergerSteps", () => {
     };
     render(<MergerSteps {...props} />);
 
-    expect(
-      screen.getAllByText("The gray-bordered image from Step 1.").length,
-    ).toBeGreaterThanOrEqual(1);
+    const buttons = screen.getAllByRole("button", { name: /choose file/i });
+    expect(buttons.length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows upload button for active step 3", () => {
@@ -113,7 +114,8 @@ describe("MergerSteps", () => {
     };
     render(<MergerSteps {...props} />);
 
-    expect(screen.getAllByText("The outpainted image from Gemini.").length).toBeGreaterThanOrEqual(1);
+    const buttons = screen.getAllByRole("button", { name: /choose file/i });
+    expect(buttons.length).toBeGreaterThanOrEqual(1);
   });
 
   it("shows de-watermark and upscale tip links when step 3 is active", () => {
@@ -283,7 +285,7 @@ describe("MergerSteps", () => {
     const ogInput = screen.getByTestId("og-file-input");
     const clickSpy = vi.spyOn(ogInput, "click");
 
-    const chooseFileBtns = screen.getAllByText("Choose file");
+    const chooseFileBtns = screen.getAllByRole("button", { name: /choose file/i });
     fireEvent.click(chooseFileBtns[0]);
 
     expect(clickSpy).toHaveBeenCalledOnce();

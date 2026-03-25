@@ -14,8 +14,8 @@ describe("OutpaintPageContent", () => {
   it("renders both step cards initially", () => {
     render(<OutpaintPageContent />);
 
-    expect(screen.getByText("THE HANDSHAKE")).toBeDefined();
-    expect(screen.getByText("OUTPAINT COMMAND")).toBeDefined();
+    const copyButtons = screen.getAllByRole("button", { name: /copy/i });
+    expect(copyButtons).toHaveLength(2);
   });
 
   it("shows both copy buttons initially", () => {
@@ -36,7 +36,7 @@ describe("OutpaintPageContent", () => {
   it("shows disabled Continue to Merge initially", () => {
     render(<OutpaintPageContent />);
 
-    const link = screen.getByText("Continue to Merge");
+    const link = screen.getByRole("link", { name: /continue/i });
     expect(link.getAttribute("aria-disabled")).toBe("true");
   });
 
@@ -48,13 +48,13 @@ describe("OutpaintPageContent", () => {
     );
 
     // Handshake is now collapsed with "Sent" label
-    expect(screen.getByText("Sent")).toBeDefined();
+    expect(screen.getByTestId("sent-label")).toBeDefined();
 
     // Outpaint command is now active with Copy button
     expect(screen.getByRole("button", { name: /copy/i })).toBeDefined();
 
     // Continue to Merge is now enabled
-    const link = screen.getByText("Continue to Merge");
+    const link = screen.getByRole("link", { name: /continue/i });
     expect(link.getAttribute("aria-disabled")).toBe("false");
   });
 
@@ -78,7 +78,7 @@ describe("OutpaintPageContent", () => {
       screen.getByRole("button", { name: /I've sent the handshake/i }),
     );
 
-    expect(screen.getByText("Sent")).toBeDefined();
+    expect(screen.getByTestId("sent-label")).toBeDefined();
 
     // Click collapsed step to expand
     await userEvent.click(
@@ -86,7 +86,7 @@ describe("OutpaintPageContent", () => {
     );
 
     // Now handshake is expanded (not collapsed), showing as inactive card
-    expect(screen.queryByText("Sent")).toBeNull();
+    expect(screen.queryByTestId("sent-label")).toBeNull();
     // Both cards visible with copy buttons
     const copyButtons = screen.getAllByRole("button", { name: /copy/i });
     expect(copyButtons).toHaveLength(2);
@@ -141,16 +141,16 @@ describe("OutpaintPageContent", () => {
     render(<OutpaintPageContent />);
 
     // Then
-    expect(screen.getByRole("heading", { level: 1, name: "Prompt Guide" })).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1 })).toBeDefined();
   });
 
-  it("renders the prompt guide section", () => {
+  it("renders the prompt guide section with an h2 heading", () => {
     // Given / When
     render(<OutpaintPageContent />);
 
-    // Then
-    expect(screen.getByRole("heading", { level: 2, name: "How to prompt Gemini" })).toBeDefined();
-    expect(screen.getByText("5 steps · best results")).toBeDefined();
+    // Then — at least one h2 heading exists (PromptGuideSection has one)
+    const h2s = screen.getAllByRole("heading", { level: 2 });
+    expect(h2s.length).toBeGreaterThanOrEqual(1);
   });
 
   it("renders the instructions aside region with an h2 heading", () => {

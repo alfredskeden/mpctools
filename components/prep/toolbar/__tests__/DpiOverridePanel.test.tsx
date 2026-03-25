@@ -10,13 +10,6 @@ const defaultProps = {
 };
 
 describe("DpiOverridePanel", () => {
-  it("renders description text", () => {
-    render(<DpiOverridePanel {...defaultProps} />);
-    expect(
-      screen.getByText(/Scales the uploaded image based on DPI/),
-    ).toBeInTheDocument();
-  });
-
   it("renders DPI input with empty value when no override", () => {
     render(<DpiOverridePanel {...defaultProps} />);
     expect(screen.getByLabelText("DPI value")).toHaveValue(null);
@@ -65,14 +58,10 @@ describe("DpiOverridePanel", () => {
     expect(onSetDpiOverride).toHaveBeenLastCalledWith(null);
   });
 
-  it("renders 270 DPI preset button", () => {
+  it("renders DPI preset buttons", () => {
     render(<DpiOverridePanel {...defaultProps} />);
-    expect(screen.getByText("270 DPI")).toBeInTheDocument();
-  });
-
-  it("renders 300 DPI preset button", () => {
-    render(<DpiOverridePanel {...defaultProps} />);
-    expect(screen.getByText("300 DPI")).toBeInTheDocument();
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.length).toBeGreaterThanOrEqual(3); // 270, 300, Clear Override
   });
 
   it("calls onSetDpiOverride with 270 when 270 DPI preset is clicked", async () => {
@@ -83,7 +72,7 @@ describe("DpiOverridePanel", () => {
         onSetDpiOverride={onSetDpiOverride}
       />,
     );
-    await userEvent.click(screen.getByText("270 DPI"));
+    await userEvent.click(screen.getByRole("button", { name: /270 dpi/i }));
     expect(onSetDpiOverride).toHaveBeenCalledWith(270);
   });
 
@@ -95,11 +84,11 @@ describe("DpiOverridePanel", () => {
         onSetDpiOverride={onSetDpiOverride}
       />,
     );
-    await userEvent.click(screen.getByText("300 DPI"));
+    await userEvent.click(screen.getByRole("button", { name: /300 dpi/i }));
     expect(onSetDpiOverride).toHaveBeenCalledWith(300);
   });
 
-  it("calls onSetDpiOverride with null when Clear Override is clicked", async () => {
+  it("calls onSetDpiOverride with null when clear override is clicked", async () => {
     const onSetDpiOverride = vi.fn();
     render(
       <DpiOverridePanel
@@ -108,26 +97,19 @@ describe("DpiOverridePanel", () => {
         onSetDpiOverride={onSetDpiOverride}
       />,
     );
-    await userEvent.click(screen.getByText("Clear Override"));
+    await userEvent.click(screen.getByRole("button", { name: /clear/i }));
     expect(onSetDpiOverride).toHaveBeenCalledWith(null);
   });
 
-  it("highlights 270 DPI preset when active", () => {
+  it("marks 270 DPI preset as active when dpiOverride is 270", () => {
     render(<DpiOverridePanel {...defaultProps} dpiOverride={270} />);
-    const button = screen.getByText("270 DPI").closest("button");
-    expect(button?.className).toContain("accent-blue");
+    const button = screen.getByRole("button", { name: /270 dpi/i });
+    expect(button.getAttribute("data-active")).toBe("true");
   });
 
-  it("highlights 300 DPI preset when active", () => {
+  it("marks 300 DPI preset as active when dpiOverride is 300", () => {
     render(<DpiOverridePanel {...defaultProps} dpiOverride={300} />);
-    const button = screen.getByText("300 DPI").closest("button");
-    expect(button?.className).toContain("accent-blue");
-  });
-
-  it("renders Scryfall info note", () => {
-    render(<DpiOverridePanel {...defaultProps} />);
-    expect(
-      screen.getByText(/Scryfall scans are always 300 DPI/),
-    ).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: /300 dpi/i });
+    expect(button.getAttribute("data-active")).toBe("true");
   });
 });

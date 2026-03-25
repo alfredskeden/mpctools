@@ -5,27 +5,27 @@ describe("StepCircle", () => {
   it("renders the step number when active", () => {
     const { container } = render(<StepCircle status="active" number={1} />);
 
-    const circle = container.querySelector(".rounded-full")!;
+    const circle = container.querySelector("[data-status='active']")!;
+    expect(circle).not.toBeNull();
     expect(circle.textContent).toBe("1");
-    expect(circle.className).toContain("bg-accent-blue");
-    expect(circle.className).toContain("text-white");
+    expect(circle.querySelector("svg")).toBeNull();
   });
 
-  it("renders a green checkmark when completed", () => {
+  it("renders a checkmark icon when completed", () => {
     const { container } = render(<StepCircle status="completed" number={1} />);
 
-    const circle = container.querySelector(".rounded-full")!;
-    expect(circle.className).toContain("bg-status-success-dark");
-    expect(circle.textContent).not.toBe("1");
+    const circle = container.querySelector("[data-status='completed']")!;
+    expect(circle).not.toBeNull();
     expect(circle.querySelector("svg")).toBeDefined();
+    expect(circle.textContent?.trim()).toBe("");
   });
 
-  it("renders the step number with muted styling when upcoming", () => {
+  it("renders the step number with upcoming status when upcoming", () => {
     const { container } = render(<StepCircle status="upcoming" number={3} />);
 
-    const circle = container.querySelector(".rounded-full")!;
+    const circle = container.querySelector("[data-status='upcoming']")!;
+    expect(circle).not.toBeNull();
     expect(circle.textContent).toBe("3");
-    expect(circle.className).toContain("border-surface-muted");
-    expect(circle.className).toContain("text-text-tertiary");
+    expect(circle.querySelector("svg")).toBeNull();
   });
 });

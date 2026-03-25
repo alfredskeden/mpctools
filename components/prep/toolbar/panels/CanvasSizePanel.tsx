@@ -80,6 +80,7 @@ export function CanvasSizePanel({
               <button
                 key={preset.label}
                 type="button"
+                data-active={String(isActive)}
                 onClick={() => onSetCanvasSize(preset.width, preset.height)}
                 className={`flex items-center justify-between rounded px-3 py-1.5 text-xs ${
                   isActive
@@ -104,6 +105,7 @@ export function CanvasSizePanel({
                 <button
                   key={preset.label}
                   type="button"
+                  data-active={String(isActive)}
                   onClick={() => onSetCanvasSize(preset.width, preset.height)}
                   className={`rounded px-3 py-1.5 text-xs ${
                     isActive

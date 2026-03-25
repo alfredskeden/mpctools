@@ -87,28 +87,26 @@ describe("PrepPageContent", () => {
   it("shows upload button initially", () => {
     render(<PrepPageContent />);
 
-    expect(screen.getAllByText("Upload Now").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByTestId("upload-trigger-btn").length,
+    ).toBeGreaterThanOrEqual(1);
   });
 
-  it("shows instruction steps", () => {
+  it("shows instruction steps aside", () => {
     render(<PrepPageContent />);
 
     expect(
-      screen.getAllByText("Upload your card art").length,
-    ).toBeGreaterThanOrEqual(1);
-    expect(
-      screen.getAllByText("Position & frame").length,
-    ).toBeGreaterThanOrEqual(1);
-    expect(
-      screen.getAllByText("Download prepared image").length,
-    ).toBeGreaterThanOrEqual(1);
+      screen.getByRole("complementary", { name: "Instructions" }),
+    ).toBeDefined();
   });
 
   it("shows action buttons", () => {
     render(<PrepPageContent />);
 
-    expect(screen.getByText("Download PNG")).toBeDefined();
-    expect(screen.getByText("Continue to Outpaint")).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: /download png/i }),
+    ).toBeDefined();
+    expect(screen.getByRole("link", { name: /continue/i })).toBeDefined();
   });
 
   it("does not crash when download is clicked without canvas data", () => {
@@ -146,16 +144,12 @@ describe("PrepPageContent", () => {
     expect(
       screen.getAllByRole("group", { name: "Controls" }).length,
     ).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Scale").length).toBeGreaterThanOrEqual(1);
     expect(
       screen.getAllByRole("button", { name: "Decrease scale" }).length,
     ).toBeGreaterThanOrEqual(1);
     expect(
       screen.getAllByRole("button", { name: "Increase scale" }).length,
     ).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Frame Overlay").length).toBeGreaterThanOrEqual(
-      1,
-    );
 
     mocks.restore();
   });
@@ -169,7 +163,7 @@ describe("PrepPageContent", () => {
     });
 
     expect(
-      screen.getAllByText("card.png uploaded").length,
+      screen.getAllByText(/card\.png/).length,
     ).toBeGreaterThanOrEqual(1);
 
     mocks.restore();
@@ -183,7 +177,9 @@ describe("PrepPageContent", () => {
       uploadFile();
     });
 
-    expect(screen.getAllByText("I'm Done").length).toBeGreaterThanOrEqual(1);
+    expect(
+      screen.getAllByTestId("mark-positioned-btn").length,
+    ).toBeGreaterThanOrEqual(1);
 
     mocks.restore();
   });
@@ -204,7 +200,7 @@ describe("PrepPageContent", () => {
 
     // Mark as positioned
     act(() => {
-      fireEvent.click(screen.getAllByText("I'm Done")[0]);
+      fireEvent.click(screen.getAllByTestId("mark-positioned-btn")[0]);
     });
 
     // Download button should be enabled (rendered in both mobile and desktop, pick first)

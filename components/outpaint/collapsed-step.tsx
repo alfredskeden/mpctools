@@ -13,7 +13,7 @@ export const CollapsedStep = ({ title, onToggle }: CollapsedStepProps) => {
       className="flex items-center justify-between rounded-lg py-4 px-5 bg-surface-raised border border-surface-border w-full"
     >
       <div className="flex items-center gap-2.5">
-        <div className="flex items-center justify-center w-5.5 h-5.5 shrink-0 rounded-full bg-status-success">
+        <div data-testid="sent-indicator" className="flex items-center justify-center w-5.5 h-5.5 shrink-0 rounded-full bg-status-success">
           <svg
             width="12"
             height="12"
@@ -29,7 +29,7 @@ export const CollapsedStep = ({ title, onToggle }: CollapsedStepProps) => {
         <span className="text-label tracking-wide text-text-secondary font-semibold">
           {title}
         </span>
-        <span className="text-caption text-status-success font-medium">
+        <span data-testid="sent-label" className="text-caption text-status-success font-medium">
           Sent
         </span>
       </div>

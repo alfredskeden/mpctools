@@ -28,6 +28,28 @@
 - Test files live alongside source files using the `.test.ts` / `.test.tsx` naming convention
 - **Always run the full test suite after making changes** — do not consider a task complete until all tests pass. Report the test count and pass rate.
 
+### Behavior-First Testing (MANDATORY)
+
+Tests must survive copy edits and design-token renames. Only assert on **structure**, **behavior**, and **state** — never on **wording** or **CSS class names**.
+
+**Never assert on:**
+- Exact user-visible strings: `getByText("Upload your card scan from Scryfall...")` — breaks on any copy change
+- CSS class names for visual styling: `className.toContain("bg-accent-blue")` — breaks on token renames
+- Decorative ordinals/numbers rendered from static data: `getByText("01")` — not a behavioral contract
+
+**Assert on instead:**
+- Element presence/absence based on state: `queryByTestId("upload-cta")` is null when step is completed
+- Semantic structure: `getAllByRole("heading", { level: 3 }).toHaveLength(5)`
+- Counts of rendered items: `getAllByRole("img").toHaveLength(5)`
+- ARIA state attributes: `getAttribute("aria-current")` instead of className checks
+- Callbacks called: `expect(onMarkPositioned).toHaveBeenCalledOnce()`
+- Navigation: `getAttribute("href")` values
+- Accessible landmark labels (ARIA roles): `getByRole("navigation", { name: "Build steps" })`
+
+100% coverage still holds — exercise every code path (branch), but assert on presence/type/count, not string content.
+
+Use `/behavior-tests [file]` to audit and fix brittle tests in an existing file.
+
 ## Project Structure
 
 ```

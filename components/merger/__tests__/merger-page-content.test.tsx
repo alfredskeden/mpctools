@@ -70,18 +70,18 @@ function uploadFile(testId: string, fileName: string) {
 }
 
 describe(MergerPageContent.name, () => {
-  it("shows all step titles", () => {
+  it("shows three upload step inputs", () => {
     render(<MergerPageContent />);
 
-    expect(screen.getAllByText("Upload original card").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Upload guide image").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("Upload outpaint result").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId("og-file-input")).toBeDefined();
+    expect(screen.getByTestId("guide-file-input")).toBeDefined();
+    expect(screen.getByTestId("outpaint-file-input")).toBeDefined();
   });
 
   it("shows download button", () => {
     render(<MergerPageContent />);
 
-    expect(screen.getByText("Download Merged")).toBeDefined();
+    expect(screen.getByRole("button", { name: /download merged/i })).toBeDefined();
   });
 
   it("shows canvas after OG upload", () => {

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import Home from "./page";
 
 vi.mock("next/image", () => ({
@@ -12,24 +12,22 @@ describe("Home", () => {
     expect(screen.getByRole("main")).toBeDefined();
   });
 
-  it("renders the hero section", () => {
+  it("renders the hero section with an h1 heading", () => {
     render(<Home />);
-    expect(
-      screen.getByText("Prep, Outpaint, Merge"),
-    ).toBeDefined();
+    expect(screen.getByRole("heading", { level: 1 })).toBeDefined();
   });
 
-  it("renders the step indicator", () => {
+  it("renders the step indicator navigation", () => {
     render(<Home />);
     expect(
       screen.getByRole("navigation", { name: "Build steps" }),
     ).toBeDefined();
   });
 
-  it("renders step labels", () => {
+  it("renders three step items in the navigation", () => {
     render(<Home />);
-    expect(screen.getByText("Prep")).toBeDefined();
-    expect(screen.getByText("Outpaint")).toBeDefined();
-    expect(screen.getByText("Merge")).toBeDefined();
+    const nav = screen.getByRole("navigation", { name: "Build steps" });
+    const items = within(nav).getAllByRole("listitem");
+    expect(items).toHaveLength(3);
   });
 });

@@ -23,22 +23,22 @@ describe("GhostCard", () => {
     expect(container.querySelector("[aria-hidden='true']")).toBeDefined();
   });
 
-  it("applies left positioning for left side", () => {
+  it("applies left side attribute for left side", () => {
     const { container } = render(
       <GhostCard side="left" images={["/img1.webp", "/img2.webp"]} />,
     );
 
-    const wrapper = container.firstElementChild as HTMLElement;
-    expect(wrapper.className).toContain("-left-10");
+    const wrapper = container.querySelector("[data-side='left']");
+    expect(wrapper).not.toBeNull();
   });
 
-  it("applies right positioning for right side", () => {
+  it("applies right side attribute for right side", () => {
     const { container } = render(
       <GhostCard side="right" images={["/img1.webp", "/img2.webp"]} />,
     );
 
-    const wrapper = container.firstElementChild as HTMLElement;
-    expect(wrapper.className).toContain("-right-8");
+    const wrapper = container.querySelector("[data-side='right']");
+    expect(wrapper).not.toBeNull();
   });
 
   it("renders two images when given two", () => {

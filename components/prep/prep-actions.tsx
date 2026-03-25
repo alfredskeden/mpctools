@@ -22,6 +22,7 @@ export const PrepActions = ({
         <button
           type="button"
           disabled
+          data-downloaded="true"
           className="h-11 w-full rounded-lg border border-status-success-dark bg-surface-overlay text-sm font-medium text-status-success"
         >
           Downloaded ✓

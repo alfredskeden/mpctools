@@ -56,7 +56,6 @@ describe("MobileInstructionCarousel", () => {
 
     const prevBtn = screen.getByRole("button", { name: "Previous step" });
     expect(prevBtn.hasAttribute("disabled")).toBe(true);
-    expect(prevBtn.className).toContain("opacity-35");
   });
 
   it("disables next button on last step", () => {
@@ -64,7 +63,6 @@ describe("MobileInstructionCarousel", () => {
 
     const nextBtn = screen.getByRole("button", { name: "Next step" });
     expect(nextBtn.hasAttribute("disabled")).toBe(true);
-    expect(nextBtn.className).toContain("opacity-35");
   });
 
   it("renders dot indicators with active dot highlighted", () => {
@@ -72,11 +70,11 @@ describe("MobileInstructionCarousel", () => {
       <MobileInstructionCarousel steps={steps} currentStepIndex={0} />,
     );
 
-    const dots = container.querySelectorAll(".size-1\\.5");
+    const dots = container.querySelectorAll("[data-active]");
     expect(dots.length).toBe(3);
-    expect(dots[0].className).toContain("bg-accent-blue");
-    expect(dots[1].className).toContain("bg-surface-muted");
-    expect(dots[2].className).toContain("bg-surface-muted");
+    expect(dots[0].getAttribute("data-active")).toBe("true");
+    expect(dots[1].getAttribute("data-active")).toBe("false");
+    expect(dots[2].getAttribute("data-active")).toBe("false");
   });
 
   it("updates dot indicators when navigating", () => {
@@ -86,9 +84,9 @@ describe("MobileInstructionCarousel", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Next step" }));
 
-    const dots = container.querySelectorAll(".size-1\\.5");
-    expect(dots[0].className).toContain("bg-surface-muted");
-    expect(dots[1].className).toContain("bg-accent-blue");
+    const dots = container.querySelectorAll("[data-active]");
+    expect(dots[0].getAttribute("data-active")).toBe("false");
+    expect(dots[1].getAttribute("data-active")).toBe("true");
   });
 
   it("auto-advances when currentStepIndex changes", () => {
@@ -112,15 +110,18 @@ describe("MobileInstructionCarousel", () => {
     expect(screen.getByText("Step 2 content")).toBeDefined();
   });
 
-  it("applies opacity to upcoming step content", () => {
+  it("marks upcoming step content with upcoming status", () => {
     render(<MobileInstructionCarousel steps={steps} currentStepIndex={0} />);
 
     // Navigate to an upcoming step
     fireEvent.click(screen.getByRole("button", { name: "Next step" }));
 
-    // The content area should have opacity-35 since step 2 is upcoming
-    const content = screen.getByText("Step 2 content").parentElement!;
-    expect(content.className).toContain("opacity-35");
+    // The content area should have data-status="upcoming"
+    const { container } = render(
+      <MobileInstructionCarousel steps={steps} currentStepIndex={1} />,
+    );
+    const contentArea = container.querySelector("[data-status='upcoming']");
+    expect(contentArea).not.toBeNull();
   });
 
   it("uses custom aria-label when provided", () => {

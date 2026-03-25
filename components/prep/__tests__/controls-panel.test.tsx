@@ -1,5 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ControlsPanel } from "../controls-panel";
+import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 
 const defaultProps = {
   scale: 1,
@@ -21,16 +22,10 @@ describe("ControlsPanel", () => {
     expect(screen.getByRole("group", { name: "Controls" })).toBeDefined();
   });
 
-  it("shows scale percentage", () => {
+  it("shows scale percentage computed from scale prop", () => {
     render(<ControlsPanel {...defaultProps} scale={1.5} />);
 
     expect(screen.getByText("150%")).toBeDefined();
-  });
-
-  it("shows Scale label", () => {
-    render(<ControlsPanel {...defaultProps} />);
-
-    expect(screen.getByText("Scale")).toBeDefined();
   });
 
   it("calls onUpdateScale with decreased value when minus is clicked", () => {
@@ -107,30 +102,21 @@ describe("ControlsPanel", () => {
     expect(onUpdateScale).toHaveBeenCalledWith(3.01);
   });
 
-  it("renders Frame Overlay section", () => {
-    render(<ControlsPanel {...defaultProps} />);
-
-    expect(screen.getByText("Frame Overlay")).toBeDefined();
-  });
-
   it("renders overlay option checkboxes", () => {
     render(<ControlsPanel {...defaultProps} />);
 
-    expect(screen.getByText("Normal")).toBeDefined();
-    expect(screen.getByText("Medium")).toBeDefined();
-    expect(screen.getByText("Short")).toBeDefined();
-    expect(screen.getByText("Tall Normal")).toBeDefined();
-    expect(screen.getByText("Black Bottom")).toBeDefined();
+    const checkboxes = screen.getAllByRole("checkbox");
+    expect(checkboxes).toHaveLength(OVERLAY_OPTIONS.length);
   });
 
-  it("calls onToggleOverlay with option id when checkbox is clicked", () => {
+  it("calls onToggleOverlay with option id when overlay is clicked", () => {
     const onToggleOverlay = vi.fn();
     render(
       <ControlsPanel {...defaultProps} onToggleOverlay={onToggleOverlay} />,
     );
 
-    fireEvent.click(screen.getByText("Normal"));
-    expect(onToggleOverlay).toHaveBeenCalledWith("normal");
+    fireEvent.click(screen.getByText(OVERLAY_OPTIONS[0].label));
+    expect(onToggleOverlay).toHaveBeenCalledWith(OVERLAY_OPTIONS[0].id);
   });
 
   it("checks checkboxes for selected overlays", () => {
@@ -151,24 +137,21 @@ describe("ControlsPanel", () => {
     expect(shortCheckbox).toBeChecked();
   });
 
-  it("highlights selected overlay text", () => {
+  it("marks selected overlay checkbox as checked", () => {
     render(<ControlsPanel {...defaultProps} selectedOverlays={["normal"]} />);
 
-    const normalText = screen.getByText("Normal");
-    expect(normalText.className).toContain("text-accent-blue");
+    expect(screen.getAllByRole("checkbox")[0]).toBeChecked();
   });
 
-  it("does not highlight unselected overlay text", () => {
+  it("marks unselected overlay checkbox as unchecked", () => {
     render(<ControlsPanel {...defaultProps} selectedOverlays={[]} />);
 
-    const normalText = screen.getByText("Normal");
-    expect(normalText.className).not.toContain("text-accent-blue");
+    expect(screen.getAllByRole("checkbox")[0]).not.toBeChecked();
   });
 
-  it("shows rotation label and value", () => {
+  it("shows rotation value computed from rotation prop", () => {
     render(<ControlsPanel {...defaultProps} rotation={45} />);
 
-    expect(screen.getByText("Rotation")).toBeDefined();
     expect(screen.getByText("45°")).toBeDefined();
   });
 

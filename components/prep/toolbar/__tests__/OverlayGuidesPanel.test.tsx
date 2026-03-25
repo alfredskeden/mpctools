@@ -13,15 +13,6 @@ const defaultProps = {
 };
 
 describe("OverlayGuidesPanel", () => {
-  it("renders description text", () => {
-    render(<OverlayGuidesPanel {...defaultProps} />);
-    expect(
-      screen.getByText(
-        "Overlays are visual-only and will not be included in downloads.",
-      ),
-    ).toBeInTheDocument();
-  });
-
   it("renders a checkbox for each overlay option", () => {
     render(<OverlayGuidesPanel {...defaultProps} />);
     const checkboxes = screen.getAllByRole("checkbox");

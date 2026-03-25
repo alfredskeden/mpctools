@@ -16,6 +16,7 @@ type StepIndicatorProps = {
 const stepDot = (active: boolean) => (
   <div
     aria-hidden="true"
+    data-active={String(active)}
     className={cn(
       "size-1.5 shrink-0 rounded-full",
       active ? "bg-accent-blue" : "bg-surface-subtle",

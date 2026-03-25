@@ -14,15 +14,10 @@ describe("OutpaintPage", () => {
     expect(screen.getByRole("main")).toBeDefined();
   });
 
-  it("shows the handshake step card", () => {
+  it("shows both step cards with copy buttons", () => {
     render(<OutpaintPage />);
 
-    expect(screen.getByText("THE HANDSHAKE")).toBeDefined();
-  });
-
-  it("shows the outpaint command step card", () => {
-    render(<OutpaintPage />);
-
-    expect(screen.getByText("OUTPAINT COMMAND")).toBeDefined();
+    const copyButtons = screen.getAllByRole("button", { name: /copy/i });
+    expect(copyButtons).toHaveLength(2);
   });
 });

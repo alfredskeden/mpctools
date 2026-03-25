@@ -110,6 +110,7 @@ export const InstructionSteps = ({
               </p>
               <button
                 type="button"
+                data-testid="upload-trigger-btn"
                 onClick={handleUploadClick}
                 className="mt-3 flex h-9 w-full items-center justify-center gap-1.5 rounded-lg bg-accent-blue text-sm font-medium text-white"
               >
@@ -177,6 +178,7 @@ export const InstructionSteps = ({
               />
               <button
                 type="button"
+                data-testid="mark-positioned-btn"
                 onClick={onMarkPositioned}
                 className="mt-3 flex h-9 w-full items-center justify-center rounded-lg bg-status-success-dark text-sm font-medium text-white"
               >
@@ -270,6 +272,7 @@ export const InstructionSteps = ({
               </p>
               <button
                 type="button"
+                data-testid="upload-trigger-btn"
                 onClick={handleUploadClick}
                 className="ml-8.5 flex h-9 items-center justify-center gap-1.5 rounded-lg bg-accent-blue text-sm font-medium text-white"
               >
@@ -332,6 +335,7 @@ export const InstructionSteps = ({
               />
               <button
                 type="button"
+                data-testid="mark-positioned-btn"
                 onClick={onMarkPositioned}
                 className="ml-8.5 mt-2 flex h-9 items-center justify-center rounded-lg bg-status-success-dark text-sm font-medium text-white"
               >

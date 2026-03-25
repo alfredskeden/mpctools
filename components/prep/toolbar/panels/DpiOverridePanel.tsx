@@ -64,6 +64,7 @@ export function DpiOverridePanel({
         <div className="flex flex-col gap-1.5">
           <button
             type="button"
+            data-active={String(dpiOverride === 270)}
             onClick={() => onSetDpiOverride(270)}
             className={`flex items-center justify-between rounded px-3 py-1.5 text-xs ${
               dpiOverride === 270
@@ -76,6 +77,7 @@ export function DpiOverridePanel({
           </button>
           <button
             type="button"
+            data-active={String(dpiOverride === 300)}
             onClick={() => onSetDpiOverride(300)}
             className={`flex items-center justify-between rounded px-3 py-1.5 text-xs ${
               dpiOverride === 300

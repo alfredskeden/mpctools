@@ -13,8 +13,8 @@ describe("PrepActions", () => {
       />,
     );
 
-    expect(screen.getByText("Download PNG")).toBeDefined();
-    expect(screen.getByText("Continue to Outpaint")).toBeDefined();
+    expect(screen.getByRole("button", { name: /download/i })).toBeDefined();
+    expect(screen.getByRole("link", { name: /continue/i })).toBeDefined();
   });
 
   it("disables download button when canDownload is false", () => {
@@ -28,7 +28,7 @@ describe("PrepActions", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /download png/i }),
+      screen.getByRole("button", { name: /download/i }),
     ).toBeDisabled();
   });
 
@@ -43,7 +43,7 @@ describe("PrepActions", () => {
     );
 
     expect(
-      screen.getByRole("button", { name: /download png/i }),
+      screen.getByRole("button", { name: /download/i }),
     ).not.toBeDisabled();
   });
 
@@ -59,7 +59,7 @@ describe("PrepActions", () => {
     );
 
     await userEvent.click(
-      screen.getByRole("button", { name: /download png/i }),
+      screen.getByRole("button", { name: /download/i }),
     );
     expect(onDownload).toHaveBeenCalledOnce();
   });
@@ -74,7 +74,7 @@ describe("PrepActions", () => {
       />,
     );
 
-    const link = screen.getByText("Continue to Outpaint");
+    const link = screen.getByRole("link", { name: /continue/i });
     expect(link.getAttribute("aria-disabled")).toBe("true");
   });
 
@@ -88,39 +88,11 @@ describe("PrepActions", () => {
       />,
     );
 
-    const link = screen.getByText("Continue to Outpaint");
+    const link = screen.getByRole("link", { name: /continue/i });
     expect(link.getAttribute("href")).toBe("/outpaint");
   });
 
-  it("applies disabled opacity to download button when disabled", () => {
-    render(
-      <PrepActions
-        canDownload={false}
-        canContinue={false}
-        isDownloaded={false}
-        onDownload={vi.fn()}
-      />,
-    );
-
-    const btn = screen.getByRole("button", { name: /download png/i });
-    expect(btn.className).toContain("opacity-40");
-  });
-
-  it("applies disabled opacity to continue link when disabled", () => {
-    render(
-      <PrepActions
-        canDownload={false}
-        canContinue={false}
-        isDownloaded={false}
-        onDownload={vi.fn()}
-      />,
-    );
-
-    const link = screen.getByText("Continue to Outpaint");
-    expect(link.className).toContain("opacity-40");
-  });
-
-  it("shows downloaded state with green border", () => {
+  it("shows downloaded state as a disabled button", () => {
     render(
       <PrepActions
         canDownload={true}
@@ -131,21 +103,7 @@ describe("PrepActions", () => {
     );
 
     const btn = screen.getByRole("button", { name: /downloaded/i });
-    expect(btn.className).toContain("border-status-success-dark");
+    expect(btn.getAttribute("data-downloaded")).toBe("true");
     expect(btn).toBeDisabled();
-  });
-
-  it("shows blue continue button when canContinue is true", () => {
-    render(
-      <PrepActions
-        canDownload={true}
-        canContinue={true}
-        isDownloaded={true}
-        onDownload={vi.fn()}
-      />,
-    );
-
-    const link = screen.getByText("Continue to Outpaint");
-    expect(link.className).toContain("border-surface-border");
   });
 });

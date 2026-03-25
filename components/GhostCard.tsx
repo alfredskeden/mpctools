@@ -46,6 +46,7 @@ export const GhostCard = ({
   return (
     <div
       aria-hidden="true"
+      data-side={side}
       className={`absolute ${positionClasses} top-1/2 -translate-y-1/2 opacity-100`}
     >
       <Card className="relative h-80 w-56 overflow-hidden rounded-xl bg-background">

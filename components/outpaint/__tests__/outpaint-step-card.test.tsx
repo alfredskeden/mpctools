@@ -12,7 +12,7 @@ const defaultProps = {
 };
 
 describe("OutpaintStepCard", () => {
-  it("renders step number and title", () => {
+  it("renders step number and title from props", () => {
     render(<OutpaintStepCard {...defaultProps} />);
 
     expect(screen.getByText("1")).toBeDefined();
@@ -31,10 +31,11 @@ describe("OutpaintStepCard", () => {
     expect(screen.getByRole("button", { name: "Copy" })).toBeDefined();
   });
 
-  it("shows Copied! when copied is true", () => {
+  it("shows copied state on the copy button when copied is true", () => {
     render(<OutpaintStepCard {...defaultProps} copied={true} />);
 
-    expect(screen.getByText("Copied!")).toBeDefined();
+    const copySpan = screen.getByRole("button").querySelector("[data-copied='true']");
+    expect(copySpan).not.toBeNull();
   });
 
   it("calls onCopy when Copy button is clicked", async () => {
@@ -51,12 +52,20 @@ describe("OutpaintStepCard", () => {
     expect(screen.getByRole("button", { name: "Copy" })).toBeDefined();
   });
 
-  it("applies opacity when inactive", () => {
+  it("marks the card as inactive when isActive is false", () => {
     const { container } = render(
       <OutpaintStepCard {...defaultProps} isActive={false} />,
     );
 
-    expect(container.firstElementChild?.className).toContain("opacity-35");
+    expect(container.querySelector("[data-active='false']")).not.toBeNull();
+  });
+
+  it("marks the card as active when isActive is true", () => {
+    const { container } = render(
+      <OutpaintStepCard {...defaultProps} isActive={true} />,
+    );
+
+    expect(container.querySelector("[data-active='true']")).not.toBeNull();
   });
 
   it("renders hint text when active and provided", () => {
@@ -82,31 +91,17 @@ describe("OutpaintStepCard", () => {
     expect(screen.queryByText("Copy this prompt and send it")).toBeNull();
   });
 
-  it("renders inactive badge with border instead of fill", () => {
-    render(<OutpaintStepCard {...defaultProps} isActive={false} />);
+  it("renders badge with inactive state when isActive is false", () => {
+    const { container } = render(
+      <OutpaintStepCard {...defaultProps} isActive={false} />,
+    );
 
-    const badge = screen.getByText("1").parentElement!;
-    expect(badge.className).toContain("border-surface-muted");
+    expect(container.querySelector("[data-slot='step-badge'][data-active='false']")).not.toBeNull();
   });
 
-  it("renders active badge with blue fill", () => {
-    render(<OutpaintStepCard {...defaultProps} />);
+  it("renders badge with active state when isActive is true", () => {
+    const { container } = render(<OutpaintStepCard {...defaultProps} />);
 
-    const badge = screen.getByText("1").parentElement!;
-    expect(badge.className).toContain("bg-accent-blue");
-  });
-
-  it("uses primary text color for title when active", () => {
-    render(<OutpaintStepCard {...defaultProps} />);
-
-    const title = screen.getByText("THE HANDSHAKE");
-    expect(title.className).toContain("text-text-primary");
-  });
-
-  it("uses secondary text color for title when inactive", () => {
-    render(<OutpaintStepCard {...defaultProps} isActive={false} />);
-
-    const title = screen.getByText("THE HANDSHAKE");
-    expect(title.className).toContain("text-text-secondary");
+    expect(container.querySelector("[data-slot='step-badge'][data-active='true']")).not.toBeNull();
   });
 });

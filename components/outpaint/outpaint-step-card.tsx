@@ -23,6 +23,7 @@ export const OutpaintStepCard = ({
 }: OutpaintStepCardProps) => {
   return (
     <div
+      data-active={String(isActive)}
       className={cn(
         "flex flex-col rounded-lg gap-3.5 bg-instructions-card border border-white/9 p-5",
         !isActive && "opacity-35",
@@ -31,13 +32,13 @@ export const OutpaintStepCard = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           {isActive ? (
-            <div className="flex items-center justify-center w-5.5 h-5.5 shrink-0 rounded-full bg-accent-blue">
+            <div data-slot="step-badge" data-active="true" className="flex items-center justify-center w-5.5 h-5.5 shrink-0 rounded-full bg-accent-blue">
               <span className="text-micro text-white font-bold">
                 {stepNumber}
               </span>
             </div>
           ) : (
-            <div className="flex items-center justify-center w-5.5 h-5.5 shrink-0 rounded-full border-1.5 border-surface-muted">
+            <div data-slot="step-badge" data-active="false" className="flex items-center justify-center w-5.5 h-5.5 shrink-0 rounded-full border-1.5 border-surface-muted">
               <span className="text-micro text-text-tertiary font-bold">
                 {stepNumber}
               </span>
@@ -70,7 +71,7 @@ export const OutpaintStepCard = ({
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
             <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
           </svg>
-          <span className="text-xs leading-4 text-white font-bold">
+          <span data-copied={String(copied)} className="text-xs leading-4 text-white font-bold">
             {copied ? "Copied!" : "Copy"}
           </span>
         </button>

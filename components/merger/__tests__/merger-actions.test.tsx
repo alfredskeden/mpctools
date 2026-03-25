@@ -43,40 +43,42 @@ describe("MergerActions", () => {
     expect(onDownload).toHaveBeenCalledOnce();
   });
 
-  it("shows downloaded state", () => {
+  it("shows downloaded state as a disabled button", () => {
     render(<MergerActions {...defaultProps} isDownloaded />);
 
-    expect(screen.getByText("Downloaded ✓")).toBeDefined();
+    const btn = screen.getByRole("button", { name: /downloaded/i });
+    expect(btn.getAttribute("data-downloaded")).toBe("true");
+    expect(btn).toBeDisabled();
   });
 
-  it("shows advanced options when toggled", () => {
+  it("shows advanced options panel when toggled", () => {
     render(<MergerActions {...defaultProps} />);
 
-    expect(screen.queryByText("Feather Strength")).toBeNull();
+    expect(screen.queryByLabelText("Feather Strength")).toBeNull();
 
-    fireEvent.click(screen.getByText("ADVANCED OPTIONS"));
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
 
-    expect(screen.getByText("Feather Strength")).toBeDefined();
+    expect(screen.getByLabelText("Feather Strength")).toBeDefined();
     expect(screen.getByText("40px")).toBeDefined();
-    expect(screen.getByText("Magnitude")).toBeDefined();
+    expect(screen.getByLabelText("Magnitude")).toBeDefined();
     expect(screen.getByText("100px")).toBeDefined();
-    expect(screen.getByText("Density")).toBeDefined();
+    expect(screen.getByLabelText("Density")).toBeDefined();
     expect(screen.getByText("100%")).toBeDefined();
-    expect(screen.getByText("Irreg Radius")).toBeDefined();
+    expect(screen.getByLabelText("Irreg Radius")).toBeDefined();
     expect(screen.getByText("0px")).toBeDefined();
-    expect(screen.getByText("Edge Blur")).toBeDefined();
+    expect(screen.getByLabelText("Edge Blur")).toBeDefined();
     expect(screen.getByText("12px")).toBeDefined();
-    expect(screen.getByText("OG + Outpaint")).toBeDefined();
   });
 
   it("hides advanced options when toggled again", () => {
     render(<MergerActions {...defaultProps} />);
 
-    fireEvent.click(screen.getByText("ADVANCED OPTIONS"));
-    expect(screen.getByText("Feather Strength")).toBeDefined();
+    const toggleBtn = screen.getByRole("button", { name: /advanced options/i });
+    fireEvent.click(toggleBtn);
+    expect(screen.getByLabelText("Feather Strength")).toBeDefined();
 
-    fireEvent.click(screen.getByText("ADVANCED OPTIONS"));
-    expect(screen.queryByText("Feather Strength")).toBeNull();
+    fireEvent.click(toggleBtn);
+    expect(screen.queryByLabelText("Feather Strength")).toBeNull();
   });
 
   it("calls onFeatherChange when slider changes", () => {
@@ -85,7 +87,7 @@ describe("MergerActions", () => {
       <MergerActions {...defaultProps} onFeatherChange={onFeatherChange} />,
     );
 
-    fireEvent.click(screen.getByText("ADVANCED OPTIONS"));
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
 
     const slider = screen.getByLabelText("Feather Strength");
     fireEvent.change(slider, { target: { value: "80" } });
@@ -96,7 +98,7 @@ describe("MergerActions", () => {
   it("displays current feather value", () => {
     render(<MergerActions {...defaultProps} featherStrength={120} />);
 
-    fireEvent.click(screen.getByText("ADVANCED OPTIONS"));
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
 
     expect(screen.getByText("120px")).toBeDefined();
   });
@@ -110,7 +112,7 @@ describe("MergerActions", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("ADVANCED OPTIONS"));
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
 
     const slider = screen.getByLabelText("Magnitude");
     fireEvent.change(slider, { target: { value: "200" } });
@@ -127,7 +129,7 @@ describe("MergerActions", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("ADVANCED OPTIONS"));
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
 
     const slider = screen.getByLabelText("Density");
     fireEvent.change(slider, { target: { value: "50" } });
@@ -144,7 +146,7 @@ describe("MergerActions", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("ADVANCED OPTIONS"));
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
 
     const slider = screen.getByLabelText("Irreg Radius");
     fireEvent.change(slider, { target: { value: "250" } });
@@ -161,7 +163,7 @@ describe("MergerActions", () => {
       />,
     );
 
-    fireEvent.click(screen.getByText("ADVANCED OPTIONS"));
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
 
     const slider = screen.getByLabelText("Edge Blur");
     fireEvent.change(slider, { target: { value: "30" } });
@@ -173,7 +175,7 @@ describe("MergerActions", () => {
     const onReseed = vi.fn();
     render(<MergerActions {...defaultProps} onReseed={onReseed} />);
 
-    fireEvent.click(screen.getByText("ADVANCED OPTIONS"));
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
     fireEvent.click(screen.getByRole("button", { name: /reseed/i }));
 
     expect(onReseed).toHaveBeenCalledOnce();

@@ -47,9 +47,11 @@ const defaultProps = {
 };
 
 describe("MobileAdvancedOptions", () => {
-  it("renders the Advanced options button", () => {
+  it("renders the Advanced options toggle button", () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    expect(screen.getByText("Advanced options")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /advanced options/i }),
+    ).toBeDefined();
   });
 
   it("does not show sections when collapsed", () => {
@@ -61,20 +63,27 @@ describe("MobileAdvancedOptions", () => {
 
   it("shows sections when expanded", async () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    await userEvent.click(screen.getByText("Advanced options"));
+    await userEvent.click(
+      screen.getByRole("button", { name: /advanced options/i }),
+    );
     expect(screen.getByTestId("mobile-advanced-sections")).toBeInTheDocument();
-    expect(screen.getByText("Image Controls")).toBeInTheDocument();
-    expect(screen.getByText("Overlay Guides")).toBeInTheDocument();
-    expect(screen.getByText("Canvas Size")).toBeInTheDocument();
-    expect(screen.getByText("DPI Override")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /image controls/i }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: /overlay guides/i }),
+    ).toBeDefined();
+    expect(screen.getByRole("button", { name: /canvas size/i })).toBeDefined();
+    expect(screen.getByRole("button", { name: /dpi override/i })).toBeDefined();
   });
 
   it("collapses when Advanced options is clicked again", async () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    await userEvent.click(screen.getByText("Advanced options"));
+    const toggleBtn = screen.getByRole("button", { name: /advanced options/i });
+    await userEvent.click(toggleBtn);
     expect(screen.getByTestId("mobile-advanced-sections")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByText("Advanced options"));
+    await userEvent.click(toggleBtn);
     expect(
       screen.queryByTestId("mobile-advanced-sections"),
     ).not.toBeInTheDocument();
@@ -82,7 +91,7 @@ describe("MobileAdvancedOptions", () => {
 
   it("sets aria-expanded on main toggle", async () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    const button = screen.getByText("Advanced options");
+    const button = screen.getByRole("button", { name: /advanced options/i });
     expect(button).toHaveAttribute("aria-expanded", "false");
 
     await userEvent.click(button);
@@ -91,92 +100,109 @@ describe("MobileAdvancedOptions", () => {
 
   it("expands Image Controls section when clicked", async () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    await userEvent.click(screen.getByText("Advanced options"));
-    await userEvent.click(screen.getByText("Image Controls"));
+    await userEvent.click(
+      screen.getByRole("button", { name: /advanced options/i }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: /image controls/i }));
 
     expect(screen.getByLabelText("Position X")).toBeInTheDocument();
   });
 
   it("expands Overlay Guides section when clicked", async () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    await userEvent.click(screen.getByText("Advanced options"));
-    await userEvent.click(screen.getByText("Overlay Guides"));
+    await userEvent.click(
+      screen.getByRole("button", { name: /advanced options/i }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /overlay guides/i }),
+    );
 
-    expect(
-      screen.getByText(
-        "Overlays are visual-only and will not be included in downloads.",
-      ),
-    ).toBeInTheDocument();
+    // Overlay guides panel renders checkboxes
+    expect(screen.getAllByRole("checkbox").length).toBeGreaterThan(0);
   });
 
   it("expands Canvas Size section when clicked", async () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    await userEvent.click(screen.getByText("Advanced options"));
-    await userEvent.click(screen.getByText("Canvas Size"));
+    await userEvent.click(
+      screen.getByRole("button", { name: /advanced options/i }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: /canvas size/i }));
 
     expect(screen.getByLabelText("Canvas width")).toBeInTheDocument();
   });
 
   it("expands DPI Override section when clicked", async () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    await userEvent.click(screen.getByText("Advanced options"));
-    await userEvent.click(screen.getByText("DPI Override"));
+    await userEvent.click(
+      screen.getByRole("button", { name: /advanced options/i }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: /dpi override/i }));
 
     expect(screen.getByLabelText("DPI value")).toBeInTheDocument();
   });
 
   it("collapses a section when its title is clicked again", async () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    await userEvent.click(screen.getByText("Advanced options"));
-    await userEvent.click(screen.getByText("Image Controls"));
+    await userEvent.click(
+      screen.getByRole("button", { name: /advanced options/i }),
+    );
+    const imageBtn = screen.getByRole("button", { name: /image controls/i });
+    await userEvent.click(imageBtn);
     expect(screen.getByLabelText("Position X")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByText("Image Controls"));
+    await userEvent.click(imageBtn);
     expect(screen.queryByLabelText("Position X")).not.toBeInTheDocument();
   });
 
   it("switches sections when a different one is clicked", async () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    await userEvent.click(screen.getByText("Advanced options"));
-    await userEvent.click(screen.getByText("Image Controls"));
+    await userEvent.click(
+      screen.getByRole("button", { name: /advanced options/i }),
+    );
+    await userEvent.click(
+      screen.getByRole("button", { name: /image controls/i }),
+    );
     expect(screen.getByLabelText("Position X")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByText("Canvas Size"));
+    await userEvent.click(screen.getByRole("button", { name: /canvas size/i }));
     expect(screen.queryByLabelText("Position X")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Canvas width")).toBeInTheDocument();
   });
 
   it("sets aria-expanded on section buttons", async () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    await userEvent.click(screen.getByText("Advanced options"));
+    await userEvent.click(
+      screen.getByRole("button", { name: /advanced options/i }),
+    );
 
-    const imageButton = screen.getByText("Image Controls");
+    const imageButton = screen.getByRole("button", { name: /image controls/i });
     expect(imageButton).toHaveAttribute("aria-expanded", "false");
 
     await userEvent.click(imageButton);
     expect(imageButton).toHaveAttribute("aria-expanded", "true");
   });
 
-  it("applies active styling to expanded section", async () => {
+  it("marks expanded section button as aria-expanded true", async () => {
     render(<MobileAdvancedOptions {...defaultProps} />);
-    await userEvent.click(screen.getByText("Advanced options"));
-    await userEvent.click(screen.getByText("Image Controls"));
+    await userEvent.click(
+      screen.getByRole("button", { name: /advanced options/i }),
+    );
+    const imageButton = screen.getByRole("button", { name: /image controls/i });
+    await userEvent.click(imageButton);
 
-    const button = screen.getByText("Image Controls");
-    expect(button.className).toContain("bg-surface-overlay");
+    expect(imageButton).toHaveAttribute("aria-expanded", "true");
   });
 
   it("applies rotate-180 to chevron when expanded", async () => {
     const { container } = render(<MobileAdvancedOptions {...defaultProps} />);
-    const button = screen.getByText("Advanced options");
+    const button = screen.getByRole("button", { name: /advanced options/i });
 
-    // Before click, chevron should not have rotate-180
-    const chevron = button.querySelector("svg");
-    expect(chevron?.classList.contains("rotate-180")).toBe(false);
+    // Before click, aria-expanded is false
+    expect(button).toHaveAttribute("aria-expanded", "false");
 
     await userEvent.click(button);
 
-    // After click, chevron should have rotate-180
+    // After click, aria-expanded is true and chevron is rotated
     const updatedChevron = container.querySelector(
       "button[aria-expanded='true'] svg",
     );

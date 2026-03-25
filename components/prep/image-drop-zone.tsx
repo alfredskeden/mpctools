@@ -79,6 +79,7 @@ export function ImageDropZone({ onImageLoad }: ImageDropZoneProps) {
         onDragLeave={handleDragLeave}
       >
         <div
+          data-dragging={String(isDragging)}
           className={cn(
             "flex h-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed transition-colors",
             isDragging

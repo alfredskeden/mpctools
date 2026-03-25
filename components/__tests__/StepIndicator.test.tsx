@@ -16,7 +16,7 @@ describe("StepIndicator", () => {
     ).toBeDefined();
   });
 
-  it("renders all step labels (hidden on mobile)", () => {
+  it("renders all step labels", () => {
     render(<StepIndicator steps={steps} />);
 
     expect(screen.getByText("Prep")).toBeDefined();
@@ -34,26 +34,19 @@ describe("StepIndicator", () => {
     expect(screen.getByText("Merge").getAttribute("aria-current")).toBeNull();
   });
 
-  it("applies active styling classes to the active step label", () => {
+  it("shows label for the active step and no aria-current for inactive", () => {
     render(<StepIndicator steps={steps} />);
 
-    expect(screen.getByText("Prep").className).toContain("text-accent-blue");
-    expect(screen.getByText("Prep").className).toContain("font-medium");
+    // Active: has aria-current
+    expect(screen.getByText("Prep").getAttribute("aria-current")).toBe("step");
+    // Inactive: no aria-current
+    expect(screen.getByText("Outpaint").getAttribute("aria-current")).toBeNull();
   });
 
-  it("applies inactive styling classes to inactive step labels", () => {
+  it("always shows step labels", () => {
     render(<StepIndicator steps={steps} />);
 
-    expect(screen.getByText("Outpaint").className).toContain(
-      "text-text-disabled",
-    );
-    expect(screen.getByText("Outpaint").className).toContain("font-normal");
-  });
-
-  it("always shows labels", () => {
-    render(<StepIndicator steps={steps} />);
-
-    expect(screen.getByText("Prep").className).not.toContain("hidden");
+    expect(screen.getByText("Prep")).toBeDefined();
   });
 
   it("renders steps as links when href is provided", () => {
@@ -84,16 +77,28 @@ describe("StepIndicator", () => {
     expect(separators).toHaveLength(2);
   });
 
-  it("renders step dots with correct active/inactive styles", () => {
+  it("renders dot indicators with active dot marked", () => {
     const { container } = render(<StepIndicator steps={steps} />);
 
-    const dots = container.querySelectorAll(
-      "[aria-hidden='true'].rounded-full",
-    );
-    expect(dots).toHaveLength(3);
-    expect(dots[0].className).toContain("bg-accent-blue");
-    expect(dots[1].className).toContain("bg-surface-subtle");
-    expect(dots[2].className).toContain("bg-surface-subtle");
+    const dots = container.querySelectorAll("[data-active]");
+    expect(dots.length).toBeGreaterThanOrEqual(3);
+    expect(dots[0].getAttribute("data-active")).toBe("true");
+    expect(dots[1].getAttribute("data-active")).toBe("false");
+    expect(dots[2].getAttribute("data-active")).toBe("false");
+  });
+
+  it("updates dot indicators when active step changes", () => {
+    const allActive = [
+      { label: "Prep", active: true },
+      { label: "Outpaint", active: true },
+      { label: "Merge", active: false },
+    ];
+    const { container } = render(<StepIndicator steps={allActive} />);
+
+    const dots = container.querySelectorAll("[data-active]");
+    expect(dots[0].getAttribute("data-active")).toBe("true");
+    expect(dots[1].getAttribute("data-active")).toBe("true");
+    expect(dots[2].getAttribute("data-active")).toBe("false");
   });
 
   it("renders an ordered list of steps", () => {
@@ -114,15 +119,7 @@ describe("StepIndicator", () => {
     expect(separators).toHaveLength(0);
   });
 
-  it("applies default className when no className prop is given", () => {
-    render(<StepIndicator steps={steps} />);
-
-    const nav = screen.getByRole("navigation", { name: "Build steps" });
-    expect(nav.className).toContain("absolute");
-    expect(nav.className).toContain("bottom-12");
-  });
-
-  it("merges custom className with defaults", () => {
+  it("merges custom className to override defaults", () => {
     render(<StepIndicator steps={steps} className="relative bottom-0" />);
 
     const nav = screen.getByRole("navigation", { name: "Build steps" });

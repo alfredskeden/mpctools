@@ -11,7 +11,7 @@ export function StepCircle({
 }) {
   if (status === "completed") {
     return (
-      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-status-success-dark">
+      <div data-status="completed" className="flex size-6 shrink-0 items-center justify-center rounded-full bg-status-success-dark">
         <Check className="size-3 text-white" strokeWidth={3} />
       </div>
     );
@@ -19,6 +19,7 @@ export function StepCircle({
 
   return (
     <div
+      data-status={status}
       className={cn(
         "flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-medium",
         status === "active" && "bg-accent-blue text-white",

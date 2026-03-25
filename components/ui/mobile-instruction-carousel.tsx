@@ -83,6 +83,7 @@ export function MobileInstructionCarousel({
         {steps.map((step, index) => (
           <div
             key={step.number}
+            data-active={String(index === visibleIndex)}
             className={cn(
               "size-1.5 rounded-full",
               index === visibleIndex ? "bg-accent-blue" : "bg-surface-muted",
@@ -93,6 +94,7 @@ export function MobileInstructionCarousel({
 
       {/* Content area */}
       <div
+        data-status={currentStep.status}
         className={cn(
           "mt-4",
           currentStep.status === "upcoming" && "opacity-35",

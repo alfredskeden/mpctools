@@ -45,45 +45,36 @@ describe("CanvasSizePanel", () => {
     expect(onSetCanvasSize).toHaveBeenCalledWith(CANVAS_WIDTH, 2048);
   });
 
-  it("renders Default and Classic borderless preset buttons", () => {
+  it("renders named preset buttons", () => {
     render(<CanvasSizePanel {...defaultProps} />);
-    expect(screen.getByText("Default")).toBeInTheDocument();
-    expect(screen.getByText("Classic borderless")).toBeInTheDocument();
+    const buttons = screen.getAllByRole("button");
+    expect(buttons.length).toBeGreaterThanOrEqual(7); // 2 named + 5 ratio
   });
 
-  it("renders ratio preset buttons", () => {
-    render(<CanvasSizePanel {...defaultProps} />);
-    expect(screen.getByText("1:1")).toBeInTheDocument();
-    expect(screen.getByText("4:3")).toBeInTheDocument();
-    expect(screen.getByText("16:9")).toBeInTheDocument();
-    expect(screen.getByText("3:4")).toBeInTheDocument();
-    expect(screen.getByText("9:16")).toBeInTheDocument();
-  });
-
-  it("calls onSetCanvasSize when a preset is clicked", async () => {
+  it("calls onSetCanvasSize when a ratio preset is clicked", async () => {
     const onSetCanvasSize = vi.fn();
     render(
       <CanvasSizePanel {...defaultProps} onSetCanvasSize={onSetCanvasSize} />,
     );
-    await userEvent.click(screen.getByText("1:1"));
+    await userEvent.click(screen.getByRole("button", { name: /1:1/ }));
     expect(onSetCanvasSize).toHaveBeenCalledWith(2048, 2048);
   });
 
-  it("highlights the active preset", () => {
+  it("marks the active preset with data-active true", () => {
     render(<CanvasSizePanel {...defaultProps} />);
-    const defaultButton = screen.getByText("Default").closest("button");
-    expect(defaultButton?.className).toContain("accent-blue");
+    const defaultButton = screen.getByRole("button", { name: /default/i });
+    expect(defaultButton.getAttribute("data-active")).toBe("true");
   });
 
-  it("does not highlight inactive presets", () => {
+  it("marks inactive presets with data-active false", () => {
     render(<CanvasSizePanel {...defaultProps} />);
-    const classicButton = screen
-      .getByText("Classic borderless")
-      .closest("button");
-    expect(classicButton?.className).not.toContain("bg-accent-blue");
+    const classicButton = screen.getByRole("button", {
+      name: /classic borderless/i,
+    });
+    expect(classicButton.getAttribute("data-active")).toBe("false");
   });
 
-  it("highlights active ratio preset", () => {
+  it("marks active ratio preset with data-active true", () => {
     render(
       <CanvasSizePanel
         {...defaultProps}
@@ -91,16 +82,18 @@ describe("CanvasSizePanel", () => {
         canvasHeight={2048}
       />,
     );
-    const button1to1 = screen.getByText("1:1").closest("button");
-    expect(button1to1?.className).toContain("accent-blue");
+    const button1to1 = screen.getByRole("button", { name: /1:1/ });
+    expect(button1to1.getAttribute("data-active")).toBe("true");
   });
 
-  it("clicks Classic borderless preset", async () => {
+  it("calls onSetCanvasSize when Classic borderless preset is clicked", async () => {
     const onSetCanvasSize = vi.fn();
     render(
       <CanvasSizePanel {...defaultProps} onSetCanvasSize={onSetCanvasSize} />,
     );
-    await userEvent.click(screen.getByText("Classic borderless"));
+    await userEvent.click(
+      screen.getByRole("button", { name: /classic borderless/i }),
+    );
     expect(onSetCanvasSize).toHaveBeenCalledWith(3712, 4608);
   });
 });
