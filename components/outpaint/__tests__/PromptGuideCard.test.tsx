@@ -62,6 +62,15 @@ describe("PromptGuideCard", () => {
     expect(img.src).toContain("/images/prompt-guide-01.jpg");
   });
 
+  it("forwards loading prop to the thumbnail image", () => {
+    // Given / When
+    render(<PromptGuideCard {...defaultProps} loading="eager" />);
+
+    // Then
+    const img = screen.getAllByAltText("Example of a clearly described scene in an outpaint prompt")[0] as HTMLImageElement;
+    expect(img.getAttribute("loading")).toBe("eager");
+  });
+
   it("applies additional className to the card wrapper", () => {
     // Given / When
     const { container } = render(

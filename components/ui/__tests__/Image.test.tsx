@@ -32,7 +32,7 @@ describe("Image", () => {
         alt="test image"
         width={100}
         height={100}
-        priority
+        preload
         className="object-cover"
       />,
     );

@@ -55,7 +55,7 @@ export const GhostCard = ({
           alt=""
           fill
           sizes="224px"
-          priority
+          preload
           className="object-cover"
         />
         {images.length > 1 && (
@@ -64,7 +64,7 @@ export const GhostCard = ({
             alt=""
             fill
             sizes="224px"
-            priority
+            preload
             className="object-cover"
             style={{
               opacity: isFading ? 1 : 0,

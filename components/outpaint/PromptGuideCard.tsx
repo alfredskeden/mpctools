@@ -14,7 +14,8 @@ type PromptGuideCardProps = {
   description: string;
   imageSrc: string;
   imageAlt: string;
-  priority?: boolean;
+  preload?: boolean;
+  loading?: "eager" | "lazy";
   className?: string;
 };
 
@@ -24,7 +25,8 @@ export const PromptGuideCard = ({
   description,
   imageSrc,
   imageAlt,
-  priority = false,
+  preload = false,
+  loading,
   className,
 }: PromptGuideCardProps) => {
   const [open, setOpen] = useState(false);
@@ -49,7 +51,8 @@ export const PromptGuideCard = ({
             fill
             sizes="(max-width: 1024px) 100vw, 33vw"
             className="object-contain"
-            priority={priority}
+            preload={preload}
+            loading={loading}
           />
         </button>
         <div className="flex flex-col gap-1 p-4 lg:p-5">
@@ -79,7 +82,7 @@ export const PromptGuideCard = ({
               width={1920}
               height={1080}
               className="max-w-full max-h-full object-contain rounded-lg"
-              priority
+              preload
             />
             <DialogPrimitive.Close asChild>
               <Button
