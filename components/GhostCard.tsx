@@ -1,7 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/Card";
-import Image from "next/image";
+import { Image } from "@/components/ui/Image";
 import { useEffect, useState } from "react";
 
 type GhostCardProps = {

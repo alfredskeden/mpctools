@@ -66,8 +66,8 @@ export function PromptGuideSection() {
         </span>
       </div>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-3 lg:gap-4">
-        {PROMPT_GUIDE_TIPS.map((tip) => (
-          <PromptGuideCard key={tip.stepNumber} {...tip} />
+        {PROMPT_GUIDE_TIPS.map((tip, index) => (
+          <PromptGuideCard key={tip.stepNumber} {...tip} priority={index === 0} />
         ))}
       </div>
     </section>

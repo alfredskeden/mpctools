@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import Image from "next/image";
+import { Image } from "@/components/ui/Image";
 
 type PromptGuideCardProps = {
   stepNumber: string;
@@ -7,6 +7,7 @@ type PromptGuideCardProps = {
   description: string;
   imageSrc: string;
   imageAlt: string;
+  priority?: boolean;
   className?: string;
 };
 
@@ -16,6 +17,7 @@ export const PromptGuideCard = ({
   description,
   imageSrc,
   imageAlt,
+  priority = false,
   className,
 }: PromptGuideCardProps) => {
   return (
@@ -26,7 +28,7 @@ export const PromptGuideCard = ({
       )}
     >
       <div className="relative aspect-video w-full h-32">
-        <Image src={imageSrc} alt={imageAlt} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-contain" />
+        <Image src={imageSrc} alt={imageAlt} fill sizes="(max-width: 1024px) 100vw, 33vw" className="object-contain" priority={priority} />
       </div>
       <div className="flex flex-col gap-1 p-4 lg:p-5">
         <span className="text-micro font-bold tracking-extra-wide uppercase text-accent-blue">
