@@ -125,6 +125,13 @@
   /* Sidebar dimensions */
   --width-sidebar-instructions: 360px;
 
+  /* Dialog dimensions */
+  --max-width-dialog: 90vw;
+  --max-height-dialog: 90vh;
+  --max-width-dialog-lg: 85vw;
+  --max-height-dialog-lg: 85vh;
+  --max-width-dialog-inset: calc(100% - 2rem);
+
   /* Instructions panel colors */
   --color-instructions-panel: var(--instructions-panel);
   --color-instructions-card: var(--instructions-card);

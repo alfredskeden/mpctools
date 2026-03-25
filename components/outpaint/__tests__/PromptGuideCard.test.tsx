@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import { PromptGuideCard } from "../PromptGuideCard";
 
 vi.mock("next/image", () => ({
@@ -49,7 +49,7 @@ describe("PromptGuideCard", () => {
 
     // Then
     expect(
-      screen.getByAltText("Example of a clearly described scene in an outpaint prompt"),
+      screen.getAllByAltText("Example of a clearly described scene in an outpaint prompt")[0],
     ).toBeDefined();
   });
 
@@ -58,7 +58,7 @@ describe("PromptGuideCard", () => {
     render(<PromptGuideCard {...defaultProps} />);
 
     // Then
-    const img = screen.getByAltText("Example of a clearly described scene in an outpaint prompt") as HTMLImageElement;
+    const img = screen.getAllByAltText("Example of a clearly described scene in an outpaint prompt")[0] as HTMLImageElement;
     expect(img.src).toContain("/images/prompt-guide-01.jpg");
   });
 
@@ -73,5 +73,53 @@ describe("PromptGuideCard", () => {
     expect(
       (container.firstChild as HTMLElement).className,
     ).toContain("custom-class");
+  });
+
+  it("does not show a dialog by default", () => {
+    // Given / When
+    render(<PromptGuideCard {...defaultProps} />);
+
+    // Then
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("opens a dialog when the image button is clicked", () => {
+    // Given
+    render(<PromptGuideCard {...defaultProps} />);
+    const button = screen.getByRole("button", { name: /full size/i });
+
+    // When
+    fireEvent.click(button);
+
+    // Then
+    expect(screen.getByRole("dialog")).toBeDefined();
+  });
+
+  it("shows the image inside the dialog", () => {
+    // Given
+    render(<PromptGuideCard {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /full size/i }));
+
+    // When
+    const dialog = screen.getByRole("dialog");
+    const imgs = dialog.querySelectorAll("img");
+
+    // Then
+    expect(imgs.length).toBeGreaterThan(0);
+    expect(imgs[0].alt).toBe("Example of a clearly described scene in an outpaint prompt");
+  });
+
+  it("closes the dialog when the close button is clicked", () => {
+    // Given
+    render(<PromptGuideCard {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /full size/i }));
+    expect(screen.getByRole("dialog")).toBeDefined();
+
+    // When
+    const closeButton = screen.getByRole("button", { name: /close/i });
+    fireEvent.click(closeButton);
+
+    // Then
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });
