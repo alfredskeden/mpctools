@@ -5,7 +5,6 @@ import { BG_COLOR } from "@/lib/canvas-utils";
 import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 import { renderPrepScene } from "@/lib/prep-renderer";
 const EXPORT_DEBOUNCE_MS = 150;
-const MIN_SCALE = 0.5;
 const PREVIEW_SCALE = 0.25;
 
 // Module-level cache for overlay images
@@ -43,7 +42,6 @@ export const TransformCanvas = ({
   position,
   rotation,
   onPositionChange,
-  onScaleChange,
   onRotationChange: _onRotationChange,
   onExport,
   onOverlayNativeDimensions,
