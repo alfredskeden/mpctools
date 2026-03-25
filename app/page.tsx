@@ -17,13 +17,21 @@ const steps = [
   { label: "Merge", active: false },
 ];
 
+function ghostImages(index: number): string[] {
+  return [
+    `/outpaint-animation/${index}_prepper.webp`,
+    `/outpaint-animation/${index}_outpaint.webp`,
+    `/outpaint-animation/${index}_full_card.webp`,
+  ];
+}
+
 export default async function Home() {
   const [leftIndex, rightIndex] = pickTwoDistinct(GHOST_IMAGE_COUNT);
 
   return (
     <main className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-background">
-      <GhostCard side="left" imageIndex={leftIndex} />
-      <GhostCard side="right" imageIndex={rightIndex} />
+      <GhostCard side="left" images={ghostImages(leftIndex)} />
+      <GhostCard side="right" images={ghostImages(rightIndex)} />
       <HeroSection />
       <StepIndicator steps={steps} variant="landing" />
     </main>
