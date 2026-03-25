@@ -2,27 +2,34 @@
 
 import { Card } from "@/components/ui/Card";
 import { Image } from "@/components/ui/Image";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type GhostCardProps = {
   side: "left" | "right";
-  images: string[];
+  imageIndex: number;
   displayDuration?: number;
   fadeDuration?: number;
 };
 
 export const GhostCard = ({
   side,
-  images,
+  imageIndex,
   displayDuration = 1000,
   fadeDuration = 3000,
 }: GhostCardProps) => {
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isFading, setIsFading] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (images.length < 2) return;
+  const images = useMemo(
+    () => [
+      `/outpaint-animation/${imageIndex}_prepper.webp`,
+      `/outpaint-animation/${imageIndex}_outpaint.webp`,
+      `/outpaint-animation/${imageIndex}_full_card.webp`,
+    ],
+    [imageIndex],
+  );
 
+  useEffect(() => {
     let timeoutId: ReturnType<typeof setTimeout>;
 
     function cycle() {
@@ -58,22 +65,20 @@ export const GhostCard = ({
           preload
           className="object-cover"
         />
-        {images.length > 1 && (
-          <Image
-            src={images[nextIndex]}
-            alt=""
-            fill
-            sizes="224px"
-            preload
-            className="object-cover"
-            style={{
-              opacity: isFading ? 1 : 0,
-              transition: isFading
-                ? `opacity ${fadeDuration}ms ease-in-out`
-                : "none",
-            }}
-          />
-        )}
+        <Image
+          src={images[nextIndex]}
+          alt=""
+          fill
+          sizes="224px"
+          preload
+          className="object-cover"
+          style={{
+            opacity: isFading ? 1 : 0,
+            transition: isFading
+              ? `opacity ${fadeDuration}ms ease-in-out`
+              : "none",
+          }}
+        />
       </Card>
     </div>
   );
