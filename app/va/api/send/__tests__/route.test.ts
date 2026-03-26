@@ -60,20 +60,7 @@ describe("POST /va/api/send", () => {
     expect(options.headers["X-Forwarded-For"]).toBe("1.2.3.4");
   });
 
-  it("falls back to x-real-ip when x-forwarded-for is absent", async () => {
-    // Given
-    mockUmamiResponse(200, "ok");
-    const request = makeRequest("{}", { "x-real-ip": "5.6.7.8" });
-
-    // When
-    await POST(request);
-
-    // Then
-    const [, options] = mockFetch.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
-    expect(options.headers["X-Forwarded-For"]).toBe("5.6.7.8");
-  });
-
-  it("uses empty string when neither ip header is present", async () => {
+  it("uses empty string when no ip header is present", async () => {
     // Given
     mockUmamiResponse(200, "ok");
     const request = makeRequest("{}");
@@ -114,6 +101,40 @@ describe("POST /va/api/send", () => {
     const [, options] = mockFetch.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
     expect(options.headers["Content-Type"]).toBe("application/json");
     expect(options.headers["User-Agent"]).toBe("Mozilla/5.0");
+  });
+
+  it("forwards Cloudflare location headers as x-vercel-ip headers when present", async () => {
+    // Given
+    mockUmamiResponse(200, "ok");
+    const request = makeRequest("{}", {
+      "cf-ipcountry": "CN",
+      "cf-ipcity": "Shanghai",
+      "cf-ipregion": "SH",
+    });
+
+    // When
+    await POST(request);
+
+    // Then
+    const [, options] = mockFetch.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
+    expect(options.headers["X-Vercel-IP-Country"]).toBe("CN");
+    expect(options.headers["X-Vercel-IP-City"]).toBe("Shanghai");
+    expect(options.headers["X-Vercel-IP-Country-Region"]).toBe("SH");
+  });
+
+  it("omits x-vercel-ip location headers when Cloudflare headers are absent", async () => {
+    // Given
+    mockUmamiResponse(200, "ok");
+    const request = makeRequest("{}");
+
+    // When
+    await POST(request);
+
+    // Then
+    const [, options] = mockFetch.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
+    expect(options.headers["X-Vercel-IP-Country"]).toBeUndefined();
+    expect(options.headers["X-Vercel-IP-City"]).toBeUndefined();
+    expect(options.headers["X-Vercel-IP-Country-Region"]).toBeUndefined();
   });
 
   it("sends request body to Umami", async () => {
