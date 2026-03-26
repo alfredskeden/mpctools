@@ -32,9 +32,8 @@ export default function RootLayout({
         {children}
         {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
           <Script
-            src="/va/script.js"
+            src="https://cloud.umami.is/script.js"
             data-website-id={process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID}
-            data-host-url="/va"
             strategy="afterInteractive"
           />
         )}
