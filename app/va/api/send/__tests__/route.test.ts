@@ -28,6 +28,23 @@ describe("POST /va/api/send", () => {
     mockFetch.mockReset();
   });
 
+  it("prefers cf-connecting-ip over all other IP headers", async () => {
+    // Given
+    mockUmamiResponse(200, "ok");
+    const request = makeRequest("{}", {
+      "cf-connecting-ip": "9.9.9.9",
+      "x-forwarded-for": "1.2.3.4, 10.0.0.1",
+      "x-real-ip": "5.6.7.8",
+    });
+
+    // When
+    await POST(request);
+
+    // Then
+    const [, options] = mockFetch.mock.calls[0] as [string, RequestInit & { headers: Record<string, string> }];
+    expect(options.headers["X-Forwarded-For"]).toBe("9.9.9.9");
+  });
+
   it("forwards x-forwarded-for (first IP from comma-separated list) to Umami", async () => {
     // Given
     mockUmamiResponse(200, "ok");
