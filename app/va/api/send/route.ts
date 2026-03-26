@@ -6,6 +6,8 @@ export async function POST(request: NextRequest) {
     request.headers.get("x-real-ip") ??
     "";
 
+  console.log("ip", ip);
+
   const body = await request.text();
 
   const response = await fetch("https://cloud.umami.is/api/send", {
