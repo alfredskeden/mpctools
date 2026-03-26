@@ -10,6 +10,9 @@ import {
   type PrepState,
 } from "../use-prep-workflow";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
+import { track } from "@/lib/analytics";
+
+vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 
 const makeImage = () => ({ width: 100, height: 100 }) as HTMLImageElement;
 
@@ -643,6 +646,10 @@ describe("VERTICAL_PRESET_CENTERS", () => {
 });
 
 describe("usePrepWorkflow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("starts at step 1 with no image", () => {
     const { result } = renderHook(() => usePrepWorkflow());
 
@@ -662,6 +669,11 @@ describe("usePrepWorkflow", () => {
     expect(result.current.state.currentStep).toBe(2);
     expect(result.current.state.uploadedImage).toBe("data:test");
     expect(result.current.state.fileName).toBe("test.png");
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_image_uploaded", {
+      fileName: "test.png",
+      width: 100,
+      height: 100,
+    });
   });
 
   it("updates position", () => {
@@ -706,6 +718,7 @@ describe("usePrepWorkflow", () => {
 
     expect(result.current.state.currentStep).toBe(3);
     expect(result.current.state.isPositioned).toBe(true);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_image_positioned");
   });
 
   it("enables download when positioned", () => {
@@ -737,6 +750,7 @@ describe("usePrepWorkflow", () => {
 
     expect(result.current.canDownload).toBe(true);
     expect(result.current.canContinue).toBe(true);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_image_downloaded");
   });
 
   it("computes step statuses", () => {
@@ -767,6 +781,7 @@ describe("usePrepWorkflow", () => {
     });
 
     expect(result.current.state.selectedOverlays).toEqual(["normal"]);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_overlay_toggled", { overlay: "normal" });
   });
 
   it("toggles an overlay off", () => {
@@ -836,6 +851,7 @@ describe("usePrepWorkflow", () => {
 
     expect(result.current.state.canvasWidth).toBe(2048);
     expect(result.current.state.canvasHeight).toBe(2048);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_canvas_size_set", { width: 2048, height: 2048 });
   });
 
   it("sets DPI override", () => {
@@ -846,6 +862,7 @@ describe("usePrepWorkflow", () => {
     });
 
     expect(result.current.state.dpiOverride).toBe(300);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_dpi_override_set", { dpi: 300 });
   });
 
   it("clears DPI override", () => {
@@ -859,6 +876,8 @@ describe("usePrepWorkflow", () => {
     });
 
     expect(result.current.state.dpiOverride).toBeNull();
+    expect(vi.mocked(track)).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_dpi_override_set", { dpi: 300 });
   });
 
   it("sets overlay opacity", () => {
@@ -889,6 +908,7 @@ describe("usePrepWorkflow", () => {
     });
 
     expect(result.current.state.algorithm).toBe("standard");
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_algorithm_set", { algorithm: "standard" });
   });
 
   it("sets image dimensions", () => {
@@ -922,6 +942,7 @@ describe("usePrepWorkflow", () => {
     const scale = result.current.state.scale;
     expect(result.current.state.position.x).toBe((CANVAS_WIDTH - 200 * scale) / 2);
     expect(result.current.state.position.y).toBe(100);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_alignment_used", { action: "center_horizontal" });
   });
 
   it("centers vertically", () => {
@@ -941,6 +962,7 @@ describe("usePrepWorkflow", () => {
     const scale = result.current.state.scale;
     expect(result.current.state.position.x).toBe(50);
     expect(result.current.state.position.y).toBe((CANVAS_HEIGHT - 300 * scale) / 2);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_alignment_used", { action: "center_vertical" });
   });
 
   it("fits width", () => {
@@ -958,6 +980,7 @@ describe("usePrepWorkflow", () => {
     expect(result.current.state.scale).toBe(fitScale);
     expect(result.current.state.position.x).toBe(0);
     expect(result.current.state.position.y).toBe((CANVAS_HEIGHT - 300 * fitScale) / 2);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_alignment_used", { action: "fit_width" });
   });
 
   it("fits height", () => {
@@ -975,6 +998,7 @@ describe("usePrepWorkflow", () => {
     expect(result.current.state.scale).toBe(fitScale);
     expect(result.current.state.position.x).toBe((CANVAS_WIDTH - 200 * fitScale) / 2);
     expect(result.current.state.position.y).toBe(0);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_alignment_used", { action: "fit_height" });
   });
 
   it("sets vertical preset with overlay dimensions", () => {
@@ -998,6 +1022,7 @@ describe("usePrepWorkflow", () => {
     const imgH = 300 * scale;
     const expectedY = Math.max(0, Math.min(Math.round(yCanvas - imgH / 2), CANVAS_HEIGHT - imgH));
     expect(result.current.state.position.y).toBe(expectedY);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("prep_vertical_preset_used", { preset: "normal" });
   });
 
   it("sets overlay native dimensions", () => {

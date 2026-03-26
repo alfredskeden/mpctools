@@ -2,6 +2,7 @@
 
 import { useReducer, useCallback } from "react";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
+import { track } from "@/lib/analytics";
 
 function gcd(a: number, b: number): number {
   return b === 0 ? a : gcd(b, a % b);
@@ -96,6 +97,7 @@ export function useOutpaintWorkflow() {
 
   const sendHandshake = useCallback(() => {
     dispatch({ type: "SEND_HANDSHAKE" });
+    track("outpaint_handshake_sent");
   }, []);
 
   const toggleHandshakeCollapse = useCallback(() => {

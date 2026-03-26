@@ -7,10 +7,13 @@ import {
   type MergerState,
 } from "../use-merger-workflow";
 import * as mergerUtils from "@/lib/merger-utils";
+import { track } from "@/lib/analytics";
 
 vi.mock("@/lib/merger-utils", () => ({
   analyzeGuide: vi.fn(),
 }));
+
+vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 
 const makeImage = (w: number, h: number) => {
   const img = new Image();
@@ -271,6 +274,7 @@ describe("getMergerStepStatuses", () => {
 
 describe("useMergerWorkflow", () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(mergerUtils.analyzeGuide).mockReturnValue({
       canvasW: 800,
       canvasH: 1200,
@@ -297,6 +301,12 @@ describe("useMergerWorkflow", () => {
 
     expect(result.current.state.currentStep).toBe(2);
     expect(result.current.state.ogImage).toBe(img);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_og_uploaded", {
+      fileName: "card.png",
+      fileSize: 1024,
+      width: 400,
+      height: 600,
+    });
   });
 
   it("transitions to step 3 on uploadGuide", () => {
@@ -315,6 +325,10 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.currentStep).toBe(3);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_guide_uploaded", {
+      fileName: "guide.png",
+      fileSize: 512,
+    });
   });
 
   it("does not transition when analyzeGuide returns null", () => {
@@ -335,6 +349,7 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.currentStep).toBe(2);
+    expect(vi.mocked(track)).not.toHaveBeenCalledWith("merger_guide_uploaded", expect.anything());
   });
 
   it("does not transition when no OG image uploaded", () => {
@@ -371,6 +386,10 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.canDownload).toBe(true);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_outpaint_uploaded", {
+      fileName: "outpaint.png",
+      fileSize: 2048,
+    });
   });
 
   it("updates feather strength", () => {
@@ -381,6 +400,7 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.featherStrength).toBe(80);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "feather", value: 80 });
   });
 
   it("updates irregular edge magnitude", () => {
@@ -391,6 +411,7 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.irregMagnitude).toBe(200);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_magnitude", value: 200 });
   });
 
   it("updates irregular edge density", () => {
@@ -401,6 +422,7 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.irregDensity).toBe(50);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_density", value: 50 });
   });
 
   it("updates irregular edge radius", () => {
@@ -411,6 +433,7 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.irregRadius).toBe(250);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_radius", value: 250 });
   });
 
   it("updates irregular edge blur", () => {
@@ -421,6 +444,7 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.irregBlur).toBe(30);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_blur", value: 30 });
   });
 
   it("reseeds irregular edge with new random value", () => {
@@ -435,6 +459,7 @@ describe("useMergerWorkflow", () => {
 
     expect(result.current.state.irregSeed).toBe(50000);
     expect(result.current.state.irregSeed).not.toBe(originalSeed);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_reseeded");
 
     vi.restoreAllMocks();
   });
@@ -447,6 +472,7 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.isDownloaded).toBe(true);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_final_downloaded");
   });
 
   it("resets to initial state", () => {

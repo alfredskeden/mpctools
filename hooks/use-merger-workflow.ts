@@ -2,6 +2,7 @@
 
 import { useReducer, useCallback } from "react";
 import { analyzeGuide, type GuideAnalysis } from "@/lib/merger-utils";
+import { track } from "@/lib/analytics";
 import { StepStatus } from "./use-prep-workflow";
 
 export type MergerStep = 1 | 2 | 3;
@@ -192,6 +193,12 @@ export function useMergerWorkflow() {
         type: "UPLOAD_OG",
         payload: { image, fileName, fileSize },
       });
+      track("merger_og_uploaded", {
+        fileName,
+        fileSize,
+        width: image.naturalWidth,
+        height: image.naturalHeight,
+      });
     },
     [],
   );
@@ -212,6 +219,7 @@ export function useMergerWorkflow() {
         type: "UPLOAD_GUIDE",
         payload: { image, fileName, fileSize, analysis },
       });
+      track("merger_guide_uploaded", { fileName, fileSize });
     },
     [state.ogImage],
   );
@@ -222,28 +230,34 @@ export function useMergerWorkflow() {
         type: "UPLOAD_OUTPAINT",
         payload: { image, fileName, fileSize },
       });
+      track("merger_outpaint_uploaded", { fileName, fileSize });
     },
     [],
   );
 
   const setFeather = useCallback((value: number) => {
     dispatch({ type: "SET_FEATHER", payload: value });
+    track("merger_blending_adjusted", { param: "feather", value });
   }, []);
 
   const setIrregMagnitude = useCallback((value: number) => {
     dispatch({ type: "SET_IRREG_MAGNITUDE", payload: value });
+    track("merger_blending_adjusted", { param: "irreg_magnitude", value });
   }, []);
 
   const setIrregDensity = useCallback((value: number) => {
     dispatch({ type: "SET_IRREG_DENSITY", payload: value });
+    track("merger_blending_adjusted", { param: "irreg_density", value });
   }, []);
 
   const setIrregRadius = useCallback((value: number) => {
     dispatch({ type: "SET_IRREG_RADIUS", payload: value });
+    track("merger_blending_adjusted", { param: "irreg_radius", value });
   }, []);
 
   const setIrregBlur = useCallback((value: number) => {
     dispatch({ type: "SET_IRREG_BLUR", payload: value });
+    track("merger_blending_adjusted", { param: "irreg_blur", value });
   }, []);
 
   const reseed = useCallback(() => {
@@ -251,10 +265,12 @@ export function useMergerWorkflow() {
       type: "SET_IRREG_SEED",
       payload: Math.floor(Math.random() * 100000),
     });
+    track("merger_reseeded");
   }, []);
 
   const markDownloaded = useCallback(() => {
     dispatch({ type: "MARK_DOWNLOADED" });
+    track("merger_final_downloaded");
   }, []);
 
   const reset = useCallback(() => {

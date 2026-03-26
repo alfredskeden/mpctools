@@ -7,6 +7,9 @@ import {
   OUTPAINT_COMMAND,
   type OutpaintState,
 } from "../use-outpaint-workflow";
+import { track } from "@/lib/analytics";
+
+vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 
 const initialState: OutpaintState = {
   currentStep: 1,
@@ -141,6 +144,10 @@ describe("prompt constants", () => {
 });
 
 describe("useOutpaintWorkflow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("starts at step 1 with handshake not sent", () => {
     const { result } = renderHook(() => useOutpaintWorkflow());
     expect(result.current.state.currentStep).toBe(1);
@@ -159,6 +166,7 @@ describe("useOutpaintWorkflow", () => {
     expect(result.current.state.handshakeSent).toBe(true);
     expect(result.current.state.handshakeCollapsed).toBe(true);
     expect(result.current.canContinueToMerge).toBe(true);
+    expect(vi.mocked(track)).toHaveBeenCalledWith("outpaint_handshake_sent");
   });
 
   it("toggles handshake collapse", () => {

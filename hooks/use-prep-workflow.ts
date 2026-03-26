@@ -6,6 +6,7 @@ import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
 } from "@/lib/canvas-utils";
+import { track } from "@/lib/analytics";
 import { StepStatus } from "./use-merger-workflow";
 
 export const OVERLAY_OPTIONS = [
@@ -359,6 +360,11 @@ export function usePrepWorkflow() {
         type: "UPLOAD_IMAGE",
         payload: { dataUrl, element, fileName },
       });
+      track("prep_image_uploaded", {
+        fileName,
+        width: element.width,
+        height: element.height,
+      });
     },
     [],
   );
@@ -377,14 +383,17 @@ export function usePrepWorkflow() {
 
   const markPositioned = useCallback(() => {
     dispatch({ type: "MARK_POSITIONED" });
+    track("prep_image_positioned");
   }, []);
 
   const markDownloaded = useCallback(() => {
     dispatch({ type: "MARK_DOWNLOADED" });
+    track("prep_image_downloaded");
   }, []);
 
   const toggleOverlay = useCallback((overlay: string) => {
     dispatch({ type: "TOGGLE_OVERLAY", payload: overlay });
+    track("prep_overlay_toggled", { overlay });
   }, []);
 
   const setCanvasDataUrl = useCallback((dataUrl: string) => {
@@ -401,10 +410,12 @@ export function usePrepWorkflow() {
 
   const setCanvasSize = useCallback((width: number, height: number) => {
     dispatch({ type: "SET_CANVAS_SIZE", payload: { width, height } });
+    track("prep_canvas_size_set", { width, height });
   }, []);
 
   const setDpiOverride = useCallback((dpi: number | null) => {
     dispatch({ type: "SET_DPI_OVERRIDE", payload: dpi });
+    if (dpi !== null) track("prep_dpi_override_set", { dpi });
   }, []);
 
   const setOverlayOpacity = useCallback((id: string, opacity: number) => {
@@ -417,6 +428,7 @@ export function usePrepWorkflow() {
 
   const setAlgorithm = useCallback((algorithm: Algorithm) => {
     dispatch({ type: "SET_ALGORITHM", payload: algorithm });
+    track("prep_algorithm_set", { algorithm });
   }, []);
 
   const setImageDimensions = useCallback((width: number, height: number) => {
@@ -425,22 +437,27 @@ export function usePrepWorkflow() {
 
   const centerHorizontal = useCallback(() => {
     dispatch({ type: "CENTER_HORIZONTAL" });
+    track("prep_alignment_used", { action: "center_horizontal" });
   }, []);
 
   const centerVertical = useCallback(() => {
     dispatch({ type: "CENTER_VERTICAL" });
+    track("prep_alignment_used", { action: "center_vertical" });
   }, []);
 
   const fitWidth = useCallback(() => {
     dispatch({ type: "FIT_WIDTH" });
+    track("prep_alignment_used", { action: "fit_width" });
   }, []);
 
   const fitHeight = useCallback(() => {
     dispatch({ type: "FIT_HEIGHT" });
+    track("prep_alignment_used", { action: "fit_height" });
   }, []);
 
   const setVerticalPreset = useCallback((preset: VerticalPreset) => {
     dispatch({ type: "SET_VERTICAL_PRESET", payload: preset });
+    track("prep_vertical_preset_used", { preset });
   }, []);
 
   const setOverlayNativeDimensions = useCallback(
