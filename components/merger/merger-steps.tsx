@@ -9,6 +9,7 @@ import {
   MobileInstructionCarousel,
   type CarouselStep,
 } from "@/components/ui/mobile-instruction-carousel";
+import { DewatermarkDialog } from "@/components/merger/dewatermark-dialog";
 
 type MergerStepsProps = {
   stepStatuses: readonly StepStatus[];
@@ -220,14 +221,7 @@ export const MergerSteps = ({
               </p>
               <p className="text-xs leading-normal text-text-tertiary">
                 Before uploading:{" "}
-                <a
-                  href="https://gip.mpcproxy.art/gwr/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent-blue"
-                >
-                  De-watermark ↗
-                </a>
+                <DewatermarkDialog onAccept={onUploadOutpaint} />
                 {" · "}
                 <a
                   href="https://upscayl.org/"
@@ -412,14 +406,7 @@ export const MergerSteps = ({
               </p>
               <p className="pl-8.5 text-xs leading-normal text-text-tertiary">
                 Before uploading:{" "}
-                <a
-                  href="https://gip.mpcproxy.art/gwr/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-accent-blue"
-                >
-                  De-watermark ↗
-                </a>
+                <DewatermarkDialog onAccept={onUploadOutpaint} />
                 {" · "}
                 <a
                   href="https://upscayl.org/"

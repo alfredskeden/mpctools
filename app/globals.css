@@ -79,6 +79,7 @@
 
   /* Custom max-width / max-height */
   --max-width-content: 640px;
+  --max-width-dialog-dewatermark: 520px;
   --spacing-22: 5.5rem;
 
   /* Custom aspect ratio */

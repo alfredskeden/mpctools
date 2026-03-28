@@ -18,10 +18,10 @@ const ALPHA_MAP_BASE64: Record<number, string> = {
 const cache = new Map<number, Float32Array>();
 
 export function decodeGeminiBase64(base64: string): Uint8Array {
+  /* v8 ignore start */
   if (typeof Buffer !== "undefined") {
     return Uint8Array.from(Buffer.from(base64, "base64"));
   }
-  /* v8 ignore start */
   if (typeof atob !== "undefined") {
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);

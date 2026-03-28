@@ -22,7 +22,10 @@ export type AnalyticsEvent =
   | "merger_outpaint_uploaded"
   | "merger_blending_adjusted"
   | "merger_reseeded"
-  | "merger_final_downloaded";
+  | "merger_final_downloaded"
+  | "dewatermark_started"
+  | "dewatermark_succeeded"
+  | "dewatermark_failed";
 
 type EventData = Record<string, string | number | boolean | null | undefined>;
 

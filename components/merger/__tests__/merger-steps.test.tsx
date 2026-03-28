@@ -7,6 +7,14 @@ vi.mock("@/lib/merger-utils", () => ({
   analyzeGuide: vi.fn(),
 }));
 
+vi.mock("@/components/merger/dewatermark-dialog", () => ({
+  DewatermarkDialog: ({ onAccept }: { onAccept: unknown }) => (
+    <button type="button" data-testid="dewatermark-dialog" onClick={() => onAccept}>
+      De-watermark
+    </button>
+  ),
+}));
+
 function setupImageMocks(dataUrl: string) {
   const OriginalFileReader = globalThis.FileReader;
   const OriginalImage = globalThis.Image;
@@ -118,16 +126,15 @@ describe("MergerSteps", () => {
     expect(buttons.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("shows de-watermark and upscale tip links when step 3 is active", () => {
+  it("shows de-watermark dialog and upscale link when step 3 is active", () => {
     const props = {
       ...defaultProps,
       stepStatuses: ["completed", "completed", "active"] as StepStatus[],
     };
     render(<MergerSteps {...props} />);
 
-    const dewatermarkLinks = screen.getAllByRole("link", { name: /de-watermark/i });
-    expect(dewatermarkLinks.length).toBeGreaterThanOrEqual(1);
-    expect(dewatermarkLinks[0]).toHaveAttribute("href", "https://gip.mpcproxy.art/gwr/");
+    const dewatermarkButtons = screen.getAllByTestId("dewatermark-dialog");
+    expect(dewatermarkButtons.length).toBeGreaterThanOrEqual(1);
 
     const upscaleLinks = screen.getAllByRole("link", { name: /upscale with upscayl/i });
     expect(upscaleLinks.length).toBeGreaterThanOrEqual(1);
