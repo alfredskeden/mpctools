@@ -269,6 +269,7 @@ export function scoreCandidate(
   context: DetectionContext,
   alphaMap: Float32Array,
   candidate: Region,
+  precomputedTemplateGrad?: Float32Array,
 ): CandidateScore | null {
   const { x, y, size } = candidate;
   if (
@@ -281,7 +282,7 @@ export function scoreCandidate(
 
   const grayRegion = getRegion(context.gray, context.width, x, y, size);
   const gradRegion = getRegion(context.grad, context.width, x, y, size);
-  const templateGrad = sobelMagnitude(alphaMap, size, size);
+  const templateGrad = precomputedTemplateGrad ?? sobelMagnitude(alphaMap, size, size);
   const spatialScore = normalizedCrossCorrelation(grayRegion, alphaMap);
   const gradientScore = normalizedCrossCorrelation(gradRegion, templateGrad);
 
@@ -406,6 +407,8 @@ export function searchCandidatePool(
       if (!alphaMap) continue;
       /* v8 ignore stop */
 
+      const templateGrad = sobelMagnitude(alphaMap, candidateSize, candidateSize);
+
       for (const corner of corners) {
         const anchor = getAnchorPosition(
           config,
@@ -429,7 +432,7 @@ export function searchCandidatePool(
               x: px,
               y: py,
               size: candidateSize,
-            });
+            }, templateGrad);
             /* v8 ignore start */
             if (!score) continue;
             /* v8 ignore stop */

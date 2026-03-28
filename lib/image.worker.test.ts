@@ -139,7 +139,7 @@ describe("image worker handleMessage", () => {
       });
       expect(runPipeline).toHaveBeenCalledWith(
         { data: pixels, width: 4, height: 4 },
-        {},
+        { postLightness: 2.75, maskExpand: 1.5, feather: 4 },
         mockDetection,
       );
       if (response.type === "REMOVE_WATERMARK") {

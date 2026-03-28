@@ -124,7 +124,11 @@ export async function removeWatermarkInWorker(
   /* v8 ignore stop */
   const img = { data: pixels, width, height };
   const detection = detectBestCandidate(img);
-  const result = runPipeline(img, {}, detection);
+  const result = runPipeline(
+    img,
+    { postLightness: 2.75, maskExpand: 1.5, feather: 4 },
+    detection,
+  );
   return {
     pixels: result.imageData.data,
     width: result.imageData.width,

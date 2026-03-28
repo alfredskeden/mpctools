@@ -74,7 +74,11 @@ export function handleMessage(msg: WorkerMessage): WorkerResponse {
     case "REMOVE_WATERMARK": {
       const img = { data: msg.pixels, width: msg.width, height: msg.height };
       const detection = detectBestCandidate(img);
-      const result = runPipeline(img, {}, detection);
+      const result = runPipeline(
+        img,
+        { postLightness: 2.75, maskExpand: 1.5, feather: 4 },
+        detection,
+      );
       return {
         type: "REMOVE_WATERMARK",
         id: msg.id,
