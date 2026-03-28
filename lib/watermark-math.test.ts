@@ -15,6 +15,7 @@ import {
   removeWatermarkReverseAlpha,
   compositeWithMask,
   applyMaskedLightness,
+  extractRegion,
   type RawImageData,
 } from "@/lib/watermark-math";
 
@@ -442,6 +443,69 @@ describe("watermark-math", () => {
       const mask = new Uint8ClampedArray([0, 0, 0, 255]);
       applyMaskedLightness(img, mask, -100);
       expect(img.data[0]).toBe(0);
+    });
+  });
+
+  describe("extractRegion", () => {
+    it("returns a RawImageData with the region dimensions", () => {
+      // Given
+      const img = makeImage(10, 10);
+
+      // When
+      const region = extractRegion(img, { x: 2, y: 3, width: 4, height: 5 });
+
+      // Then
+      expect(region.width).toBe(4);
+      expect(region.height).toBe(5);
+      expect(region.data.length).toBe(4 * 5 * 4);
+    });
+
+    it("copies the correct pixel values from the source image", () => {
+      // Given: 4×4 image where each pixel's R channel equals its row index
+      const img: RawImageData = {
+        width: 4,
+        height: 4,
+        data: new Uint8ClampedArray(
+          Array.from({ length: 64 }, (_, i) => {
+            const pixel = Math.floor(i / 4);
+            const row = Math.floor(pixel / 4);
+            return i % 4 === 0 ? row * 10 : 255;
+          }),
+        ),
+      };
+
+      // When: extract a 2×2 region at (1, 2)
+      const region = extractRegion(img, { x: 1, y: 2, width: 2, height: 2 });
+
+      // Then: R channel of first pixel should equal row 2 = 20
+      expect(region.data[0]).toBe(20);
+      // R channel of second row should equal row 3 = 30
+      expect(region.data[2 * 4]).toBe(30);
+    });
+
+    it("does not mutate the source image", () => {
+      // Given
+      const img = makeImage(8, 8, 100, 100, 100);
+      const originalSlice = Array.from(img.data.slice(0, 16));
+
+      // When
+      extractRegion(img, { x: 0, y: 0, width: 4, height: 4 });
+
+      // Then
+      expect(Array.from(img.data.slice(0, 16))).toEqual(originalSlice);
+    });
+
+    it("handles a region at the image boundary", () => {
+      // Given
+      const img = makeImage(6, 6, 200, 150, 100);
+
+      // When
+      const region = extractRegion(img, { x: 4, y: 4, width: 2, height: 2 });
+
+      // Then: all pixels should have the same color as the source
+      expect(region.data[0]).toBe(200);
+      expect(region.data[1]).toBe(150);
+      expect(region.data[2]).toBe(100);
     });
   });
 });

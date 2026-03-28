@@ -51,28 +51,40 @@ function boxBlurAlpha(
   width: number,
   height: number,
   passes: number,
+  bbox: { x: number; y: number; w: number; h: number },
 ): void {
   if (passes <= 0) return;
-  const src = new Float32Array(width * height);
+  const x0 = Math.max(0, bbox.x);
+  const y0 = Math.max(0, bbox.y);
+  const x1 = Math.min(width, bbox.x + bbox.w);
+  const y1 = Math.min(height, bbox.y + bbox.h);
+  const bboxW = x1 - x0;
+  const bboxH = y1 - y0;
+  /* v8 ignore start */
+  if (bboxW <= 0 || bboxH <= 0) return;
+  /* v8 ignore stop */
+  const src = new Float32Array(bboxW * bboxH);
   for (let p = 0; p < passes; p += 1) {
-    for (let i = 0; i < width * height; i += 1) {
-      src[i] = data[i * 4 + 3];
+    for (let by = 0; by < bboxH; by += 1) {
+      for (let bx = 0; bx < bboxW; bx += 1) {
+        src[by * bboxW + bx] = data[((y0 + by) * width + (x0 + bx)) * 4 + 3];
+      }
     }
-    for (let y = 0; y < height; y += 1) {
-      for (let x = 0; x < width; x += 1) {
+    for (let by = 0; by < bboxH; by += 1) {
+      for (let bx = 0; bx < bboxW; bx += 1) {
         let sum = 0;
         let count = 0;
         for (let dy = -1; dy <= 1; dy += 1) {
-          const ny = y + dy;
-          if (ny < 0 || ny >= height) continue;
+          const ny = by + dy;
+          if (ny < 0 || ny >= bboxH) continue;
           for (let dx = -1; dx <= 1; dx += 1) {
-            const nx = x + dx;
-            if (nx < 0 || nx >= width) continue;
-            sum += src[ny * width + nx];
+            const nx = bx + dx;
+            if (nx < 0 || nx >= bboxW) continue;
+            sum += src[ny * bboxW + nx];
             count += 1;
           }
         }
-        data[(y * width + x) * 4 + 3] = Math.round(sum / count);
+        data[((y0 + by) * width + (x0 + bx)) * 4 + 3] = Math.round(sum / count);
       }
     }
   }
@@ -144,7 +156,13 @@ export function buildWeightedMaskData(
   }
 
   const passes = Math.max(0, Math.round(featherPx));
-  boxBlurAlpha(data, imageWidth, imageHeight, passes);
+  const blurPad = Math.ceil(featherPx) + 1;
+  boxBlurAlpha(data, imageWidth, imageHeight, passes, {
+    x: rect.x - blurPad,
+    y: rect.y - blurPad,
+    w: rect.width + blurPad * 2,
+    h: rect.height + blurPad * 2,
+  });
   return data;
 }
 
@@ -225,7 +243,13 @@ export function buildVisibilityMaskData(
   }
 
   const passes = Math.max(0, Math.round(feather + GEMINI_VISIBILITY_FEATHER_BOOST));
-  boxBlurAlpha(data, imageWidth, imageHeight, passes);
+  const blurPad = Math.ceil(feather + GEMINI_VISIBILITY_FEATHER_BOOST) + expand + 1;
+  boxBlurAlpha(data, imageWidth, imageHeight, passes, {
+    x: rect.x - blurPad,
+    y: rect.y - blurPad,
+    w: rect.width + blurPad * 2,
+    h: rect.height + blurPad * 2,
+  });
 
   // After blurring, force core pixels to fully opaque
   for (let row = 0; row < rect.height; row += 1) {

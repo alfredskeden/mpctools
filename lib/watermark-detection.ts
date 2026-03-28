@@ -18,7 +18,7 @@ import {
   computeRegionSpatialCorrelation,
   computeRegionGradientCorrelation,
   removeWatermarkReverseAlpha,
-  cloneRawImageData,
+  extractRegion,
   type RawImageData,
   type Region,
 } from "@/lib/watermark-math";
@@ -67,6 +67,7 @@ export type ScoredCandidate = CandidateScore & {
 
 export type EvaluatedCandidate = ScoredCandidate & {
   alphaGain: number;
+  /** Region-sized processed image (width/height = position.width/height). Not used by runPipeline. */
   imageData: RawImageData;
   originalSpatialScore: number;
   originalGradientScore: number;
@@ -545,11 +546,9 @@ export function evaluateRestorationCandidate(
   alphaGain: number,
 ): EvaluatedCandidate {
   const { position, alphaMap } = candidate;
-  const positionAsRegion = {
-    x: position.x,
-    y: position.y,
-    size: position.width,
-  };
+  const regionPos = { x: 0, y: 0, width: position.width, height: position.height };
+  const regionAsRegion = { x: 0, y: 0, size: position.width };
+
   const baselineNearBlackRatio = calculateNearBlackRatio(
     originalImageData,
     position,
@@ -557,20 +556,22 @@ export function evaluateRestorationCandidate(
   const originalSpatialScore = candidate.spatialScore;
   const originalGradientScore = candidate.gradientScore;
 
-  const processed = cloneRawImageData(originalImageData);
-  removeWatermarkReverseAlpha(processed, alphaMap, position, { alphaGain });
+  // Extract only the watermark region (~96×96 px) instead of cloning the full image.
+  // runPipeline does not use imageData, so full-image clones are wasteful.
+  const regionImg = extractRegion(originalImageData, position);
+  removeWatermarkReverseAlpha(regionImg, alphaMap, regionPos, { alphaGain });
 
   const processedSpatialScore = computeRegionSpatialCorrelation(
-    processed,
+    regionImg,
     alphaMap,
-    positionAsRegion,
+    regionAsRegion,
   );
   const processedGradientScore = computeRegionGradientCorrelation(
-    processed,
+    regionImg,
     alphaMap,
-    positionAsRegion,
+    regionAsRegion,
   );
-  const nearBlackRatio = calculateNearBlackRatio(processed, position);
+  const nearBlackRatio = calculateNearBlackRatio(regionImg, regionPos);
   const nearBlackIncrease = nearBlackRatio - baselineNearBlackRatio;
   const improvement = originalSpatialScore - processedSpatialScore;
   const gradientIncrease = processedGradientScore - originalGradientScore;
@@ -584,7 +585,7 @@ export function evaluateRestorationCandidate(
   return {
     ...candidate,
     alphaGain,
-    imageData: processed,
+    imageData: regionImg,
     originalSpatialScore,
     originalGradientScore,
     processedSpatialScore,

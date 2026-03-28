@@ -309,6 +309,25 @@ export function cloneRawImageData(img: RawImageData): RawImageData {
   };
 }
 
+export function extractRegion(
+  img: RawImageData,
+  pos: { x: number; y: number; width: number; height: number },
+): RawImageData {
+  const { x, y, width, height } = pos;
+  const data = new Uint8ClampedArray(width * height * 4);
+  for (let row = 0; row < height; row += 1) {
+    for (let col = 0; col < width; col += 1) {
+      const src = ((y + row) * img.width + (x + col)) * 4;
+      const dst = (row * width + col) * 4;
+      data[dst] = img.data[src];
+      data[dst + 1] = img.data[src + 1];
+      data[dst + 2] = img.data[src + 2];
+      data[dst + 3] = img.data[src + 3];
+    }
+  }
+  return { data, width, height };
+}
+
 // ─── Pixel-level composite ────────────────────────────────────────────────────
 
 export function compositeWithMask(

@@ -89,7 +89,7 @@ export async function POST(request: Request): Promise<Response> {
     pngBuffer = await sharp(Buffer.from(result.imageData.data.buffer), {
       raw: { width: result.imageData.width, height: result.imageData.height, channels: 4 },
     })
-      .png()
+      .png({ compressionLevel: 0 }) // skip zlib compression — faster over loopback
       .toBuffer();
   } catch {
     return Response.json({ error: "Failed to encode output" }, { status: 500 });
