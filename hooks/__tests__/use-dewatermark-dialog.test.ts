@@ -3,13 +3,6 @@ import { renderHook, act } from "@testing-library/react";
 const mockRemoveWatermark = vi.fn();
 vi.mock("@/lib/watermark-api", () => ({
   removeWatermark: (...args: unknown[]) => mockRemoveWatermark(...args),
-  WatermarkApiError: class extends Error {
-    status: number;
-    constructor(status: number, message: string) {
-      super(message);
-      this.status = status;
-    }
-  },
 }));
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));

@@ -155,4 +155,82 @@ describe("worker-client", () => {
       globalThis.Worker = originalWorker;
     });
   });
+
+  describe("removeWatermarkInWorker", () => {
+    it("falls back to main-thread execution when Worker is unavailable", async () => {
+      const originalWorker = globalThis.Worker;
+      // @ts-expect-error - intentionally removing Worker
+      delete globalThis.Worker;
+
+      const { removeWatermarkInWorker: fn } = await import("./worker-client");
+
+      // Use a tiny 2x2 image to keep the test fast
+      const pixels = new Uint8ClampedArray(2 * 2 * 4);
+      for (let i = 0; i < pixels.length; i += 4) {
+        pixels[i] = 128;
+        pixels[i + 1] = 128;
+        pixels[i + 2] = 128;
+        pixels[i + 3] = 255;
+      }
+
+      const result = await fn(pixels, 2, 2);
+
+      expect(result.pixels).toBeInstanceOf(Uint8ClampedArray);
+      expect(result.width).toBe(2);
+      expect(result.height).toBe(2);
+      expect(result.metadata).toHaveProperty("confidence");
+      expect(result.metadata).toHaveProperty("source");
+
+      globalThis.Worker = originalWorker;
+    });
+
+    it("uses worker when available and resolves with removal result", async () => {
+      const originalWorker = globalThis.Worker;
+      let onMessageHandler: ((e: MessageEvent) => void) | null = null;
+
+      globalThis.Worker = class MockWorker {
+        onmessage: ((e: MessageEvent) => void) | null = null;
+        constructor() {
+          setTimeout(() => {
+            onMessageHandler = this.onmessage;
+          }, 0);
+        }
+        postMessage(data: { type: string; id: number }) {
+          const resultPixels = new Uint8ClampedArray(2 * 2 * 4);
+          setTimeout(() => {
+            onMessageHandler?.({
+              data: {
+                type: "REMOVE_WATERMARK",
+                id: data.id,
+                pixels: resultPixels,
+                width: 2,
+                height: 2,
+                metadata: {
+                  corner: "bottom-right",
+                  confidence: 0.9,
+                  alphaGain: 1.05,
+                  source: "adaptive",
+                },
+              },
+            } as MessageEvent);
+          }, 0);
+        }
+      } as unknown as typeof Worker;
+
+      const { removeWatermarkInWorker: fn } = await import("./worker-client");
+
+      const pixels = new Uint8ClampedArray(2 * 2 * 4);
+      const result = await fn(pixels, 2, 2);
+
+      expect(result.pixels).toBeInstanceOf(Uint8ClampedArray);
+      expect(result.metadata).toEqual({
+        corner: "bottom-right",
+        confidence: 0.9,
+        alphaGain: 1.05,
+        source: "adaptive",
+      });
+
+      globalThis.Worker = originalWorker;
+    });
+  });
 });

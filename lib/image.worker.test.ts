@@ -1,5 +1,20 @@
 import { handleMessage } from "./image.worker";
 
+vi.mock("./watermark-detection", () => ({
+  detectBestCandidate: vi.fn(),
+}));
+
+vi.mock("./watermark-removal", () => ({
+  runPipeline: vi.fn(),
+}));
+
+import { detectBestCandidate } from "./watermark-detection";
+import { runPipeline } from "./watermark-removal";
+
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("image worker handleMessage", () => {
   describe("SHARPEN", () => {
     it("returns sharpened pixel data with correct type and id", () => {
@@ -83,6 +98,92 @@ describe("image worker handleMessage", () => {
       if (response.type === "ANALYZE_GUIDE") {
         expect(response.result).not.toBeNull();
         expect(response.result!.canvasW).toBeGreaterThan(0);
+      }
+    });
+  });
+
+  describe("REMOVE_WATERMARK", () => {
+    it("calls detectBestCandidate and runPipeline and returns result with metadata", () => {
+      // Given
+      const pixels = new Uint8ClampedArray(4 * 4 * 4);
+      const resultPixels = new Uint8ClampedArray(4 * 4 * 4);
+      const mockDetection = { corner: "bottom-right", accepted: true };
+
+      vi.mocked(detectBestCandidate).mockReturnValue(mockDetection as never);
+      vi.mocked(runPipeline).mockReturnValue({
+        imageData: { data: resultPixels, width: 4, height: 4 },
+        position: { x: 0, y: 0, width: 4, height: 4 },
+        alphaMap: new Float32Array(16),
+        alphaGain: 1.1,
+        confidence: 0.92,
+        accepted: true,
+        detectionSource: "adaptive",
+      });
+
+      // When
+      const response = handleMessage({
+        type: "REMOVE_WATERMARK",
+        id: 5,
+        pixels,
+        width: 4,
+        height: 4,
+      });
+
+      // Then
+      expect(response.type).toBe("REMOVE_WATERMARK");
+      expect(response.id).toBe(5);
+      expect(detectBestCandidate).toHaveBeenCalledWith({
+        data: pixels,
+        width: 4,
+        height: 4,
+      });
+      expect(runPipeline).toHaveBeenCalledWith(
+        { data: pixels, width: 4, height: 4 },
+        {},
+        mockDetection,
+      );
+      if (response.type === "REMOVE_WATERMARK") {
+        expect(response.pixels).toBe(resultPixels);
+        expect(response.width).toBe(4);
+        expect(response.height).toBe(4);
+        expect(response.metadata).toEqual({
+          corner: "bottom-right",
+          confidence: 0.92,
+          alphaGain: 1.1,
+          source: "adaptive",
+        });
+      }
+    });
+
+    it("returns empty corner when detection is not accepted", () => {
+      // Given
+      const pixels = new Uint8ClampedArray(4 * 4 * 4);
+      const resultPixels = new Uint8ClampedArray(4 * 4 * 4);
+
+      vi.mocked(detectBestCandidate).mockReturnValue(null);
+      vi.mocked(runPipeline).mockReturnValue({
+        imageData: { data: resultPixels, width: 4, height: 4 },
+        position: { x: 0, y: 0, width: 4, height: 4 },
+        alphaMap: new Float32Array(16),
+        alphaGain: 1,
+        confidence: 0.74,
+        accepted: false,
+        detectionSource: "preset",
+      });
+
+      // When
+      const response = handleMessage({
+        type: "REMOVE_WATERMARK",
+        id: 9,
+        pixels,
+        width: 4,
+        height: 4,
+      });
+
+      // Then
+      if (response.type === "REMOVE_WATERMARK") {
+        expect(response.metadata.corner).toBe("");
+        expect(response.metadata.source).toBe("preset");
       }
     });
   });

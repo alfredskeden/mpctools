@@ -1,6 +1,8 @@
 import { sharpenPixelData, analyzeGuideData } from "./image-processing";
+import { detectBestCandidate } from "./watermark-detection";
+import { runPipeline } from "./watermark-removal";
 import type { GuideAnalysis } from "./merger-utils";
-import type { WorkerMessage, WorkerResponse } from "./image.worker";
+import type { WorkerMessage, WorkerResponse, WatermarkWorkerMetadata } from "./image.worker";
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>
@@ -87,4 +89,51 @@ export async function analyzeGuideInWorker(
   }
   /* v8 ignore stop */
   return analyzeGuideData(data, width, height, ogWidth, ogHeight);
+}
+
+export type RemoveWatermarkWorkerResult = {
+  pixels: Uint8ClampedArray;
+  width: number;
+  height: number;
+  metadata: WatermarkWorkerMetadata;
+};
+
+export async function removeWatermarkInWorker(
+  pixels: Uint8ClampedArray,
+  width: number,
+  height: number,
+): Promise<RemoveWatermarkWorkerResult> {
+  /* v8 ignore start -- Worker path requires real Web Worker */
+  try {
+    const copy = new Uint8ClampedArray(pixels);
+    const response = await postToWorker(
+      { type: "REMOVE_WATERMARK", pixels: copy, width, height },
+      [copy.buffer],
+    );
+    if (response.type === "REMOVE_WATERMARK") {
+      return {
+        pixels: response.pixels,
+        width: response.width,
+        height: response.height,
+        metadata: response.metadata,
+      };
+    }
+  } catch {
+    // fallback
+  }
+  /* v8 ignore stop */
+  const img = { data: pixels, width, height };
+  const detection = detectBestCandidate(img);
+  const result = runPipeline(img, {}, detection);
+  return {
+    pixels: result.imageData.data,
+    width: result.imageData.width,
+    height: result.imageData.height,
+    metadata: {
+      corner: result.accepted ? String(detection?.corner ?? "") : "",
+      confidence: result.confidence,
+      alphaGain: result.alphaGain,
+      source: result.detectionSource,
+    },
+  };
 }

@@ -1,53 +1,79 @@
-import { removeWatermark, WatermarkApiError } from "./watermark-api";
+const mockRemoveWatermarkInWorker = vi.fn();
+vi.mock("./worker-client", () => ({
+  removeWatermarkInWorker: (...args: unknown[]) =>
+    mockRemoveWatermarkInWorker(...args),
+}));
 
-const mockFetch = vi.fn();
-vi.stubGlobal("fetch", mockFetch);
+import { removeWatermark } from "./watermark-api";
+
+const mockGetImageData = vi.fn();
+const mockDrawImage = vi.fn();
+const mockPutImageData = vi.fn();
+const mockConvertToBlob = vi.fn();
+const mockClose = vi.fn();
+
+vi.stubGlobal("createImageBitmap", vi.fn());
+class MockOffscreenCanvas {
+  width: number;
+  height: number;
+  constructor(w: number, h: number) {
+    this.width = w;
+    this.height = h;
+  }
+  getContext() {
+    return {
+      drawImage: mockDrawImage,
+      getImageData: mockGetImageData,
+      putImageData: mockPutImageData,
+    };
+  }
+  convertToBlob = mockConvertToBlob;
+}
+vi.stubGlobal("OffscreenCanvas", MockOffscreenCanvas);
+
+function setupDefaults(overrides: { width?: number; height?: number } = {}) {
+  const w = overrides.width ?? 100;
+  const h = overrides.height ?? 100;
+  const pixels = new Uint8ClampedArray(w * h * 4);
+
+  vi.mocked(createImageBitmap).mockResolvedValue({
+    width: w,
+    height: h,
+    close: mockClose,
+  } as unknown as ImageBitmap);
+
+  mockGetImageData.mockReturnValue({
+    data: new Uint8ClampedArray(w * h * 4),
+    width: w,
+    height: h,
+  });
+
+  mockRemoveWatermarkInWorker.mockResolvedValue({
+    pixels,
+    width: w,
+    height: h,
+    metadata: {
+      corner: "bottom-right",
+      confidence: 0.87,
+      alphaGain: 1.05,
+      source: "adaptive",
+    },
+  });
+
+  mockConvertToBlob.mockResolvedValue(
+    new Blob(["fake-png"], { type: "image/png" }),
+  );
+}
 
 afterEach(() => {
   vi.clearAllMocks();
 });
 
-function makeSuccessResponse(
-  overrides: Partial<Record<string, string>> = {},
-) {
-  const headers = new Headers({
-    "content-type": "image/png",
-    "x-detection-corner": "bottom-right",
-    "x-detection-confidence": "0.87",
-    "x-detection-alpha-gain": "1.05",
-    "x-detection-source": "adaptive",
-    ...overrides,
-  });
-  const blob = new Blob(["fake-png"], { type: "image/png" });
-  return new Response(blob, { status: 200, headers });
-}
-
-function makeErrorResponse(status: number, body: string) {
-  return new Response(body, { status, headers: { "content-type": "text/plain" } });
-}
-
 describe("removeWatermark", () => {
-  it("sends FormData with image to the API endpoint", async () => {
+  it("decodes the file, processes via worker, and returns blob with metadata", async () => {
     // Given
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
-    mockFetch.mockResolvedValue(makeSuccessResponse());
-
-    // When
-    await removeWatermark(file);
-
-    // Then
-    expect(mockFetch).toHaveBeenCalledOnce();
-    const [url, options] = mockFetch.mock.calls[0];
-    expect(url).toBe("/api/watermark-remove");
-    expect(options.method).toBe("POST");
-    expect(options.body).toBeInstanceOf(FormData);
-    expect(options.body.get("image")).toBe(file);
-  });
-
-  it("returns blob and parsed metadata on success", async () => {
-    // Given
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
-    mockFetch.mockResolvedValue(makeSuccessResponse());
+    setupDefaults();
+    const file = new File(["pixels"], "test.png", { type: "image/png" });
 
     // When
     const result = await removeWatermark(file);
@@ -62,109 +88,114 @@ describe("removeWatermark", () => {
     });
   });
 
-  it("parses metadata from custom header values", async () => {
+  it("passes the file to createImageBitmap for decoding", async () => {
     // Given
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
-    mockFetch.mockResolvedValue(
-      makeSuccessResponse({
-        "x-detection-corner": "top-left",
-        "x-detection-confidence": "0.42",
-        "x-detection-alpha-gain": "1.30",
-        "x-detection-source": "preset",
-      }),
+    setupDefaults();
+    const file = new File(["pixels"], "test.png", { type: "image/png" });
+
+    // When
+    await removeWatermark(file);
+
+    // Then
+    expect(createImageBitmap).toHaveBeenCalledWith(file);
+  });
+
+  it("closes the bitmap after extracting pixel data", async () => {
+    // Given
+    setupDefaults();
+    const file = new File(["pixels"], "test.png", { type: "image/png" });
+
+    // When
+    await removeWatermark(file);
+
+    // Then
+    expect(mockClose).toHaveBeenCalledOnce();
+  });
+
+  it("sends pixel data to worker with correct dimensions", async () => {
+    // Given
+    setupDefaults({ width: 200, height: 150 });
+    const file = new File(["pixels"], "test.png", { type: "image/png" });
+
+    // When
+    await removeWatermark(file);
+
+    // Then
+    expect(mockRemoveWatermarkInWorker).toHaveBeenCalledWith(
+      expect.any(Uint8ClampedArray),
+      200,
+      150,
     );
-
-    // When
-    const result = await removeWatermark(file);
-
-    // Then
-    expect(result.metadata).toEqual({
-      corner: "top-left",
-      confidence: 0.42,
-      alphaGain: 1.3,
-      source: "preset",
-    });
   });
 
-  it("throws WatermarkApiError on non-200 response", async () => {
+  it("encodes the result pixels to a PNG blob", async () => {
     // Given
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
-    mockFetch.mockResolvedValueOnce(makeErrorResponse(422, "Failed to decode image"));
+    setupDefaults();
+    const file = new File(["pixels"], "test.png", { type: "image/png" });
 
     // When
-    const promise = removeWatermark(file);
+    await removeWatermark(file);
 
     // Then
-    await expect(promise).rejects.toThrow(WatermarkApiError);
+    expect(mockConvertToBlob).toHaveBeenCalledWith({ type: "image/png" });
   });
 
-  it("includes status and message in WatermarkApiError", async () => {
+  it("throws AbortError immediately if signal is already aborted", async () => {
     // Given
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
-    mockFetch.mockResolvedValueOnce(makeErrorResponse(422, "Failed to decode image"));
-
-    // When
-    const error = await removeWatermark(file).catch((e: unknown) => e);
-
-    // Then
-    expect(error).toMatchObject({ status: 422, message: "Failed to decode image" });
-  });
-
-  it("throws WatermarkApiError on 403 forbidden", async () => {
-    // Given
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
-    mockFetch.mockResolvedValueOnce(makeErrorResponse(403, "Forbidden"));
-
-    // When
-    const error = await removeWatermark(file).catch((e: unknown) => e);
-
-    // Then
-    expect(error).toBeInstanceOf(WatermarkApiError);
-    expect(error).toMatchObject({ status: 403, message: "Forbidden" });
-  });
-
-  it("passes abort signal to fetch", async () => {
-    // Given
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
+    setupDefaults();
+    const file = new File(["pixels"], "test.png", { type: "image/png" });
     const controller = new AbortController();
-    mockFetch.mockResolvedValue(makeSuccessResponse());
-
-    // When
-    await removeWatermark(file, controller.signal);
-
-    // Then
-    const [, options] = mockFetch.mock.calls[0];
-    expect(options.signal).toBe(controller.signal);
-  });
-
-  it("propagates network errors as-is", async () => {
-    // Given
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
-    const networkError = new TypeError("Failed to fetch");
-    mockFetch.mockRejectedValue(networkError);
+    controller.abort();
 
     // When / Then
-    await expect(removeWatermark(file)).rejects.toThrow(networkError);
+    await expect(removeWatermark(file, controller.signal)).rejects.toThrow(
+      "Aborted",
+    );
+    expect(createImageBitmap).not.toHaveBeenCalled();
   });
 
-  it("handles missing metadata headers with defaults", async () => {
+  it("throws AbortError after worker completes if signal was aborted during processing", async () => {
     // Given
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
-    const response = new Response(new Blob(["png"]), {
-      status: 200,
-      headers: { "content-type": "image/png" },
-    });
-    mockFetch.mockResolvedValue(response);
+    setupDefaults();
+    const file = new File(["pixels"], "test.png", { type: "image/png" });
+    const controller = new AbortController();
 
-    // When
-    const result = await removeWatermark(file);
-
-    // Then
-    expect(result.metadata).toEqual({
-      corner: "",
-      confidence: 0,
-      alphaGain: 0,
-      source: "",
+    mockRemoveWatermarkInWorker.mockImplementation(async () => {
+      controller.abort();
+      return {
+        pixels: new Uint8ClampedArray(100 * 100 * 4),
+        width: 100,
+        height: 100,
+        metadata: { corner: "", confidence: 0, alphaGain: 1, source: "preset" },
+      };
     });
+
+    // When / Then
+    await expect(removeWatermark(file, controller.signal)).rejects.toThrow(
+      "Aborted",
+    );
+  });
+
+  it("propagates createImageBitmap errors", async () => {
+    // Given
+    vi.mocked(createImageBitmap).mockRejectedValue(
+      new Error("Invalid image data"),
+    );
+    const file = new File(["bad"], "broken.png", { type: "image/png" });
+
+    // When / Then
+    await expect(removeWatermark(file)).rejects.toThrow("Invalid image data");
+  });
+
+  it("propagates worker errors", async () => {
+    // Given
+    setupDefaults();
+    mockRemoveWatermarkInWorker.mockRejectedValue(
+      new Error("Processing failed"),
+    );
+    const file = new File(["pixels"], "test.png", { type: "image/png" });
+
+    // When / Then
+    await expect(removeWatermark(file)).rejects.toThrow("Processing failed");
   });
 });

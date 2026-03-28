@@ -1,3 +1,5 @@
+import { removeWatermarkInWorker } from "./worker-client";
+
 export type WatermarkMetadata = {
   corner: string;
   confidence: number;
@@ -10,44 +12,41 @@ export type WatermarkResult = {
   metadata: WatermarkMetadata;
 };
 
-export class WatermarkApiError extends Error {
-  status: number;
-
-  constructor(status: number, message: string) {
-    super(message);
-    this.name = "WatermarkApiError";
-    this.status = status;
-  }
-}
-
 export async function removeWatermark(
   file: File,
   signal?: AbortSignal,
 ): Promise<WatermarkResult> {
-  const formData = new FormData();
-  formData.append("image", file);
-
-  const response = await fetch("/api/watermark-remove", {
-    method: "POST",
-    body: formData,
-    signal,
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new WatermarkApiError(response.status, text);
+  if (signal?.aborted) {
+    throw new DOMException("Aborted", "AbortError");
   }
 
-  const blob = await response.blob();
-  const headers = response.headers;
+  const bitmap = await createImageBitmap(file);
+  const { width, height } = bitmap;
 
-  return {
-    blob,
-    metadata: {
-      corner: headers.get("x-detection-corner") ?? "",
-      confidence: Number(headers.get("x-detection-confidence")) || 0,
-      alphaGain: Number(headers.get("x-detection-alpha-gain")) || 0,
-      source: headers.get("x-detection-source") ?? "",
-    },
-  };
+  const canvas = new OffscreenCanvas(width, height);
+  const ctx = canvas.getContext("2d")!;
+  ctx.drawImage(bitmap, 0, 0);
+  bitmap.close();
+  const imageData = ctx.getImageData(0, 0, width, height);
+
+  const result = await removeWatermarkInWorker(
+    imageData.data,
+    width,
+    height,
+  );
+
+  if (signal?.aborted) {
+    throw new DOMException("Aborted", "AbortError");
+  }
+
+  const outCanvas = new OffscreenCanvas(result.width, result.height);
+  const outCtx = outCanvas.getContext("2d")!;
+  outCtx.putImageData(
+    new ImageData(result.pixels, result.width, result.height),
+    0,
+    0,
+  );
+  const blob = await outCanvas.convertToBlob({ type: "image/png" });
+
+  return { blob, metadata: result.metadata };
 }
