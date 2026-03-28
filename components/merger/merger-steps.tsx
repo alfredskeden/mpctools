@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Upload } from "lucide-react";
 import type { StepStatus, MergerState } from "@/hooks/use-merger-workflow";

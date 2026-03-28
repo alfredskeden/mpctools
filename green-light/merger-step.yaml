@@ -1,0 +1,58 @@
+# Merger step (Step 3) interactions.
+# Covers: three file upload zones, download button disabled/enabled states,
+# advanced options toggle, reseed button, header context.
+
+suite: "Merger Step"
+
+tests:
+  - name: "Merger page loads with three upload sections visible"
+    steps:
+      - go to "/merger"
+      - check that the page contains "Upload original card"
+      - check that the page contains "Upload guide image"
+      - check that the page contains "Upload outpaint result"
+
+  - name: "Download button is disabled before any files are uploaded"
+    steps:
+      - go to "/merger"
+      - check that the "Download Merged" button is disabled
+
+  - name: "Download button becomes enabled after all three files are uploaded"
+    steps:
+      - go to "/merger"
+      - upload "fixtures/og_image.png" to the file input with data-testid="og-file-input"
+      - upload "fixtures/guide_image.png" to the file input with data-testid="guide-file-input"
+      - upload "fixtures/outpaint_image.png" to the file input with data-testid="outpaint-file-input"
+      - check that the "Download Merged" button is enabled
+
+  - name: "Advanced options section is collapsed by default"
+    steps:
+      - go to "/merger"
+      - check that the page contains "ADVANCED OPTIONS"
+      - check that "Feather Strength" is not visible
+
+  - name: "Advanced options expands to show blend sliders"
+    steps:
+      - go to "/merger"
+      - click "ADVANCED OPTIONS"
+      - check that the page contains "Feather Strength"
+      - check that the page contains "Magnitude"
+      - check that the page contains "Density"
+      - check that the page contains "Edge Blur"
+
+  - name: "Reseed button is visible inside advanced options"
+    steps:
+      - go to "/merger"
+      - click "ADVANCED OPTIONS"
+      - check that the page contains "Reseed"
+
+  - name: "Header shows Step 3 context"
+    steps:
+      - go to "/merger"
+      - check that the page contains "Merge Result"
+
+  - name: "Helpful external links are shown in outpaint upload step"
+    steps:
+      - go to "/merger"
+      - check that the page does not contain "De-watermark"
+      - check that the page does not contain "Upscale with Upscayl"

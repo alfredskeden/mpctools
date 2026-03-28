@@ -1,0 +1,37 @@
+# Prep step (Step 1) interactions.
+# Covers: image upload zone, initial disabled state of controls, frame overlay selector,
+# scale/rotation controls, download and continue button states.
+
+suite: "Prep Step"
+
+tests:
+  - name: "Prep page loads with an upload button and that the user can not continue to outpaint"
+    steps:
+      - go to "/prep"
+      - check that the "Upload Now" button is enabled
+      - check that the "Continue to Outpaint" button disabled
+
+  - name: "Scale control is visible after uploading an image"
+    steps:
+      - go to "/prep"
+      - upload "fixtures/og_image.png" via the button "Upload Now"
+      - check that the page contains "98"
+
+  - name: "Frame overlay selector is accessible after uploading an image"
+    steps:
+      - go to "/prep"
+      - upload "fixtures/og_image.png" via the button "Upload Now"
+      - check that the page contains "Frame Overlay"
+
+  - name: "Continue to Outpaint becomes enabled after upload and marking as positioned"
+    steps:
+      - go to "/prep"
+      - upload "fixtures/og_image.png" via the button "Upload Now"
+      - click the "I'm Done" button
+      - click the "Download PNG" button
+      - check that the "Continue to Outpaint" button is enabled
+
+  - name: "Header shows Step 1 context"
+    steps:
+      - go to "/prep"
+      - check that the page contains "Prepare Image"

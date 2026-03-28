@@ -45,3 +45,5 @@ next-env.d.ts
 /.claude/plans
 /.claude/skills
 /designs/
+# GreenLight cached plans
+.greenlight/

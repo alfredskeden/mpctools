@@ -1,0 +1,35 @@
+# Full navigation flow across all steps.
+# Covers: landing → prep → outpaint → merger → back to landing via header.
+
+suite: "Full Flow"
+
+tests:
+  - name: "Full flow from landing page through all steps and back to landing"
+    steps:
+      - check that the page contains "Prep, Outpaint, Merge"
+      - check that the URL is "/"
+      - click the "Get Started" button
+      - check that the URL is "/prep"
+      - click "Outpaint with Gemini" in the header
+      - check that the URL is "/outpaint"
+      - click "Merge Result" in the header
+      - check that the URL is "/merger"
+      - click "Step 3" in the header
+      - check that the URL is "/"
+
+  - name: "Landing page step indicator navigates to prep"
+    steps:
+      - check that the URL is "/"
+      - check that the page contains "Prep, Outpaint, Merge"
+      - click the "Get Started" button
+      - check that the URL is "/prep"
+
+  - name: "Header step dots allow forward and backward navigation"
+    steps:
+      - go to "/prep"
+      - click "Merge Result" in the header
+      - check that the URL is "/merger"
+      - click "Prepare Image" in the header
+      - check that the URL is "/prep"
+      - click "Outpaint with Gemini" in the header
+      - check that the URL is "/outpaint"

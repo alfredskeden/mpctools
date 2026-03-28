@@ -1,0 +1,41 @@
+# Outpaint step (Step 2) interactions.
+# Covers: handshake prompt copy, step progression after handshake confirmation,
+# outpaint command copy, continue button state.
+
+suite: "Outpaint Step"
+
+tests:
+  - name: "Outpaint page loads with handshake step active"
+    steps:
+      - go to "/outpaint"
+      - check that the page contains "THE HANDSHAKE"
+      - check that the page contains "OUTPAINT COMMAND"
+
+  - name: "Copy handshake prompt button is present and clickable"
+    steps:
+      - go to "/outpaint"
+      - check that the page contains "THE HANDSHAKE"
+      - click the first "Copy" button
+
+  - name: "Continue to Merge is disabled before handshake is confirmed"
+    steps:
+      - go to "/outpaint"
+      - check that the "Continue to Merge" button is disabled
+
+  - name: "Confirming handshake reveals outpaint command step and enables continue"
+    steps:
+      - go to "/outpaint"
+      - click the "I've sent the handshake" button
+      - check that the "Continue to Merge" button is enabled
+
+  - name: "Continue to Merge navigates to merger page"
+    steps:
+      - go to "/outpaint"
+      - click the "I've sent the handshake" button
+      - click the "Continue to Merge" button
+      - check that the URL is "/merger"
+
+  - name: "Header shows Step 2 context"
+    steps:
+      - go to "/outpaint"
+      - check that the page contains "Outpaint with Gemini"

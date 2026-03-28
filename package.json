@@ -10,9 +10,14 @@
     "lint:ts": "tsc --pretty --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "greenlight": "export LLM_API_KEY=ollama && npx greenlight run --base-url http://localhost:3050 --llm-base-url http://localhost:11434/v1 --model qwen2.5:14b green-light/*.yaml",
+    "greenlight:pilot": "export LLM_API_KEY=ollama && npx greenlight run --base-url http://localhost:3050 --llm-base-url http://localhost:11434/v1 --model qwen2.5:14b green-light/*.yaml --pilot",
+    "greenlight:headed": "export LLM_API_KEY=ollama && npx greenlight run --base-url http://localhost:3050 --llm-base-url http://localhost:11434/v1 --model qwen2.5:14b green-light/*.yaml --headed",
+    "greenlight:pilot:headed": "export LLM_API_KEY=ollama && npx greenlight run --base-url http://localhost:3050 --llm-base-url http://localhost:11434/v1 --model qwen2.5:14b green-light/*.yaml --pilot --headed"
   },
   "dependencies": {
+    "@eidra-umain/greenlight": "link:/Users/alfske/Documents/private/GreenLight",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.577.0",
