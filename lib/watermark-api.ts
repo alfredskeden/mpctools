@@ -41,8 +41,9 @@ export async function removeWatermark(
 
   const outCanvas = new OffscreenCanvas(result.width, result.height);
   const outCtx = outCanvas.getContext("2d")!;
+  const outPixels = new Uint8ClampedArray(result.pixels);
   outCtx.putImageData(
-    new ImageData(result.pixels, result.width, result.height),
+    new ImageData(outPixels, result.width, result.height),
     0,
     0,
   );
