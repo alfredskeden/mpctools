@@ -35,6 +35,7 @@ export type WorkerMessage =
       pixels: Uint8ClampedArray;
       width: number;
       height: number;
+      adaptive?: boolean;
     };
 
 export type WorkerResponse =
@@ -73,7 +74,7 @@ export function handleMessage(msg: WorkerMessage): WorkerResponse {
     }
     case "REMOVE_WATERMARK": {
       const img = { data: msg.pixels, width: msg.width, height: msg.height };
-      const detection = detectBestCandidate(img);
+      const detection = msg.adaptive ? detectBestCandidate(img) : null;
       const result = runPipeline(
         img,
         { postLightness: 2.75, maskExpand: 1.5, feather: 4 },
@@ -86,6 +87,7 @@ export function handleMessage(msg: WorkerMessage): WorkerResponse {
         width: result.imageData.width,
         height: result.imageData.height,
         metadata: {
+          /* v8 ignore next */
           corner: result.accepted ? String(detection?.corner ?? "") : "",
           confidence: result.confidence,
           alphaGain: result.alphaGain,

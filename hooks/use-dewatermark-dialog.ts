@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useReducer, useRef } from "react";
-import { removeWatermark } from "@/lib/watermark-api";
+import { removeWatermark, removeWatermarkFromPixels } from "@/lib/watermark-api";
 import { track } from "@/lib/analytics";
-import type { WatermarkMetadata } from "@/lib/watermark-api";
+import type { WatermarkMetadata, PixelData } from "@/lib/watermark-api";
 
 type IdleState = { phase: "idle" };
 type ProcessingState = { phase: "processing" };
@@ -54,6 +54,7 @@ export function useDewatermarkDialog() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const abortRef = useRef<AbortController | null>(null);
   const previewUrlRef = useRef<string | null>(null);
+  const pixelDataRef = useRef<PixelData | null>(null);
 
   const processFile = useCallback((file: File) => {
     abortRef.current?.abort();
@@ -67,6 +68,7 @@ export function useDewatermarkDialog() {
       .then((result) => {
         const url = URL.createObjectURL(result.blob);
         previewUrlRef.current = url;
+        pixelDataRef.current = result.pixelData;
 
         dispatch({
           type: "SET_RESULT",
@@ -90,6 +92,47 @@ export function useDewatermarkDialog() {
       });
   }, []);
 
+  const runAdaptiveDetection = useCallback(() => {
+    if (!pixelDataRef.current) return;
+
+    const { pixels, width, height } = pixelDataRef.current;
+
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    dispatch({ type: "START_PROCESSING" });
+    track("dewatermark_adaptive_started");
+
+    removeWatermarkFromPixels(pixels, width, height, { adaptive: true })
+      .then((result) => {
+        URL.revokeObjectURL(previewUrlRef.current!);
+        const url = URL.createObjectURL(result.blob);
+        previewUrlRef.current = url;
+        pixelDataRef.current = result.pixelData;
+
+        dispatch({
+          type: "SET_RESULT",
+          blob: result.blob,
+          previewUrl: url,
+          metadata: result.metadata,
+        });
+        track("dewatermark_adaptive_succeeded", {
+          corner: result.metadata.corner,
+          confidence: result.metadata.confidence,
+        });
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          dispatch({ type: "RESET" });
+          return;
+        }
+        const message = error instanceof Error ? error.message : "Unknown error";
+        dispatch({ type: "SET_ERROR", message });
+        track("dewatermark_adaptive_failed", { error: message });
+      });
+  }, []);
+
   const reset = useCallback(() => {
     abortRef.current?.abort();
     abortRef.current = null;
@@ -98,6 +141,8 @@ export function useDewatermarkDialog() {
       URL.revokeObjectURL(previewUrlRef.current);
       previewUrlRef.current = null;
     }
+
+    pixelDataRef.current = null;
 
     dispatch({ type: "RESET" });
   }, []);
@@ -127,5 +172,5 @@ export function useDewatermarkDialog() {
     });
   }, [state]);
 
-  return { state, processFile, reset, acceptResult };
+  return { state, processFile, reset, acceptResult, runAdaptiveDetection };
 }

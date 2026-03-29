@@ -1,8 +1,10 @@
 import { renderHook, act } from "@testing-library/react";
 
 const mockRemoveWatermark = vi.fn();
+const mockRemoveWatermarkFromPixels = vi.fn();
 vi.mock("@/lib/watermark-api", () => ({
   removeWatermark: (...args: unknown[]) => mockRemoveWatermark(...args),
+  removeWatermarkFromPixels: (...args: unknown[]) => mockRemoveWatermarkFromPixels(...args),
 }));
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
@@ -26,6 +28,14 @@ function makeBlob() {
   return new Blob(["fake-png"], { type: "image/png" });
 }
 
+function makePixelData() {
+  return {
+    pixels: new Uint8ClampedArray(100 * 100 * 4),
+    width: 100,
+    height: 100,
+  };
+}
+
 function makeResult(overrides: Record<string, unknown> = {}) {
   return {
     blob: makeBlob(),
@@ -35,6 +45,7 @@ function makeResult(overrides: Record<string, unknown> = {}) {
       alphaGain: 1.05,
       source: "adaptive",
     },
+    pixelData: makePixelData(),
     ...overrides,
   };
 }
@@ -249,6 +260,254 @@ describe("useDewatermarkDialog", () => {
     }
   });
 
+  describe("runAdaptiveDetection", () => {
+    it("transitions to processing then result with adaptive metadata", async () => {
+      // Given
+      mockRemoveWatermark.mockResolvedValue(makeResult({
+        metadata: { corner: "", confidence: 0.74, alphaGain: 1, source: "preset" },
+      }));
+      const adaptiveResult = makeResult({
+        metadata: { corner: "bottom-right", confidence: 0.92, alphaGain: 1.1, source: "adaptive" },
+      });
+      mockRemoveWatermarkFromPixels.mockResolvedValue(adaptiveResult);
+
+      const { result } = renderHook(() => useDewatermarkDialog());
+
+      await act(async () => {
+        result.current.processFile(
+          new File(["pixels"], "outpaint.png", { type: "image/png" }),
+        );
+      });
+      expect(result.current.state.phase).toBe("result");
+
+      // When
+      await act(async () => {
+        result.current.runAdaptiveDetection();
+      });
+
+      // Then
+      expect(result.current.state.phase).toBe("result");
+      if (result.current.state.phase === "result") {
+        expect(result.current.state.metadata).toEqual(adaptiveResult.metadata);
+      }
+    });
+
+    it("calls removeWatermarkFromPixels with adaptive true", async () => {
+      // Given
+      mockRemoveWatermark.mockResolvedValue(makeResult());
+      mockRemoveWatermarkFromPixels.mockResolvedValue(makeResult());
+
+      const { result } = renderHook(() => useDewatermarkDialog());
+
+      await act(async () => {
+        result.current.processFile(
+          new File(["pixels"], "outpaint.png", { type: "image/png" }),
+        );
+      });
+
+      // When
+      await act(async () => {
+        result.current.runAdaptiveDetection();
+      });
+
+      // Then
+      expect(mockRemoveWatermarkFromPixels).toHaveBeenCalledWith(
+        expect.any(Uint8ClampedArray),
+        100,
+        100,
+        { adaptive: true },
+      );
+    });
+
+    it("is a no-op when not in result phase", async () => {
+      // Given
+      const { result } = renderHook(() => useDewatermarkDialog());
+
+      // When
+      await act(async () => {
+        result.current.runAdaptiveDetection();
+      });
+
+      // Then
+      expect(result.current.state.phase).toBe("idle");
+      expect(mockRemoveWatermarkFromPixels).not.toHaveBeenCalled();
+    });
+
+    it("revokes previous preview URL before setting new one", async () => {
+      // Given
+      mockRemoveWatermark.mockResolvedValue(makeResult());
+      let callCount = 0;
+      mockCreateObjectURL.mockImplementation(() => {
+        callCount++;
+        return `blob:preview-url-${callCount}`;
+      });
+      mockRemoveWatermarkFromPixels.mockResolvedValue(makeResult());
+
+      const { result } = renderHook(() => useDewatermarkDialog());
+
+      await act(async () => {
+        result.current.processFile(
+          new File(["pixels"], "outpaint.png", { type: "image/png" }),
+        );
+      });
+
+      // When
+      await act(async () => {
+        result.current.runAdaptiveDetection();
+      });
+
+      // Then
+      expect(mockRevokeObjectURL).toHaveBeenCalledWith("blob:preview-url-1");
+    });
+
+    it("tracks dewatermark_adaptive_started", async () => {
+      // Given
+      mockRemoveWatermark.mockResolvedValue(makeResult());
+      mockRemoveWatermarkFromPixels.mockResolvedValue(makeResult());
+
+      const { result } = renderHook(() => useDewatermarkDialog());
+
+      await act(async () => {
+        result.current.processFile(
+          new File(["pixels"], "outpaint.png", { type: "image/png" }),
+        );
+      });
+
+      // When
+      await act(async () => {
+        result.current.runAdaptiveDetection();
+      });
+
+      // Then
+      expect(vi.mocked(track)).toHaveBeenCalledWith("dewatermark_adaptive_started");
+    });
+
+    it("tracks dewatermark_adaptive_succeeded on success", async () => {
+      // Given
+      mockRemoveWatermark.mockResolvedValue(makeResult());
+      mockRemoveWatermarkFromPixels.mockResolvedValue(makeResult({
+        metadata: { corner: "top-left", confidence: 0.95, alphaGain: 1.2, source: "adaptive" },
+      }));
+
+      const { result } = renderHook(() => useDewatermarkDialog());
+
+      await act(async () => {
+        result.current.processFile(
+          new File(["pixels"], "outpaint.png", { type: "image/png" }),
+        );
+      });
+
+      // When
+      await act(async () => {
+        result.current.runAdaptiveDetection();
+      });
+
+      // Then
+      expect(vi.mocked(track)).toHaveBeenCalledWith("dewatermark_adaptive_succeeded", {
+        corner: "top-left",
+        confidence: 0.95,
+      });
+    });
+
+    it("transitions to error on failure", async () => {
+      // Given
+      mockRemoveWatermark.mockResolvedValue(makeResult());
+      mockRemoveWatermarkFromPixels.mockRejectedValue(new Error("Detection failed"));
+
+      const { result } = renderHook(() => useDewatermarkDialog());
+
+      await act(async () => {
+        result.current.processFile(
+          new File(["pixels"], "outpaint.png", { type: "image/png" }),
+        );
+      });
+
+      // When
+      await act(async () => {
+        result.current.runAdaptiveDetection();
+      });
+
+      // Then
+      expect(result.current.state.phase).toBe("error");
+      if (result.current.state.phase === "error") {
+        expect(result.current.state.message).toBe("Detection failed");
+      }
+    });
+
+    it("tracks dewatermark_adaptive_failed on error", async () => {
+      // Given
+      mockRemoveWatermark.mockResolvedValue(makeResult());
+      mockRemoveWatermarkFromPixels.mockRejectedValue(new Error("Detection failed"));
+
+      const { result } = renderHook(() => useDewatermarkDialog());
+
+      await act(async () => {
+        result.current.processFile(
+          new File(["pixels"], "outpaint.png", { type: "image/png" }),
+        );
+      });
+
+      // When
+      await act(async () => {
+        result.current.runAdaptiveDetection();
+      });
+
+      // Then
+      expect(vi.mocked(track)).toHaveBeenCalledWith("dewatermark_adaptive_failed", {
+        error: "Detection failed",
+      });
+    });
+
+    it("resets to idle on abort during adaptive detection", async () => {
+      // Given
+      mockRemoveWatermark.mockResolvedValue(makeResult());
+      mockRemoveWatermarkFromPixels.mockRejectedValue(
+        new DOMException("Aborted", "AbortError"),
+      );
+
+      const { result } = renderHook(() => useDewatermarkDialog());
+
+      await act(async () => {
+        result.current.processFile(
+          new File(["pixels"], "outpaint.png", { type: "image/png" }),
+        );
+      });
+
+      // When
+      await act(async () => {
+        result.current.runAdaptiveDetection();
+      });
+
+      // Then
+      expect(result.current.state.phase).toBe("idle");
+    });
+
+    it("handles non-Error rejection with fallback message", async () => {
+      // Given
+      mockRemoveWatermark.mockResolvedValue(makeResult());
+      mockRemoveWatermarkFromPixels.mockRejectedValue("string error");
+
+      const { result } = renderHook(() => useDewatermarkDialog());
+
+      await act(async () => {
+        result.current.processFile(
+          new File(["pixels"], "outpaint.png", { type: "image/png" }),
+        );
+      });
+
+      // When
+      await act(async () => {
+        result.current.runAdaptiveDetection();
+      });
+
+      // Then
+      expect(result.current.state.phase).toBe("error");
+      if (result.current.state.phase === "error") {
+        expect(result.current.state.message).toBe("Unknown error");
+      }
+    });
+  });
+
   it("acceptResult creates HTMLImageElement from preview URL", async () => {
     // Given
     const OriginalImage = globalThis.Image;
@@ -327,5 +586,4 @@ describe("useDewatermarkDialog", () => {
       vi.stubGlobal("Image", OriginalImage);
     }
   });
-
 });

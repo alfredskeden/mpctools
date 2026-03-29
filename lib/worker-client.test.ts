@@ -157,7 +157,7 @@ describe("worker-client", () => {
   });
 
   describe("removeWatermarkInWorker", () => {
-    it("falls back to main-thread execution when Worker is unavailable", async () => {
+    it("falls back to preset path when Worker is unavailable and adaptive is not set", async () => {
       const originalWorker = globalThis.Worker;
       // @ts-expect-error - intentionally removing Worker
       delete globalThis.Worker;
@@ -174,6 +174,31 @@ describe("worker-client", () => {
       }
 
       const result = await fn(pixels, 2, 2);
+
+      expect(result.pixels).toBeInstanceOf(Uint8ClampedArray);
+      expect(result.width).toBe(2);
+      expect(result.height).toBe(2);
+      expect(result.metadata.source).toBe("preset");
+
+      globalThis.Worker = originalWorker;
+    });
+
+    it("falls back to adaptive path when Worker is unavailable and adaptive is true", async () => {
+      const originalWorker = globalThis.Worker;
+      // @ts-expect-error - intentionally removing Worker
+      delete globalThis.Worker;
+
+      const { removeWatermarkInWorker: fn } = await import("./worker-client");
+
+      const pixels = new Uint8ClampedArray(2 * 2 * 4);
+      for (let i = 0; i < pixels.length; i += 4) {
+        pixels[i] = 128;
+        pixels[i + 1] = 128;
+        pixels[i + 2] = 128;
+        pixels[i + 3] = 255;
+      }
+
+      const result = await fn(pixels, 2, 2, true);
 
       expect(result.pixels).toBeInstanceOf(Uint8ClampedArray);
       expect(result.width).toBe(2);

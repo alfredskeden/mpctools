@@ -7,14 +7,22 @@ export type WatermarkMetadata = {
   source: string;
 };
 
+export type PixelData = {
+  pixels: Uint8ClampedArray;
+  width: number;
+  height: number;
+};
+
 export type WatermarkResult = {
   blob: Blob;
   metadata: WatermarkMetadata;
+  pixelData: PixelData;
 };
 
 export async function removeWatermark(
   file: File,
   signal?: AbortSignal,
+  options?: { adaptive?: boolean },
 ): Promise<WatermarkResult> {
   if (signal?.aborted) {
     throw new DOMException("Aborted", "AbortError");
@@ -29,10 +37,13 @@ export async function removeWatermark(
   bitmap.close();
   const imageData = ctx.getImageData(0, 0, width, height);
 
+  const originalPixels = new Uint8ClampedArray(imageData.data);
+
   const result = await removeWatermarkInWorker(
     imageData.data,
     width,
     height,
+    options?.adaptive,
   );
 
   if (signal?.aborted) {
@@ -49,5 +60,41 @@ export async function removeWatermark(
   );
   const blob = await outCanvas.convertToBlob({ type: "image/png" });
 
-  return { blob, metadata: result.metadata };
+  return {
+    blob,
+    metadata: result.metadata,
+    pixelData: { pixels: originalPixels, width, height },
+  };
+}
+
+export async function removeWatermarkFromPixels(
+  pixels: Uint8ClampedArray,
+  width: number,
+  height: number,
+  options?: { adaptive?: boolean },
+): Promise<WatermarkResult> {
+  const copy = new Uint8ClampedArray(pixels);
+
+  const result = await removeWatermarkInWorker(
+    copy,
+    width,
+    height,
+    options?.adaptive,
+  );
+
+  const outCanvas = new OffscreenCanvas(result.width, result.height);
+  const outCtx = outCanvas.getContext("2d")!;
+  const outPixels = new Uint8ClampedArray(result.pixels);
+  outCtx.putImageData(
+    new ImageData(outPixels, result.width, result.height),
+    0,
+    0,
+  );
+  const blob = await outCanvas.convertToBlob({ type: "image/png" });
+
+  return {
+    blob,
+    metadata: result.metadata,
+    pixelData: { pixels, width, height },
+  };
 }

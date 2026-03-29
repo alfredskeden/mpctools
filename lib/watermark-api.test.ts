@@ -4,7 +4,7 @@ vi.mock("./worker-client", () => ({
     mockRemoveWatermarkInWorker(...args),
 }));
 
-import { removeWatermark } from "./watermark-api";
+import { removeWatermark, removeWatermarkFromPixels } from "./watermark-api";
 
 const mockGetImageData = vi.fn();
 const mockDrawImage = vi.fn();
@@ -88,6 +88,20 @@ describe("removeWatermark", () => {
     });
   });
 
+  it("returns original pixel data for re-processing", async () => {
+    // Given
+    setupDefaults();
+    const file = new File(["pixels"], "test.png", { type: "image/png" });
+
+    // When
+    const result = await removeWatermark(file);
+
+    // Then
+    expect(result.pixelData.pixels).toBeInstanceOf(Uint8ClampedArray);
+    expect(result.pixelData.width).toBe(100);
+    expect(result.pixelData.height).toBe(100);
+  });
+
   it("passes the file to createImageBitmap for decoding", async () => {
     // Given
     setupDefaults();
@@ -112,7 +126,7 @@ describe("removeWatermark", () => {
     expect(mockClose).toHaveBeenCalledOnce();
   });
 
-  it("sends pixel data to worker with correct dimensions", async () => {
+  it("passes adaptive false by default to worker", async () => {
     // Given
     setupDefaults({ width: 200, height: 150 });
     const file = new File(["pixels"], "test.png", { type: "image/png" });
@@ -125,6 +139,24 @@ describe("removeWatermark", () => {
       expect.any(Uint8ClampedArray),
       200,
       150,
+      undefined,
+    );
+  });
+
+  it("passes adaptive true when option is set", async () => {
+    // Given
+    setupDefaults({ width: 200, height: 150 });
+    const file = new File(["pixels"], "test.png", { type: "image/png" });
+
+    // When
+    await removeWatermark(file, undefined, { adaptive: true });
+
+    // Then
+    expect(mockRemoveWatermarkInWorker).toHaveBeenCalledWith(
+      expect.any(Uint8ClampedArray),
+      200,
+      150,
+      true,
     );
   });
 
@@ -197,5 +229,83 @@ describe("removeWatermark", () => {
 
     // When / Then
     await expect(removeWatermark(file)).rejects.toThrow("Processing failed");
+  });
+});
+
+describe("removeWatermarkFromPixels", () => {
+  it("processes pixels via worker and returns blob with metadata", async () => {
+    // Given
+    setupDefaults();
+    const pixels = new Uint8ClampedArray(100 * 100 * 4);
+
+    // When
+    const result = await removeWatermarkFromPixels(pixels, 100, 100);
+
+    // Then
+    expect(result.blob).toBeInstanceOf(Blob);
+    expect(result.metadata).toEqual({
+      corner: "bottom-right",
+      confidence: 0.87,
+      alphaGain: 1.05,
+      source: "adaptive",
+    });
+  });
+
+  it("preserves original pixel data reference in result", async () => {
+    // Given
+    setupDefaults();
+    const pixels = new Uint8ClampedArray(100 * 100 * 4);
+
+    // When
+    const result = await removeWatermarkFromPixels(pixels, 100, 100);
+
+    // Then
+    expect(result.pixelData.pixels).toBe(pixels);
+    expect(result.pixelData.width).toBe(100);
+    expect(result.pixelData.height).toBe(100);
+  });
+
+  it("passes adaptive option to worker", async () => {
+    // Given
+    setupDefaults();
+    const pixels = new Uint8ClampedArray(100 * 100 * 4);
+
+    // When
+    await removeWatermarkFromPixels(pixels, 100, 100, { adaptive: true });
+
+    // Then
+    expect(mockRemoveWatermarkInWorker).toHaveBeenCalledWith(
+      expect.any(Uint8ClampedArray),
+      100,
+      100,
+      true,
+    );
+  });
+
+  it("sends a copy of pixels to worker to avoid buffer transfer issues", async () => {
+    // Given
+    setupDefaults();
+    const pixels = new Uint8ClampedArray(100 * 100 * 4);
+
+    // When
+    await removeWatermarkFromPixels(pixels, 100, 100);
+
+    // Then
+    const sentPixels = mockRemoveWatermarkInWorker.mock.calls[0][0];
+    expect(sentPixels).not.toBe(pixels);
+    expect(sentPixels).toEqual(pixels);
+  });
+
+  it("propagates worker errors", async () => {
+    // Given
+    mockRemoveWatermarkInWorker.mockRejectedValue(
+      new Error("Processing failed"),
+    );
+    const pixels = new Uint8ClampedArray(100 * 100 * 4);
+
+    // When / Then
+    await expect(
+      removeWatermarkFromPixels(pixels, 100, 100),
+    ).rejects.toThrow("Processing failed");
   });
 });

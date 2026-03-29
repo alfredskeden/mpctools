@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 const mockProcessFile = vi.fn();
 const mockReset = vi.fn();
 const mockAcceptResult = vi.fn();
+const mockRunAdaptiveDetection = vi.fn();
 let mockState: Record<string, unknown> = { phase: "idle" };
 
 vi.mock("@/hooks/use-dewatermark-dialog", () => ({
@@ -11,6 +12,7 @@ vi.mock("@/hooks/use-dewatermark-dialog", () => ({
     processFile: mockProcessFile,
     reset: mockReset,
     acceptResult: mockAcceptResult,
+    runAdaptiveDetection: mockRunAdaptiveDetection,
   }),
 }));
 
@@ -265,6 +267,58 @@ describe("DewatermarkDialog", () => {
 
     // Then
     expect(mockReset).toHaveBeenCalledOnce();
+  });
+
+  it("shows Adaptive Detect button in result phase", () => {
+    // Given
+    mockState = {
+      phase: "result",
+      blob: new Blob(["png"]),
+      previewUrl: "blob:preview",
+      metadata: { corner: "bottom-right", confidence: 0.87, alphaGain: 1.05, source: "preset" },
+    };
+    render(<DewatermarkDialog onAccept={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /de-watermark/i }));
+
+    // Then
+    expect(screen.getByTestId("dewatermark-adaptive-detect")).toBeDefined();
+  });
+
+  it("calls runAdaptiveDetection when Adaptive Detect is clicked", () => {
+    // Given
+    mockState = {
+      phase: "result",
+      blob: new Blob(["png"]),
+      previewUrl: "blob:preview",
+      metadata: { corner: "bottom-right", confidence: 0.87, alphaGain: 1.05, source: "preset" },
+    };
+    render(<DewatermarkDialog onAccept={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /de-watermark/i }));
+
+    // When
+    fireEvent.click(screen.getByTestId("dewatermark-adaptive-detect"));
+
+    // Then
+    expect(mockRunAdaptiveDetection).toHaveBeenCalledOnce();
+  });
+
+  it("does not show Adaptive Detect button in idle phase", () => {
+    // Given
+    render(<DewatermarkDialog onAccept={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /de-watermark/i }));
+
+    // Then
+    expect(screen.queryByTestId("dewatermark-adaptive-detect")).toBeNull();
+  });
+
+  it("does not show Adaptive Detect button in processing phase", () => {
+    // Given
+    mockState = { phase: "processing" };
+    render(<DewatermarkDialog onAccept={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /de-watermark/i }));
+
+    // Then
+    expect(screen.queryByTestId("dewatermark-adaptive-detect")).toBeNull();
   });
 
   it("calls reset when dialog is closed via close button", () => {

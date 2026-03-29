@@ -25,7 +25,7 @@ type DewatermarkDialogProps = {
 
 export function DewatermarkDialog({ onAccept }: DewatermarkDialogProps) {
   const [open, setOpen] = useState(false);
-  const { state, processFile, reset, acceptResult } = useDewatermarkDialog();
+  const { state, processFile, reset, acceptResult, runAdaptiveDetection } = useDewatermarkDialog();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenChange = useCallback(
@@ -108,6 +108,13 @@ export function DewatermarkDialog({ onAccept }: DewatermarkDialogProps) {
           <DialogFooter>
             <Button variant="outline" onClick={handleCancel}>
               Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={runAdaptiveDetection}
+              data-testid="dewatermark-adaptive-detect"
+            >
+              Adaptive Detect
             </Button>
             <Button onClick={handleAccept}>Use this image</Button>
           </DialogFooter>

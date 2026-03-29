@@ -103,7 +103,7 @@ describe("image worker handleMessage", () => {
   });
 
   describe("REMOVE_WATERMARK", () => {
-    it("calls detectBestCandidate and runPipeline and returns result with metadata", () => {
+    it("runs adaptive detection when adaptive flag is true", () => {
       // Given
       const pixels = new Uint8ClampedArray(4 * 4 * 4);
       const resultPixels = new Uint8ClampedArray(4 * 4 * 4);
@@ -127,6 +127,7 @@ describe("image worker handleMessage", () => {
         pixels,
         width: 4,
         height: 4,
+        adaptive: true,
       });
 
       // Then
@@ -155,6 +156,76 @@ describe("image worker handleMessage", () => {
       }
     });
 
+    it("skips adaptive detection when adaptive flag is false", () => {
+      // Given
+      const pixels = new Uint8ClampedArray(4 * 4 * 4);
+      const resultPixels = new Uint8ClampedArray(4 * 4 * 4);
+
+      vi.mocked(runPipeline).mockReturnValue({
+        imageData: { data: resultPixels, width: 4, height: 4 },
+        position: { x: 0, y: 0, width: 4, height: 4 },
+        alphaMap: new Float32Array(16),
+        alphaGain: 1,
+        confidence: 0.74,
+        accepted: false,
+        detectionSource: "preset",
+      });
+
+      // When
+      const response = handleMessage({
+        type: "REMOVE_WATERMARK",
+        id: 6,
+        pixels,
+        width: 4,
+        height: 4,
+        adaptive: false,
+      });
+
+      // Then
+      expect(detectBestCandidate).not.toHaveBeenCalled();
+      expect(runPipeline).toHaveBeenCalledWith(
+        { data: pixels, width: 4, height: 4 },
+        { postLightness: 2.75, maskExpand: 1.5, feather: 4 },
+        null,
+      );
+      if (response.type === "REMOVE_WATERMARK") {
+        expect(response.metadata.source).toBe("preset");
+      }
+    });
+
+    it("skips adaptive detection when adaptive flag is omitted", () => {
+      // Given
+      const pixels = new Uint8ClampedArray(4 * 4 * 4);
+      const resultPixels = new Uint8ClampedArray(4 * 4 * 4);
+
+      vi.mocked(runPipeline).mockReturnValue({
+        imageData: { data: resultPixels, width: 4, height: 4 },
+        position: { x: 0, y: 0, width: 4, height: 4 },
+        alphaMap: new Float32Array(16),
+        alphaGain: 1,
+        confidence: 0.74,
+        accepted: false,
+        detectionSource: "preset",
+      });
+
+      // When
+      handleMessage({
+        type: "REMOVE_WATERMARK",
+        id: 7,
+        pixels,
+        width: 4,
+        height: 4,
+      });
+
+      // Then
+      expect(detectBestCandidate).not.toHaveBeenCalled();
+      expect(runPipeline).toHaveBeenCalledWith(
+        { data: pixels, width: 4, height: 4 },
+        { postLightness: 2.75, maskExpand: 1.5, feather: 4 },
+        null,
+      );
+    });
+
     it("returns empty corner when detection is not accepted", () => {
       // Given
       const pixels = new Uint8ClampedArray(4 * 4 * 4);
@@ -178,6 +249,7 @@ describe("image worker handleMessage", () => {
         pixels,
         width: 4,
         height: 4,
+        adaptive: true,
       });
 
       // Then

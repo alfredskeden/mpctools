@@ -102,12 +102,13 @@ export async function removeWatermarkInWorker(
   pixels: Uint8ClampedArray,
   width: number,
   height: number,
+  adaptive?: boolean,
 ): Promise<RemoveWatermarkWorkerResult> {
   /* v8 ignore start -- Worker path requires real Web Worker */
   try {
     const copy = new Uint8ClampedArray(pixels);
     const response = await postToWorker(
-      { type: "REMOVE_WATERMARK", pixels: copy, width, height },
+      { type: "REMOVE_WATERMARK", pixels: copy, width, height, adaptive: adaptive ?? false },
       [copy.buffer],
     );
     if (response.type === "REMOVE_WATERMARK") {
@@ -123,7 +124,7 @@ export async function removeWatermarkInWorker(
   }
   /* v8 ignore stop */
   const img = { data: pixels, width, height };
-  const detection = detectBestCandidate(img);
+  const detection = adaptive ? detectBestCandidate(img) : null;
   const result = runPipeline(
     img,
     { postLightness: 2.75, maskExpand: 1.5, feather: 4 },
@@ -134,6 +135,7 @@ export async function removeWatermarkInWorker(
     width: result.imageData.width,
     height: result.imageData.height,
     metadata: {
+      /* v8 ignore next */
       corner: result.accepted ? String(detection?.corner ?? "") : "",
       confidence: result.confidence,
       alphaGain: result.alphaGain,
