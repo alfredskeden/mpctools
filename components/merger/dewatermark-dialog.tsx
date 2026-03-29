@@ -25,7 +25,8 @@ type DewatermarkDialogProps = {
 
 export function DewatermarkDialog({ onAccept }: DewatermarkDialogProps) {
   const [open, setOpen] = useState(false);
-  const { state, processFile, reset, acceptResult, runAdaptiveDetection } = useDewatermarkDialog();
+  const { state, processFile, reset, acceptResult, runAdaptiveDetection } =
+    useDewatermarkDialog();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleOpenChange = useCallback(
@@ -64,26 +65,18 @@ export function DewatermarkDialog({ onAccept }: DewatermarkDialogProps) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <button
-          type="button"
-          className="text-accent-blue"
-        >
+        <button type="button" className="text-accent-blue hover:cursor-pointer">
           De-watermark
         </button>
       </DialogTrigger>
-      <DialogContent
-        className="sm:max-w-dialog-dewatermark"
-        showCloseButton
-      >
+      <DialogContent className="sm:max-w-dialog-dewatermark" showCloseButton>
         <DialogHeader>
           <DialogTitle>
             {state.phase === "result"
               ? "Watermark Removed"
               : "Remove Gemini Watermark"}
           </DialogTitle>
-          <DialogDescription>
-            {getDescription(state)}
-          </DialogDescription>
+          <DialogDescription>{getDescription(state)}</DialogDescription>
         </DialogHeader>
 
         {state.phase === "idle" && (
@@ -96,9 +89,7 @@ export function DewatermarkDialog({ onAccept }: DewatermarkDialogProps) {
 
         {state.phase === "processing" && <ProcessingContent />}
 
-        {state.phase === "result" && (
-          <ResultContent state={state} />
-        )}
+        {state.phase === "result" && <ResultContent state={state} />}
 
         {state.phase === "error" && (
           <ErrorContent message={state.message} onRetry={reset} />
