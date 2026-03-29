@@ -27,6 +27,7 @@
 - Every piece of code must have corresponding tests — no exceptions
 - Test files live alongside source files using the `.test.ts` / `.test.tsx` naming convention
 - **Always run the full test suite after making changes** — do not consider a task complete until all tests pass. Report the test count and pass rate.
+- **Run `pnpm lint:ts` before considering a task complete** — TypeScript must compile without errors
 
 ### Behavior-First Testing (MANDATORY)
 

@@ -25,7 +25,10 @@ export type AnalyticsEvent =
   | "merger_final_downloaded"
   | "dewatermark_started"
   | "dewatermark_succeeded"
-  | "dewatermark_failed";
+  | "dewatermark_failed"
+  | "dewatermark_adaptive_started"
+  | "dewatermark_adaptive_succeeded"
+  | "dewatermark_adaptive_failed";
 
 type EventData = Record<string, string | number | boolean | null | undefined>;
 
