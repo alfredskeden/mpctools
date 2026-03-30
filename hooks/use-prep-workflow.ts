@@ -331,13 +331,10 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
       };
     }
     case "SET_VERTICAL_PRESET": {
-      if (!state.imageElement || !state.overlayNativeDimensions) return state;
+      if (!state.imageElement) return state;
       const pixelFromBottom = VERTICAL_PRESET_CENTERS[action.payload];
-      const overlayW = state.overlayNativeDimensions.width;
-      const overlayH = state.overlayNativeDimensions.height;
-      const scaleFactor = state.canvasWidth / overlayW;
-      const yOriginal = overlayH - pixelFromBottom;
-      const yCanvas = Math.round(yOriginal * scaleFactor);
+      const scaleY = state.canvasHeight / CANVAS_HEIGHT;
+      const yCanvas = Math.round((CANVAS_HEIGHT - pixelFromBottom) * scaleY);
       const imgH = state.imageElement.height * state.scale;
       const newY = Math.round(yCanvas - imgH / 2);
       const clampedY = Math.max(0, Math.min(newY, state.canvasHeight - imgH));

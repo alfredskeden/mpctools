@@ -7,33 +7,48 @@ import {
   Search,
   Frame,
   ChevronDown,
-  RotateCw,
+  AlignCenterHorizontal,
+  AlignVerticalSpaceAround,
 } from "lucide-react";
-import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
+import {
+  OVERLAY_OPTIONS,
+  type VerticalPreset,
+} from "@/hooks/use-prep-workflow";
 import { useRepeatOnHold } from "@/hooks/use-repeat-on-hold";
 
 const MIN_SCALE = 0.5;
 const SCALE_STEP = 0.01;
 
+const OVERLAY_PRESET_MAP: Partial<Record<string, VerticalPreset>> = {
+  normal: "normal",
+  medium: "medium",
+  short: "short",
+  tall_normal: "tall",
+};
+
 type ControlsPanelProps = {
   scale: number;
   selectedOverlays: string[];
-  rotation: number;
   onUpdateScale: (scale: number) => void;
   onToggleOverlay: (overlay: string) => void;
-  onUpdateRotation: (rotation: number) => void;
+  onCenterHorizontal: () => void;
+  onSetVerticalPreset?: (preset: VerticalPreset) => void;
 };
 
 export function ControlsPanel({
   scale,
   selectedOverlays,
-  rotation,
   onUpdateScale,
   onToggleOverlay,
-  onUpdateRotation,
+  onCenterHorizontal,
+  onSetVerticalPreset,
 }: ControlsPanelProps) {
   const scalePercent = Math.round(scale * 100);
-  const rotationDisplay = Math.round(rotation);
+
+  const activePreset = [...selectedOverlays]
+    .reverse()
+    .map((id) => OVERLAY_PRESET_MAP[id])
+    .find((preset): preset is VerticalPreset => preset !== undefined);
 
   const scaleRef = useRef(scale);
   useEffect(() => {
@@ -92,26 +107,28 @@ export function ControlsPanel({
           </button>
         </div>
       </div>
-      {/* Rotation Control */}
-      <div className="flex flex-col gap-2 rounded-lg bg-surface-overlay px-3 py-2.5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <RotateCw className="size-3.5 text-text-secondary" />
-            <span className="text-sm text-text-primary">Rotation</span>
-          </div>
-          <span className="text-xs font-medium text-accent-blue">
-            {rotationDisplay}&deg;
-          </span>
-        </div>
-        <input
-          type="range"
-          min={-180}
-          max={180}
-          value={rotationDisplay}
-          onChange={(e) => onUpdateRotation(Number(e.target.value))}
-          className="h-1 w-full cursor-pointer appearance-none rounded-full bg-surface-subtle accent-accent-blue [&::-webkit-slider-thumb]:size-3 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent-blue"
-          aria-label="Rotation"
-        />
+      {/* Quick Actions */}
+      <div className="flex gap-1.5">
+        <button
+          type="button"
+          onClick={onCenterHorizontal}
+          className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-surface-overlay px-3 py-2.5 text-xs text-text-secondary hover:text-text-primary"
+          aria-label="Center horizontally"
+        >
+          <AlignCenterHorizontal className="size-3.5" />
+          <span>Center H</span>
+        </button>
+        {activePreset && onSetVerticalPreset && (
+          <button
+            type="button"
+            onClick={() => onSetVerticalPreset(activePreset)}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-surface-overlay px-3 py-2.5 text-xs text-text-secondary hover:text-text-primary"
+            aria-label="Apply vertical preset"
+          >
+            <AlignVerticalSpaceAround className="size-3.5" />
+            <span>Vertical Preset</span>
+          </button>
+        )}
       </div>
       {/* Frame Overlay Control */}
       <details className="group">

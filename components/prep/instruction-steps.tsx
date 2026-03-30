@@ -152,10 +152,10 @@ export const InstructionSteps = ({
                 <ControlsPanel
                   scale={state.scale}
                   selectedOverlays={state.selectedOverlays}
-                  rotation={state.rotation}
                   onUpdateScale={onUpdateScale}
                   onToggleOverlay={onToggleOverlay}
-                  onUpdateRotation={onUpdateRotation}
+                  onCenterHorizontal={onCenterHorizontal}
+                  onSetVerticalPreset={onSetVerticalPreset}
                 />
               </div>
               <MobileAdvancedOptions
@@ -328,10 +328,10 @@ export const InstructionSteps = ({
               <ControlsPanel
                 scale={state.scale}
                 selectedOverlays={state.selectedOverlays}
-                rotation={state.rotation}
                 onUpdateScale={onUpdateScale}
                 onToggleOverlay={onToggleOverlay}
-                onUpdateRotation={onUpdateRotation}
+                onCenterHorizontal={onCenterHorizontal}
+                onSetVerticalPreset={onSetVerticalPreset}
               />
               <button
                 type="button"

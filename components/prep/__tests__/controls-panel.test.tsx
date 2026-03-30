@@ -5,10 +5,10 @@ import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
 const defaultProps = {
   scale: 1,
   selectedOverlays: [] as string[],
-  rotation: 0,
   onUpdateScale: vi.fn(),
   onToggleOverlay: vi.fn(),
-  onUpdateRotation: vi.fn(),
+  onCenterHorizontal: vi.fn(),
+  onSetVerticalPreset: vi.fn(),
 };
 
 describe("ControlsPanel", () => {
@@ -109,13 +109,13 @@ describe("ControlsPanel", () => {
     expect(checkboxes).toHaveLength(OVERLAY_OPTIONS.length);
   });
 
-  it("calls onToggleOverlay with option id when overlay is clicked", () => {
+  it("calls onToggleOverlay with option id when overlay checkbox is clicked", () => {
     const onToggleOverlay = vi.fn();
     render(
       <ControlsPanel {...defaultProps} onToggleOverlay={onToggleOverlay} />,
     );
 
-    fireEvent.click(screen.getByText(OVERLAY_OPTIONS[0].label));
+    fireEvent.click(screen.getAllByRole("checkbox")[0]);
     expect(onToggleOverlay).toHaveBeenCalledWith(OVERLAY_OPTIONS[0].id);
   });
 
@@ -149,29 +149,68 @@ describe("ControlsPanel", () => {
     expect(screen.getAllByRole("checkbox")[0]).not.toBeChecked();
   });
 
-  it("shows rotation value computed from rotation prop", () => {
-    render(<ControlsPanel {...defaultProps} rotation={45} />);
-
-    expect(screen.getByText("45°")).toBeDefined();
-  });
-
-  it("calls onUpdateRotation when rotation slider changes", () => {
-    const onUpdateRotation = vi.fn();
+  it("calls onCenterHorizontal when Center H button is clicked", () => {
+    const onCenterHorizontal = vi.fn();
     render(
-      <ControlsPanel {...defaultProps} onUpdateRotation={onUpdateRotation} />,
+      <ControlsPanel {...defaultProps} onCenterHorizontal={onCenterHorizontal} />,
     );
 
-    const slider = screen.getByRole("slider", { name: "Rotation" });
-    fireEvent.change(slider, { target: { value: "90" } });
+    fireEvent.click(screen.getByRole("button", { name: "Center horizontally" }));
 
-    expect(onUpdateRotation).toHaveBeenCalledWith(90);
+    expect(onCenterHorizontal).toHaveBeenCalledOnce();
   });
 
-  it("renders rotation slider with correct range", () => {
-    render(<ControlsPanel {...defaultProps} />);
+  it("does not show vertical preset button when no preset-mapped overlay is selected", () => {
+    render(<ControlsPanel {...defaultProps} selectedOverlays={["black_bottom"]} />);
 
-    const slider = screen.getByRole("slider", { name: "Rotation" });
-    expect(slider.getAttribute("min")).toBe("-180");
-    expect(slider.getAttribute("max")).toBe("180");
+    expect(
+      screen.queryByRole("button", { name: "Apply vertical preset" }),
+    ).toBeNull();
+  });
+
+  it("does not show vertical preset button when no overlays are selected", () => {
+    render(<ControlsPanel {...defaultProps} selectedOverlays={[]} />);
+
+    expect(
+      screen.queryByRole("button", { name: "Apply vertical preset" }),
+    ).toBeNull();
+  });
+
+  it.each([
+    { overlay: "normal", preset: "normal" },
+    { overlay: "medium", preset: "medium" },
+    { overlay: "short", preset: "short" },
+    { overlay: "tall_normal", preset: "tall" },
+  ])(
+    "calls onSetVerticalPreset with '$preset' when $overlay overlay is selected",
+    ({ overlay, preset }) => {
+      const onSetVerticalPreset = vi.fn();
+      render(
+        <ControlsPanel
+          {...defaultProps}
+          selectedOverlays={[overlay]}
+          onSetVerticalPreset={onSetVerticalPreset}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "Apply vertical preset" }));
+
+      expect(onSetVerticalPreset).toHaveBeenCalledWith(preset);
+    },
+  );
+
+  it("uses the last selected overlay's preset when multiple are selected", () => {
+    const onSetVerticalPreset = vi.fn();
+    render(
+      <ControlsPanel
+        {...defaultProps}
+        selectedOverlays={["short", "tall_normal", "normal"]}
+        onSetVerticalPreset={onSetVerticalPreset}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Apply vertical preset" }));
+
+    expect(onSetVerticalPreset).toHaveBeenCalledWith("normal");
   });
 });
