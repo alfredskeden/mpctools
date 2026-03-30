@@ -152,8 +152,11 @@ export const InstructionSteps = ({
                 <ControlsPanel
                   scale={state.scale}
                   selectedOverlays={state.selectedOverlays}
+                  canvasWidth={state.canvasWidth}
+                  canvasHeight={state.canvasHeight}
                   onUpdateScale={onUpdateScale}
                   onToggleOverlay={onToggleOverlay}
+                  onSetCanvasSize={onSetCanvasSize}
                   onCenterHorizontal={onCenterHorizontal}
                   onSetVerticalPreset={onSetVerticalPreset}
                 />
@@ -328,8 +331,11 @@ export const InstructionSteps = ({
               <ControlsPanel
                 scale={state.scale}
                 selectedOverlays={state.selectedOverlays}
+                canvasWidth={state.canvasWidth}
+                canvasHeight={state.canvasHeight}
                 onUpdateScale={onUpdateScale}
                 onToggleOverlay={onToggleOverlay}
+                onSetCanvasSize={onSetCanvasSize}
                 onCenterHorizontal={onCenterHorizontal}
                 onSetVerticalPreset={onSetVerticalPreset}
               />

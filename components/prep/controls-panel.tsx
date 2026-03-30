@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import {
   OVERLAY_OPTIONS,
+  CANVAS_SIZE_PRESETS,
   type VerticalPreset,
 } from "@/hooks/use-prep-workflow";
 import { useRepeatOnHold } from "@/hooks/use-repeat-on-hold";
@@ -26,11 +27,16 @@ const OVERLAY_PRESET_MAP: Partial<Record<string, VerticalPreset>> = {
   tall_normal: "tall",
 };
 
+const CANVAS_QUICK_PRESETS = CANVAS_SIZE_PRESETS.slice(0, 2);
+
 type ControlsPanelProps = {
   scale: number;
   selectedOverlays: string[];
+  canvasWidth: number;
+  canvasHeight: number;
   onUpdateScale: (scale: number) => void;
   onToggleOverlay: (overlay: string) => void;
+  onSetCanvasSize: (width: number, height: number) => void;
   onCenterHorizontal: () => void;
   onSetVerticalPreset?: (preset: VerticalPreset) => void;
 };
@@ -38,8 +44,11 @@ type ControlsPanelProps = {
 export function ControlsPanel({
   scale,
   selectedOverlays,
+  canvasWidth,
+  canvasHeight,
   onUpdateScale,
   onToggleOverlay,
+  onSetCanvasSize,
   onCenterHorizontal,
   onSetVerticalPreset,
 }: ControlsPanelProps) {
@@ -126,7 +135,7 @@ export function ControlsPanel({
             aria-label="Apply vertical preset"
           >
             <AlignVerticalSpaceAround className="size-3.5" />
-            <span>Vertical Preset</span>
+            <span>V Preset</span>
           </button>
         )}
       </div>
@@ -161,6 +170,29 @@ export function ControlsPanel({
           })}
         </div>
       </details>
+      {/* Canvas Size Quick Presets */}
+      <div className="flex gap-1.5">
+        {CANVAS_QUICK_PRESETS.map((preset) => {
+          const isActive =
+            canvasWidth === preset.width && canvasHeight === preset.height;
+          return (
+            <button
+              key={preset.label}
+              type="button"
+              onClick={() => onSetCanvasSize(preset.width, preset.height)}
+              className={`flex flex-1 items-center justify-center rounded-lg px-2 py-1.5 text-xs ${
+                isActive
+                  ? "bg-surface-overlay text-accent-blue"
+                  : "bg-surface-overlay text-text-secondary hover:text-text-primary"
+              }`}
+              aria-label={`Set canvas to ${preset.label}`}
+              aria-pressed={isActive}
+            >
+              {preset.label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

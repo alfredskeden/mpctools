@@ -1,12 +1,20 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { ControlsPanel } from "../controls-panel";
-import { OVERLAY_OPTIONS } from "@/hooks/use-prep-workflow";
+import {
+  OVERLAY_OPTIONS,
+  CANVAS_SIZE_PRESETS,
+} from "@/hooks/use-prep-workflow";
+
+const [DEFAULT_PRESET, CLASSIC_PRESET] = CANVAS_SIZE_PRESETS;
 
 const defaultProps = {
   scale: 1,
   selectedOverlays: [] as string[],
+  canvasWidth: DEFAULT_PRESET.width,
+  canvasHeight: DEFAULT_PRESET.height,
   onUpdateScale: vi.fn(),
   onToggleOverlay: vi.fn(),
+  onSetCanvasSize: vi.fn(),
   onCenterHorizontal: vi.fn(),
   onSetVerticalPreset: vi.fn(),
 };
@@ -212,5 +220,105 @@ describe("ControlsPanel", () => {
     fireEvent.click(screen.getByRole("button", { name: "Apply vertical preset" }));
 
     expect(onSetVerticalPreset).toHaveBeenCalledWith("normal");
+  });
+
+  it("renders Default and Classic borderless canvas preset buttons", () => {
+    render(<ControlsPanel {...defaultProps} />);
+
+    expect(
+      screen.getByRole("button", { name: "Set canvas to Default" }),
+    ).toBeDefined();
+    expect(
+      screen.getByRole("button", { name: "Set canvas to Classic borderless" }),
+    ).toBeDefined();
+  });
+
+  it("marks Default preset button as pressed when canvas matches Default dimensions", () => {
+    render(
+      <ControlsPanel
+        {...defaultProps}
+        canvasWidth={DEFAULT_PRESET.width}
+        canvasHeight={DEFAULT_PRESET.height}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Set canvas to Default" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("button", { name: "Set canvas to Classic borderless" }),
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("marks Classic borderless preset button as pressed when canvas matches its dimensions", () => {
+    render(
+      <ControlsPanel
+        {...defaultProps}
+        canvasWidth={CLASSIC_PRESET.width}
+        canvasHeight={CLASSIC_PRESET.height}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Set canvas to Classic borderless" }),
+    ).toHaveAttribute("aria-pressed", "true");
+    expect(
+      screen.getByRole("button", { name: "Set canvas to Default" }),
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("neither preset is pressed when canvas size does not match either preset", () => {
+    render(
+      <ControlsPanel
+        {...defaultProps}
+        canvasWidth={2048}
+        canvasHeight={2048}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Set canvas to Default" }),
+    ).toHaveAttribute("aria-pressed", "false");
+    expect(
+      screen.getByRole("button", { name: "Set canvas to Classic borderless" }),
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("calls onSetCanvasSize with Default dimensions when Default button is clicked", () => {
+    const onSetCanvasSize = vi.fn();
+    render(
+      <ControlsPanel
+        {...defaultProps}
+        canvasWidth={CLASSIC_PRESET.width}
+        canvasHeight={CLASSIC_PRESET.height}
+        onSetCanvasSize={onSetCanvasSize}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Set canvas to Default" }));
+
+    expect(onSetCanvasSize).toHaveBeenCalledWith(
+      DEFAULT_PRESET.width,
+      DEFAULT_PRESET.height,
+    );
+  });
+
+  it("calls onSetCanvasSize with Classic borderless dimensions when Classic borderless button is clicked", () => {
+    const onSetCanvasSize = vi.fn();
+    render(
+      <ControlsPanel
+        {...defaultProps}
+        onSetCanvasSize={onSetCanvasSize}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Set canvas to Classic borderless" }),
+    );
+
+    expect(onSetCanvasSize).toHaveBeenCalledWith(
+      CLASSIC_PRESET.width,
+      CLASSIC_PRESET.height,
+    );
   });
 });
