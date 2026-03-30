@@ -1,9 +1,16 @@
 "use client";
 
 import { useCallback, useReducer, useRef } from "react";
-import { removeWatermark, removeWatermarkFromPixels } from "@/lib/watermark-api";
+import { removeMergerWatermark } from "@/app/(steps)/merger/actions";
 import { track } from "@/lib/analytics";
-import type { WatermarkMetadata, PixelData } from "@/lib/watermark-api";
+import type { WatermarkActionResult } from "@/app/(steps)/merger/actions";
+
+type WatermarkMetadata = {
+  corner: string;
+  confidence: number;
+  alphaGain: number;
+  source: string;
+};
 
 type IdleState = { phase: "idle" };
 type ProcessingState = { phase: "processing" };
@@ -50,42 +57,44 @@ function reducer(state: DewatermarkState, action: Action): DewatermarkState {
 
 const initialState: DewatermarkState = { phase: "idle" };
 
+function buildMetadata(result: WatermarkActionResult): WatermarkMetadata {
+  return {
+    corner: result.corner,
+    confidence: result.confidence,
+    alphaGain: result.alphaGain,
+    source: result.source,
+  };
+}
+
 export function useDewatermarkDialog() {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const abortRef = useRef<AbortController | null>(null);
   const previewUrlRef = useRef<string | null>(null);
-  const pixelDataRef = useRef<PixelData | null>(null);
+  const fileRef = useRef<File | null>(null);
 
   const processFile = useCallback((file: File) => {
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+    fileRef.current = file;
 
     dispatch({ type: "START_PROCESSING" });
     track("dewatermark_started", { fileName: file.name });
 
-    removeWatermark(file, controller.signal)
+    removeMergerWatermark(file, { adaptive: false })
       .then((result) => {
-        const url = URL.createObjectURL(result.blob);
+        const blob = new Blob([new Uint8Array(result.pngBytes)], { type: "image/png" });
+        const url = URL.createObjectURL(blob);
         previewUrlRef.current = url;
-        pixelDataRef.current = result.pixelData;
 
         dispatch({
           type: "SET_RESULT",
-          blob: result.blob,
+          blob,
           previewUrl: url,
-          metadata: result.metadata,
+          metadata: buildMetadata(result),
         });
         track("dewatermark_succeeded", {
-          corner: result.metadata.corner,
-          confidence: result.metadata.confidence,
+          corner: result.corner,
+          confidence: result.confidence,
         });
       })
       .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          dispatch({ type: "RESET" });
-          return;
-        }
         const message = error instanceof Error ? error.message : "Unknown error";
         dispatch({ type: "SET_ERROR", message });
         track("dewatermark_failed", { error: message });
@@ -93,40 +102,32 @@ export function useDewatermarkDialog() {
   }, []);
 
   const runAdaptiveDetection = useCallback(() => {
-    if (!pixelDataRef.current) return;
+    if (!fileRef.current) return;
 
-    const { pixels, width, height } = pixelDataRef.current;
-
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
+    const file = fileRef.current;
 
     dispatch({ type: "START_PROCESSING" });
     track("dewatermark_adaptive_started");
 
-    removeWatermarkFromPixels(pixels, width, height, { adaptive: true })
+    removeMergerWatermark(file, { adaptive: true })
       .then((result) => {
         URL.revokeObjectURL(previewUrlRef.current!);
-        const url = URL.createObjectURL(result.blob);
+        const blob = new Blob([new Uint8Array(result.pngBytes)], { type: "image/png" });
+        const url = URL.createObjectURL(blob);
         previewUrlRef.current = url;
-        pixelDataRef.current = result.pixelData;
 
         dispatch({
           type: "SET_RESULT",
-          blob: result.blob,
+          blob,
           previewUrl: url,
-          metadata: result.metadata,
+          metadata: buildMetadata(result),
         });
         track("dewatermark_adaptive_succeeded", {
-          corner: result.metadata.corner,
-          confidence: result.metadata.confidence,
+          corner: result.corner,
+          confidence: result.confidence,
         });
       })
       .catch((error: unknown) => {
-        if (error instanceof DOMException && error.name === "AbortError") {
-          dispatch({ type: "RESET" });
-          return;
-        }
         const message = error instanceof Error ? error.message : "Unknown error";
         dispatch({ type: "SET_ERROR", message });
         track("dewatermark_adaptive_failed", { error: message });
@@ -134,15 +135,12 @@ export function useDewatermarkDialog() {
   }, []);
 
   const reset = useCallback(() => {
-    abortRef.current?.abort();
-    abortRef.current = null;
-
     if (previewUrlRef.current) {
       URL.revokeObjectURL(previewUrlRef.current);
       previewUrlRef.current = null;
     }
 
-    pixelDataRef.current = null;
+    fileRef.current = null;
 
     dispatch({ type: "RESET" });
   }, []);

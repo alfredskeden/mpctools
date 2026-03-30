@@ -2,30 +2,24 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // ─── Mocks ────────────────────────────────────────────────────────────────────
 
-vi.mock("sharp");
-vi.mock("@/lib/watermark-detection", () => ({ detectBestCandidate: vi.fn() }));
-vi.mock("@/lib/watermark-removal", () => ({ runPipeline: vi.fn() }));
+vi.mock("@/lib/watermark-pipeline", () => ({ runWatermarkPipeline: vi.fn() }));
 
-import sharp from "sharp";
-import { detectBestCandidate } from "@/lib/watermark-detection";
-import { runPipeline } from "@/lib/watermark-removal";
+import { runWatermarkPipeline } from "@/lib/watermark-pipeline";
 import { POST } from "./route";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const HOST = "localhost:3000";
 const ORIGIN = "http://localhost:3000";
-const DECODED_DATA = Buffer.alloc(4 * 10 * 10);
-const DECODED_INFO = { width: 10, height: 10, channels: 4 };
-const PNG_BYTES = Buffer.from([137, 80, 78, 71]);
-const DEFAULT_PIPELINE_RESULT = {
-  imageData: { data: new Uint8ClampedArray(4 * 10 * 10), width: 10, height: 10 },
-  alphaMap: new Float32Array(100),
-  alphaGain: 1.1,
+const SECRET = "test-secret-abc123";
+const PNG_BYTES = new Uint8Array([137, 80, 78, 71]);
+const DEFAULT_PIPELINE_OUTPUT = {
+  pngBytes: PNG_BYTES,
+  corner: "bottom-right",
   confidence: 0.87,
+  alphaGain: 1.1,
+  source: "adaptive" as const,
   accepted: true,
-  detectionSource: "adaptive" as const,
-  position: { x: 0, y: 0, width: 10, height: 10 },
 };
 
 // ─── Request helpers ──────────────────────────────────────────────────────────
@@ -51,7 +45,7 @@ function makeMockBlob(error?: Error): { arrayBuffer: () => Promise<ArrayBuffer> 
 
 function makeRequest(opts: RequestOpts = {}): Request {
   const {
-    headers = { origin: ORIGIN, host: HOST },
+    headers = { origin: ORIGIN, host: HOST, authorization: `Bearer ${SECRET}` },
     formDataError,
     image = { kind: "ok" },
     fields = {},
@@ -82,61 +76,24 @@ function makeRequest(opts: RequestOpts = {}): Request {
   return mockRequest as unknown as Request;
 }
 
-// ─── Sharp helpers ────────────────────────────────────────────────────────────
-
-function createDecodeInstance(error?: Error) {
-  const inst = {
-    ensureAlpha: vi.fn(),
-    raw: vi.fn(),
-    toBuffer: vi.fn(),
-  };
-  inst.ensureAlpha.mockReturnValue(inst);
-  inst.raw.mockReturnValue(inst);
-  if (error) {
-    inst.toBuffer.mockRejectedValue(error);
-  } else {
-    inst.toBuffer.mockResolvedValue({ data: DECODED_DATA, info: DECODED_INFO });
-  }
-  return inst;
-}
-
-function createEncodeInstance(error?: Error) {
-  const inst = { png: vi.fn(), toBuffer: vi.fn() };
-  inst.png.mockReturnValue(inst);
-  if (error) {
-    inst.toBuffer.mockRejectedValue(error);
-  } else {
-    inst.toBuffer.mockResolvedValue(PNG_BYTES);
-  }
-  return inst;
-}
-
-function setupSharp({
-  decodeError,
-  encodeError,
-}: { decodeError?: Error; encodeError?: Error } = {}) {
-  vi.mocked(sharp).mockReset();
-  vi.mocked(sharp)
-    .mockReturnValueOnce(createDecodeInstance(decodeError) as unknown as ReturnType<typeof sharp>)
-    .mockReturnValueOnce(createEncodeInstance(encodeError) as unknown as ReturnType<typeof sharp>);
-}
-
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("POST /api/watermark-remove", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    setupSharp();
-    vi.mocked(detectBestCandidate).mockReturnValue(
-      { corner: "bottom-right" } as ReturnType<typeof detectBestCandidate>,
-    );
-    vi.mocked(runPipeline).mockReturnValue(DEFAULT_PIPELINE_RESULT);
+    vi.stubEnv("WATERMARK_API_SECRET", SECRET);
+    vi.mocked(runWatermarkPipeline).mockResolvedValue(DEFAULT_PIPELINE_OUTPUT);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
   });
 
   describe("access control", () => {
-    it("returns 403 when origin header is missing", async () => {
+    it("returns 403 when WATERMARK_API_SECRET is not set", async () => {
       // Given
-      const request = makeRequest({ headers: { host: HOST } });
+      vi.unstubAllEnvs();
+      const request = makeRequest();
 
       // When
       const response = await POST(request);
@@ -145,9 +102,9 @@ describe("POST /api/watermark-remove", () => {
       expect(response.status).toBe(403);
     });
 
-    it("returns 403 when host header is missing", async () => {
+    it("returns 403 when authorization header is missing", async () => {
       // Given
-      const request = makeRequest({ headers: { origin: ORIGIN } });
+      const request = makeRequest({ headers: { origin: ORIGIN, host: HOST } });
 
       // When
       const response = await POST(request);
@@ -156,9 +113,11 @@ describe("POST /api/watermark-remove", () => {
       expect(response.status).toBe(403);
     });
 
-    it("returns 403 when origin does not include host", async () => {
+    it("returns 403 when token is wrong", async () => {
       // Given
-      const request = makeRequest({ headers: { origin: "http://evil.com", host: HOST } });
+      const request = makeRequest({
+        headers: { origin: ORIGIN, host: HOST, authorization: "Bearer wrong-token" },
+      });
 
       // When
       const response = await POST(request);
@@ -167,7 +126,7 @@ describe("POST /api/watermark-remove", () => {
       expect(response.status).toBe(403);
     });
 
-    it("allows same-origin requests", async () => {
+    it("allows request with valid Bearer token", async () => {
       // Given
       const request = makeRequest();
 
@@ -176,6 +135,18 @@ describe("POST /api/watermark-remove", () => {
 
       // Then
       expect(response.status).toBe(200);
+    });
+
+    it("returns 403 for same-origin request without secret", async () => {
+      // Given
+      vi.unstubAllEnvs();
+      const request = makeRequest({ headers: { origin: ORIGIN, host: HOST } });
+
+      // When
+      const response = await POST(request);
+
+      // Then
+      expect(response.status).toBe(403);
     });
   });
 
@@ -226,9 +197,9 @@ describe("POST /api/watermark-remove", () => {
       expect(response.status).toBe(400);
     });
 
-    it("returns 422 when sharp cannot decode the image", async () => {
+    it("returns 422 when pipeline throws a decode error", async () => {
       // Given
-      setupSharp({ decodeError: new Error("unsupported format") });
+      vi.mocked(runWatermarkPipeline).mockRejectedValue(new Error("Input unsupported format"));
       const request = makeRequest();
 
       // When
@@ -237,10 +208,22 @@ describe("POST /api/watermark-remove", () => {
       // Then
       expect(response.status).toBe(422);
     });
+
+    it("returns 500 when pipeline throws a non-decode error", async () => {
+      // Given
+      vi.mocked(runWatermarkPipeline).mockRejectedValue(new Error("encode error"));
+      const request = makeRequest();
+
+      // When
+      const response = await POST(request);
+
+      // Then
+      expect(response.status).toBe(500);
+    });
   });
 
   describe("processing", () => {
-    it("skips detectBestCandidate by default (adaptive=false)", async () => {
+    it("skips adaptive detection by default (adaptive=false)", async () => {
       // Given
       const request = makeRequest();
 
@@ -248,15 +231,13 @@ describe("POST /api/watermark-remove", () => {
       await POST(request);
 
       // Then
-      expect(detectBestCandidate).not.toHaveBeenCalled();
-      expect(runPipeline).toHaveBeenCalledWith(
+      expect(runWatermarkPipeline).toHaveBeenCalledWith(
         expect.anything(),
-        expect.anything(),
-        null,
+        expect.objectContaining({ adaptive: false }),
       );
     });
 
-    it("calls detectBestCandidate when adaptive=true", async () => {
+    it("passes adaptive=true when specified", async () => {
       // Given
       const request = makeRequest({ fields: { adaptive: "true" } });
 
@@ -264,10 +245,13 @@ describe("POST /api/watermark-remove", () => {
       await POST(request);
 
       // Then
-      expect(detectBestCandidate).toHaveBeenCalledOnce();
+      expect(runWatermarkPipeline).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ adaptive: true }),
+      );
     });
 
-    it("passes forcedVariant and corner to detectBestCandidate", async () => {
+    it("passes forcedVariant and corner to the pipeline", async () => {
       // Given
       const request = makeRequest({
         fields: { adaptive: "true", forcedVariant: "96", corner: "bottom-right" },
@@ -277,28 +261,13 @@ describe("POST /api/watermark-remove", () => {
       await POST(request);
 
       // Then
-      expect(detectBestCandidate).toHaveBeenCalledWith(
+      expect(runWatermarkPipeline).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({ forcedVariant: "96", corner: "bottom-right" }),
       );
     });
 
-    it("uses worker-matching defaults (postLightness=2.75, maskExpand=1.5, feather=4)", async () => {
-      // Given
-      const request = makeRequest();
-
-      // When
-      await POST(request);
-
-      // Then
-      expect(runPipeline).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ postLightness: 2.75, maskExpand: 1.5, feather: 4 }),
-        null,
-      );
-    });
-
-    it("passes all explicit settings to runPipeline", async () => {
+    it("passes all explicit float settings to the pipeline", async () => {
       // Given
       const request = makeRequest({
         fields: {
@@ -308,7 +277,6 @@ describe("POST /api/watermark-remove", () => {
           edgeReveal: "0.8",
           innerPunch: "1.1",
           maskExpand: "2.0",
-          corner: "top-left",
         },
       });
 
@@ -316,7 +284,7 @@ describe("POST /api/watermark-remove", () => {
       await POST(request);
 
       // Then
-      expect(runPipeline).toHaveBeenCalledWith(
+      expect(runWatermarkPipeline).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           alphaGain: 1.2,
@@ -325,13 +293,11 @@ describe("POST /api/watermark-remove", () => {
           edgeReveal: 0.8,
           innerPunch: 1.1,
           maskExpand: 2.0,
-          corner: "top-left",
         }),
-        null,
       );
     });
 
-    it("ignores non-numeric float fields and omits them from settings", async () => {
+    it("omits non-numeric float fields from pipeline options", async () => {
       // Given
       const request = makeRequest({ fields: { alphaGain: "not-a-number" } });
 
@@ -339,20 +305,8 @@ describe("POST /api/watermark-remove", () => {
       await POST(request);
 
       // Then
-      const settings = vi.mocked(runPipeline).mock.calls[0][1];
-      expect((settings as Record<string, unknown>).alphaGain).toBeUndefined();
-    });
-
-    it("returns 500 when sharp encoding fails", async () => {
-      // Given
-      setupSharp({ encodeError: new Error("encode error") });
-      const request = makeRequest();
-
-      // When
-      const response = await POST(request);
-
-      // Then
-      expect(response.status).toBe(500);
+      const options = vi.mocked(runWatermarkPipeline).mock.calls[0][1] as Record<string, unknown>;
+      expect(options.alphaGain).toBeUndefined();
     });
   });
 
@@ -382,13 +336,9 @@ describe("POST /api/watermark-remove", () => {
       expect(response.headers.get("x-detection-accepted")).toBe("true");
     });
 
-    it("populates corner header when detection was accepted", async () => {
+    it("includes corner header from pipeline output", async () => {
       // Given
-      vi.mocked(runPipeline).mockReturnValue({ ...DEFAULT_PIPELINE_RESULT, accepted: true });
-      vi.mocked(detectBestCandidate).mockReturnValue(
-        { corner: "bottom-right" } as ReturnType<typeof detectBestCandidate>,
-      );
-      const request = makeRequest({ fields: { adaptive: "true" } });
+      const request = makeRequest();
 
       // When
       const response = await POST(request);
@@ -397,22 +347,10 @@ describe("POST /api/watermark-remove", () => {
       expect(response.headers.get("x-detection-corner")).toBe("bottom-right");
     });
 
-    it("leaves corner header empty when result was not accepted", async () => {
+    it("returns empty corner header when pipeline output has empty corner", async () => {
       // Given
-      vi.mocked(runPipeline).mockReturnValue({ ...DEFAULT_PIPELINE_RESULT, accepted: false });
+      vi.mocked(runWatermarkPipeline).mockResolvedValue({ ...DEFAULT_PIPELINE_OUTPUT, corner: "" });
       const request = makeRequest();
-
-      // When
-      const response = await POST(request);
-
-      // Then
-      expect(response.headers.get("x-detection-corner")).toBe("");
-    });
-
-    it("leaves corner header empty when no detection ran (adaptive=false)", async () => {
-      // Given
-      vi.mocked(runPipeline).mockReturnValue({ ...DEFAULT_PIPELINE_RESULT, accepted: true });
-      const request = makeRequest({ fields: { adaptive: "false" } });
 
       // When
       const response = await POST(request);
