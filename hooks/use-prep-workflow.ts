@@ -333,8 +333,8 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
     case "SET_VERTICAL_PRESET": {
       if (!state.imageElement) return state;
       const pixelFromBottom = VERTICAL_PRESET_CENTERS[action.payload];
-      const scaleY = state.canvasHeight / CANVAS_HEIGHT;
-      const yCanvas = Math.round((CANVAS_HEIGHT - pixelFromBottom) * scaleY);
+      const scaleX = state.canvasWidth / CANVAS_WIDTH;
+      const yCanvas = Math.round((CANVAS_HEIGHT - pixelFromBottom) * scaleX);
       const imgH = state.imageElement.height * state.scale;
       const newY = Math.round(yCanvas - imgH / 2);
       const clampedY = Math.max(0, Math.min(newY, state.canvasHeight - imgH));

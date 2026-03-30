@@ -503,7 +503,7 @@ describe("prepReducer", () => {
     expect(result.scale).toBe(1);
   });
 
-  it("handles SET_VERTICAL_PRESET computing Y from canvas height", () => {
+  it("handles SET_VERTICAL_PRESET computing Y scaled by canvas width ratio", () => {
     const image = { width: 200, height: 300 } as HTMLImageElement;
     const state: PrepState = {
       ...initialState,
@@ -515,9 +515,11 @@ describe("prepReducer", () => {
       payload: "short",
     });
 
-    // yCanvas = canvasHeight - pixelFromBottom = 4800 - 2836 = 1964
+    // scaleX = canvasWidth / CANVAS_WIDTH = 3520/3520 = 1.0
+    // yCanvas = round((4800 - 2836) * 1.0) = 1964
     // imgH = 300 * 2 = 600, newY = round(1964 - 300) = 1664
-    const yCanvas = CANVAS_HEIGHT - VERTICAL_PRESET_CENTERS.short;
+    const scaleX = CANVAS_WIDTH / CANVAS_WIDTH;
+    const yCanvas = Math.round((CANVAS_HEIGHT - VERTICAL_PRESET_CENTERS.short) * scaleX);
     const imgH = 300 * 2;
     const expectedY = Math.round(yCanvas - imgH / 2);
     expect(result.position.y).toBe(expectedY);
@@ -537,7 +539,8 @@ describe("prepReducer", () => {
     });
 
     expect(result.position.x).toBe(50);
-    const yCanvas = CANVAS_HEIGHT - VERTICAL_PRESET_CENTERS.tall;
+    const scaleX = CANVAS_WIDTH / CANVAS_WIDTH;
+    const yCanvas = Math.round((CANVAS_HEIGHT - VERTICAL_PRESET_CENTERS.tall) * scaleX);
     const imgH = 300 * 2;
     const expectedY = Math.round(yCanvas - imgH / 2);
     expect(result.position.y).toBe(expectedY);
@@ -564,7 +567,7 @@ describe("prepReducer", () => {
       payload: "short",
     });
 
-    const yCanvas = CANVAS_HEIGHT - VERTICAL_PRESET_CENTERS.short;
+    const yCanvas = Math.round((CANVAS_HEIGHT - VERTICAL_PRESET_CENTERS.short) * (CANVAS_WIDTH / CANVAS_WIDTH));
     const imgH = 300 * 2;
     const expectedY = Math.round(yCanvas - imgH / 2);
     expect(result.position.y).toBe(expectedY);
@@ -572,11 +575,13 @@ describe("prepReducer", () => {
 
   it("handles SET_VERTICAL_PRESET scaling proportionally for non-default canvas size", () => {
     const image = { width: 200, height: 300 } as HTMLImageElement;
+    const customCanvasWidth = 3712;
     const customCanvasHeight = 4608;
     const state: PrepState = {
       ...initialState,
       imageElement: image,
       scale: 2,
+      canvasWidth: customCanvasWidth,
       canvasHeight: customCanvasHeight,
     };
     const result = prepReducer(state, {
@@ -584,8 +589,8 @@ describe("prepReducer", () => {
       payload: "tall",
     });
 
-    const scaleY = customCanvasHeight / CANVAS_HEIGHT;
-    const yCanvas = Math.round((CANVAS_HEIGHT - VERTICAL_PRESET_CENTERS.tall) * scaleY);
+    const scaleX = customCanvasWidth / CANVAS_WIDTH;
+    const yCanvas = Math.round((CANVAS_HEIGHT - VERTICAL_PRESET_CENTERS.tall) * scaleX);
     const imgH = 300 * 2;
     const expectedY = Math.round(yCanvas - imgH / 2);
     expect(result.position.y).toBe(expectedY);
@@ -1040,7 +1045,7 @@ describe("usePrepWorkflow", () => {
     });
 
     const scale = result.current.state.scale;
-    const yCanvas = CANVAS_HEIGHT - VERTICAL_PRESET_CENTERS.normal;
+    const yCanvas = Math.round((CANVAS_HEIGHT - VERTICAL_PRESET_CENTERS.normal) * (CANVAS_WIDTH / CANVAS_WIDTH));
     const imgH = 300 * scale;
     const expectedY = Math.max(0, Math.min(Math.round(yCanvas - imgH / 2), CANVAS_HEIGHT - imgH));
     expect(result.current.state.position.y).toBe(expectedY);
