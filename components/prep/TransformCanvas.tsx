@@ -287,6 +287,7 @@ export const TransformCanvas = ({
               width: display.width,
               height: display.height,
               position: "relative",
+              overflow: "hidden",
             }}
           >
             {/* Gray background */}
@@ -331,9 +332,10 @@ export const TransformCanvas = ({
                 alt=""
                 style={{
                   position: "absolute",
-                  inset: 0,
+                  top: 0,
+                  left: 0,
                   width: "100%",
-                  height: "100%",
+                  height: "auto",
                   pointerEvents: "none",
                   opacity: (overlayOpacities?.[option.id] ?? 100) / 100,
                 }}
