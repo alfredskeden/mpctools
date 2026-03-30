@@ -110,13 +110,27 @@ describe("prepReducer", () => {
     expect(result.position).toEqual({ x: 10, y: 20 });
   });
 
-  it("handles UPDATE_SCALE", () => {
+  it("handles UPDATE_SCALE with no image as scale-only update", () => {
     const result = prepReducer(initialState, {
       type: "UPDATE_SCALE",
       payload: 1.5,
     });
 
     expect(result.scale).toBe(1.5);
+    expect(result.position).toEqual({ x: 0, y: 0 });
+  });
+
+  it("handles UPDATE_SCALE with image by scaling about the image center", () => {
+    // image: 100x100, scale: 1, position: (50, 50)
+    // center: (50 + 50, 50 + 50) = (100, 100)
+    // new scale: 2 → new size: 200x200
+    // new position: (100 - 100, 100 - 100) = (0, 0)
+    const image = { width: 100, height: 100 } as HTMLImageElement;
+    const state: PrepState = { ...initialState, imageElement: image, scale: 1, position: { x: 50, y: 50 } };
+    const result = prepReducer(state, { type: "UPDATE_SCALE", payload: 2 });
+
+    expect(result.scale).toBe(2);
+    expect(result.position).toEqual({ x: 0, y: 0 });
   });
 
   it("handles UPDATE_ROTATION", () => {
@@ -400,7 +414,11 @@ describe("prepReducer", () => {
     expect(result.algorithm).toBe("standard");
   });
 
-  it("handles SET_IMAGE_DIMENSIONS by computing scale from width", () => {
+  it("handles SET_IMAGE_DIMENSIONS by computing scale from width and adjusting position about image center", () => {
+    // image: 200x300, scale: 1, position: (0, 0)
+    // center: (0 + 100, 0 + 150) = (100, 150)
+    // new scale: 2 → new size: 400x600
+    // new position: (100 - 200, 150 - 300) = (-100, -150)
     const image = { width: 200, height: 300 } as HTMLImageElement;
     const state: PrepState = { ...initialState, imageElement: image, scale: 1 };
     const result = prepReducer(state, {
@@ -409,6 +427,7 @@ describe("prepReducer", () => {
     });
 
     expect(result.scale).toBe(2);
+    expect(result.position).toEqual({ x: -100, y: -150 });
   });
 
   it("handles SET_IMAGE_DIMENSIONS with no image as no-op", () => {

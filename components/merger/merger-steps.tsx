@@ -146,14 +146,14 @@ export const MergerSteps = ({
   const mobileSteps: CarouselStep[] = [
     {
       number: 1,
-      title: "Upload original card",
+      title: "Upload the original art",
       status: step1Status,
       content: (
         <>
           {step1Status === "active" && (
             <>
               <p className="text-xs leading-normal text-text-secondary">
-                The high-res card scan from Scryfall.
+                The original art without gray border from prep step.
               </p>
               <button
                 type="button"
@@ -301,14 +301,14 @@ export const MergerSteps = ({
                   : "text-text-primary",
               )}
             >
-              Upload original card
+              Upload the original art
             </p>
           </div>
 
           {step1Status === "active" && (
             <>
               <p className="pl-8.5 text-xs leading-normal text-text-secondary">
-                The high-res card scan from Scryfall.
+                The original art without gray border from prep step.
               </p>
               <button
                 type="button"

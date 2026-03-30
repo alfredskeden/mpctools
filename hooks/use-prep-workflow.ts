@@ -158,11 +158,26 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         ...state,
         position: action.payload,
       };
-    case "UPDATE_SCALE":
+    case "UPDATE_SCALE": {
+      const newScale = action.payload;
+      if (!state.imageElement) {
+        return { ...state, scale: newScale };
+      }
+      const currentW = state.imageElement.width * state.scale;
+      const currentH = state.imageElement.height * state.scale;
+      const cx = state.position.x + currentW / 2;
+      const cy = state.position.y + currentH / 2;
+      const newW = state.imageElement.width * newScale;
+      const newH = state.imageElement.height * newScale;
       return {
         ...state,
-        scale: action.payload,
+        scale: newScale,
+        position: {
+          x: Math.round(cx - newW / 2),
+          y: Math.round(cy - newH / 2),
+        },
       };
+    }
     case "UPDATE_ROTATION":
       return {
         ...state,
@@ -256,9 +271,19 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
     case "SET_IMAGE_DIMENSIONS": {
       if (!state.imageElement) return state;
       const newScale = action.payload.width / state.imageElement.width;
+      const currentW = state.imageElement.width * state.scale;
+      const currentH = state.imageElement.height * state.scale;
+      const cx = state.position.x + currentW / 2;
+      const cy = state.position.y + currentH / 2;
+      const newW = state.imageElement.width * newScale;
+      const newH = state.imageElement.height * newScale;
       return {
         ...state,
         scale: newScale,
+        position: {
+          x: Math.round(cx - newW / 2),
+          y: Math.round(cy - newH / 2),
+        },
       };
     }
     case "CENTER_HORIZONTAL": {
