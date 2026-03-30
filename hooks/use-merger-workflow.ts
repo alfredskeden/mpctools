@@ -237,27 +237,22 @@ export function useMergerWorkflow() {
 
   const setFeather = useCallback((value: number) => {
     dispatch({ type: "SET_FEATHER", payload: value });
-    track("merger_blending_adjusted", { param: "feather", value });
   }, []);
 
   const setIrregMagnitude = useCallback((value: number) => {
     dispatch({ type: "SET_IRREG_MAGNITUDE", payload: value });
-    track("merger_blending_adjusted", { param: "irreg_magnitude", value });
   }, []);
 
   const setIrregDensity = useCallback((value: number) => {
     dispatch({ type: "SET_IRREG_DENSITY", payload: value });
-    track("merger_blending_adjusted", { param: "irreg_density", value });
   }, []);
 
   const setIrregRadius = useCallback((value: number) => {
     dispatch({ type: "SET_IRREG_RADIUS", payload: value });
-    track("merger_blending_adjusted", { param: "irreg_radius", value });
   }, []);
 
   const setIrregBlur = useCallback((value: number) => {
     dispatch({ type: "SET_IRREG_BLUR", payload: value });
-    track("merger_blending_adjusted", { param: "irreg_blur", value });
   }, []);
 
   const reseed = useCallback(() => {

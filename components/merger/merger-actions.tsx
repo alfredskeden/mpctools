@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronDown } from "lucide-react";
+import { track } from "@/lib/analytics";
 
 type MergerActionsProps = {
   canDownload: boolean;
@@ -101,6 +102,7 @@ export function MergerActions({
               max={200}
               value={featherStrength}
               onChange={(e) => onFeatherChange(Number(e.target.value))}
+              onPointerUp={(e) => track("merger_blending_adjusted", { param: "feather", value: Number((e.target as HTMLInputElement).value) })}
               className="w-full"
             />
           </div>
@@ -123,6 +125,7 @@ export function MergerActions({
               max={300}
               value={irregMagnitude}
               onChange={(e) => onIrregMagnitudeChange(Number(e.target.value))}
+              onPointerUp={(e) => track("merger_blending_adjusted", { param: "irreg_magnitude", value: Number((e.target as HTMLInputElement).value) })}
               className="w-full"
             />
           </div>
@@ -145,6 +148,7 @@ export function MergerActions({
               max={100}
               value={irregDensity}
               onChange={(e) => onIrregDensityChange(Number(e.target.value))}
+              onPointerUp={(e) => track("merger_blending_adjusted", { param: "irreg_density", value: Number((e.target as HTMLInputElement).value) })}
               className="w-full"
             />
           </div>
@@ -167,6 +171,7 @@ export function MergerActions({
               max={500}
               value={irregRadius}
               onChange={(e) => onIrregRadiusChange(Number(e.target.value))}
+              onPointerUp={(e) => track("merger_blending_adjusted", { param: "irreg_radius", value: Number((e.target as HTMLInputElement).value) })}
               className="w-full"
             />
           </div>
@@ -189,6 +194,7 @@ export function MergerActions({
               max={100}
               value={irregBlur}
               onChange={(e) => onIrregBlurChange(Number(e.target.value))}
+              onPointerUp={(e) => track("merger_blending_adjusted", { param: "irreg_blur", value: Number((e.target as HTMLInputElement).value) })}
               className="w-full"
             />
           </div>

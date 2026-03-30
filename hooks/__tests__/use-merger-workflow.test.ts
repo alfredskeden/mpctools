@@ -400,7 +400,6 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.featherStrength).toBe(80);
-    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "feather", value: 80 });
   });
 
   it("updates irregular edge magnitude", () => {
@@ -411,7 +410,6 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.irregMagnitude).toBe(200);
-    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_magnitude", value: 200 });
   });
 
   it("updates irregular edge density", () => {
@@ -422,7 +420,6 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.irregDensity).toBe(50);
-    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_density", value: 50 });
   });
 
   it("updates irregular edge radius", () => {
@@ -433,7 +430,6 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.irregRadius).toBe(250);
-    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_radius", value: 250 });
   });
 
   it("updates irregular edge blur", () => {
@@ -444,7 +440,6 @@ describe("useMergerWorkflow", () => {
     });
 
     expect(result.current.state.irregBlur).toBe(30);
-    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_blur", value: 30 });
   });
 
   it("reseeds irregular edge with new random value", () => {

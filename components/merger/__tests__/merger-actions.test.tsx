@@ -1,5 +1,8 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MergerActions } from "../merger-actions";
+import { track } from "@/lib/analytics";
+
+vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 
 const defaultProps = {
   canDownload: false,
@@ -179,5 +182,55 @@ describe("MergerActions", () => {
     fireEvent.click(screen.getByRole("button", { name: /reseed/i }));
 
     expect(onReseed).toHaveBeenCalledOnce();
+  });
+
+  it("tracks feather adjustment on pointer up", () => {
+    render(<MergerActions {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
+
+    const slider = screen.getByLabelText("Feather Strength");
+    fireEvent.pointerUp(slider, { target: { value: "80" } });
+
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "feather", value: expect.any(Number) });
+  });
+
+  it("tracks magnitude adjustment on pointer up", () => {
+    render(<MergerActions {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
+
+    const slider = screen.getByLabelText("Magnitude");
+    fireEvent.pointerUp(slider, { target: { value: "200" } });
+
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_magnitude", value: expect.any(Number) });
+  });
+
+  it("tracks density adjustment on pointer up", () => {
+    render(<MergerActions {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
+
+    const slider = screen.getByLabelText("Density");
+    fireEvent.pointerUp(slider, { target: { value: "50" } });
+
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_density", value: expect.any(Number) });
+  });
+
+  it("tracks radius adjustment on pointer up", () => {
+    render(<MergerActions {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
+
+    const slider = screen.getByLabelText("Irreg Radius");
+    fireEvent.pointerUp(slider, { target: { value: "250" } });
+
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_radius", value: expect.any(Number) });
+  });
+
+  it("tracks blur adjustment on pointer up", () => {
+    render(<MergerActions {...defaultProps} />);
+    fireEvent.click(screen.getByRole("button", { name: /advanced options/i }));
+
+    const slider = screen.getByLabelText("Edge Blur");
+    fireEvent.pointerUp(slider, { target: { value: "30" } });
+
+    expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_blur", value: expect.any(Number) });
   });
 });
