@@ -44,6 +44,7 @@ import {
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
 import { VERTICAL_PRESET_CENTERS } from "@/hooks/use-prep-workflow";
 import {
+  buildHandshakePrompt,
   HANDSHAKE_PROMPT,
   OUTPAINT_COMMAND,
 } from "@/hooks/use-outpaint-workflow";
@@ -516,6 +517,22 @@ describe("useDesignWorkflow", () => {
     // Then
     expect(result.current.handshakePrompt).toBe(HANDSHAKE_PROMPT);
     expect(result.current.outpaintCommand).toBe(OUTPAINT_COMMAND);
+  });
+
+  it("handshakePrompt updates to match selected canvas size", () => {
+    // Given
+    const { result } = renderHook(() => useDesignWorkflow());
+
+    // When
+    act(() => {
+      result.current.selectCanvasSize("classic-borderless");
+    });
+
+    // Then
+    const preset = DESIGN_CANVAS_PRESETS["classic-borderless"];
+    expect(result.current.handshakePrompt).toBe(
+      buildHandshakePrompt(preset.width, preset.height),
+    );
   });
 
   it("selectTextBoxSize advances to stage 3", () => {

@@ -8,6 +8,7 @@ import {
   type VerticalPreset,
 } from "@/hooks/use-prep-workflow";
 import {
+  buildHandshakePrompt,
   HANDSHAKE_PROMPT,
   OUTPAINT_COMMAND,
 } from "@/hooks/use-outpaint-workflow";
@@ -522,7 +523,12 @@ export function useDesignWorkflow() {
     downloadResult,
     exportPsd,
     reset,
-    handshakePrompt: HANDSHAKE_PROMPT,
+    handshakePrompt: state.canvasSize
+      ? buildHandshakePrompt(
+          DESIGN_CANVAS_PRESETS[state.canvasSize].width,
+          DESIGN_CANVAS_PRESETS[state.canvasSize].height,
+        )
+      : HANDSHAKE_PROMPT,
     outpaintCommand: OUTPAINT_COMMAND,
   };
 }
