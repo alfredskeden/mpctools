@@ -1,0 +1,422 @@
+"use client";
+
+import { useReducer, useCallback, useEffect, useRef } from "react";
+import {
+  calculateInitialScale,
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
+} from "@/lib/canvas-utils";
+import { exportFullResolution } from "@/lib/prep-renderer";
+import {
+  VERTICAL_PRESET_CENTERS,
+  type VerticalPreset,
+} from "@/hooks/use-prep-workflow";
+import {
+  HANDSHAKE_PROMPT,
+  OUTPAINT_COMMAND,
+} from "@/hooks/use-outpaint-workflow";
+import { removeWatermark } from "@/lib/watermark-api";
+import { analyzeGuide, downloadCanvasAsBlob } from "@/lib/merger-utils";
+import { drawMergerScene } from "@/components/merger/MergerCanvas";
+import type { MergerState } from "@/hooks/use-merger-workflow";
+
+export type DesignStage = 1 | 2 | 3 | 4 | 5 | 6;
+
+export type TextBoxSize = VerticalPreset;
+
+export type DesignState = {
+  stage: DesignStage;
+  textBoxSize: TextBoxSize | null;
+  originalImage: HTMLImageElement | null;
+  originalFileName: string | null;
+  grayBorderDataUrl: string | null;
+  isProcessing: boolean;
+  dewatermarkPhase: "idle" | "processing" | "done" | "error";
+  dewatermarkedImage: HTMLImageElement | null;
+  dewatermarkError: string | null;
+  mergePhase: "idle" | "processing" | "done";
+  mergedCanvasDataUrl: string | null;
+  isDownloaded: boolean;
+};
+
+export type DesignAction =
+  | { type: "SELECT_TEXT_BOX_SIZE"; payload: TextBoxSize }
+  | {
+      type: "UPLOAD_ORIGINAL";
+      payload: { image: HTMLImageElement; fileName: string };
+    }
+  | { type: "START_AUTO_PROCESS" }
+  | { type: "AUTO_PROCESS_COMPLETE"; payload: string }
+  | { type: "DEWATERMARK_START" }
+  | {
+      type: "DEWATERMARK_COMPLETE";
+      payload: HTMLImageElement;
+    }
+  | { type: "DEWATERMARK_ERROR"; payload: string }
+  | { type: "START_MERGE" }
+  | { type: "MERGE_COMPLETE"; payload: string }
+  | { type: "MARK_DOWNLOADED" }
+  | { type: "RESET" };
+
+export const initialDesignState: DesignState = {
+  stage: 1,
+  textBoxSize: null,
+  originalImage: null,
+  originalFileName: null,
+  grayBorderDataUrl: null,
+  isProcessing: false,
+  dewatermarkPhase: "idle",
+  dewatermarkedImage: null,
+  dewatermarkError: null,
+  mergePhase: "idle",
+  mergedCanvasDataUrl: null,
+  isDownloaded: false,
+};
+
+export function designReducer(
+  state: DesignState,
+  action: DesignAction,
+): DesignState {
+  switch (action.type) {
+    case "SELECT_TEXT_BOX_SIZE":
+      return {
+        ...initialDesignState,
+        stage: 2,
+        textBoxSize: action.payload,
+      };
+    case "UPLOAD_ORIGINAL":
+      return {
+        ...state,
+        stage: 3,
+        originalImage: action.payload.image,
+        originalFileName: action.payload.fileName,
+        isProcessing: true,
+        grayBorderDataUrl: null,
+        dewatermarkPhase: "idle",
+        dewatermarkedImage: null,
+        dewatermarkError: null,
+        mergePhase: "idle",
+        mergedCanvasDataUrl: null,
+        isDownloaded: false,
+      };
+    case "START_AUTO_PROCESS":
+      return {
+        ...state,
+        isProcessing: true,
+      };
+    case "AUTO_PROCESS_COMPLETE":
+      return {
+        ...state,
+        stage: 4,
+        isProcessing: false,
+        grayBorderDataUrl: action.payload,
+      };
+    case "DEWATERMARK_START":
+      return {
+        ...state,
+        dewatermarkPhase: "processing",
+        dewatermarkedImage: null,
+        dewatermarkError: null,
+      };
+    case "DEWATERMARK_COMPLETE":
+      return {
+        ...state,
+        stage: 5,
+        dewatermarkPhase: "done",
+        dewatermarkedImage: action.payload,
+        mergePhase: "processing",
+      };
+    case "DEWATERMARK_ERROR":
+      return {
+        ...state,
+        dewatermarkPhase: "error",
+        dewatermarkError: action.payload,
+      };
+    case "START_MERGE":
+      return {
+        ...state,
+        mergePhase: "processing",
+      };
+    case "MERGE_COMPLETE":
+      return {
+        ...state,
+        stage: 6,
+        mergePhase: "done",
+        mergedCanvasDataUrl: action.payload,
+      };
+    case "MARK_DOWNLOADED":
+      return {
+        ...state,
+        isDownloaded: true,
+      };
+    case "RESET":
+      return initialDesignState;
+    default:
+      return state;
+  }
+}
+
+export function computeAutoPosition(
+  image: HTMLImageElement,
+  textBoxSize: TextBoxSize,
+): { position: { x: number; y: number }; scale: number } {
+  const scale = calculateInitialScale(image, {
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+  });
+
+  const x = Math.round((CANVAS_WIDTH - image.width * scale) / 2);
+
+  const pixelFromBottom = VERTICAL_PRESET_CENTERS[textBoxSize];
+  const yCanvas = Math.round(CANVAS_HEIGHT - pixelFromBottom);
+  const imgH = image.height * scale;
+  const y = Math.max(0, Math.min(Math.round(yCanvas - imgH / 2), CANVAS_HEIGHT - imgH));
+
+  return { position: { x, y }, scale };
+}
+
+function buildMergerState(
+  ogImage: HTMLImageElement,
+  outpaintImage: HTMLImageElement,
+  canvasW: number,
+  canvasH: number,
+  ogX: number,
+  ogY: number,
+): MergerState {
+  return {
+    currentStep: 3,
+    ogImage,
+    ogFileName: null,
+    ogFileSize: null,
+    guideImage: null,
+    guideFileName: null,
+    guideFileSize: null,
+    outpaintImage,
+    outpaintFileName: null,
+    outpaintFileSize: null,
+    canvasW,
+    canvasH,
+    ogPosition: {
+      x: ogX,
+      y: ogY,
+      w: ogImage.naturalWidth,
+      h: ogImage.naturalHeight,
+    },
+    featherStrength: 40,
+    irregMagnitude: 100,
+    irregDensity: 100,
+    irregRadius: 0,
+    irregBlur: 12,
+    irregSeed: 42,
+    isDownloaded: false,
+  };
+}
+
+export function useDesignWorkflow() {
+  const [state, dispatch] = useReducer(designReducer, initialDesignState);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const selectTextBoxSize = useCallback((size: TextBoxSize) => {
+    dispatch({ type: "SELECT_TEXT_BOX_SIZE", payload: size });
+  }, []);
+
+  const uploadOriginal = useCallback(
+    (image: HTMLImageElement, fileName: string) => {
+      dispatch({ type: "UPLOAD_ORIGINAL", payload: { image, fileName } });
+    },
+    [],
+  );
+
+  // Stage 3: Auto-process effect
+  useEffect(() => {
+    if (
+      state.stage !== 3 ||
+      !state.isProcessing ||
+      !state.originalImage ||
+      !state.textBoxSize
+    ) {
+      return;
+    }
+
+    const image = state.originalImage;
+    const textBoxSize = state.textBoxSize;
+
+    const frameId = requestAnimationFrame(() => {
+      const { position, scale } = computeAutoPosition(image, textBoxSize);
+      const dataUrl = exportFullResolution(image, position, scale, 0);
+      dispatch({ type: "AUTO_PROCESS_COMPLETE", payload: dataUrl });
+    });
+
+    return () => cancelAnimationFrame(frameId);
+  }, [state.stage, state.isProcessing, state.originalImage, state.textBoxSize]);
+
+  const uploadOutpaint = useCallback((file: File) => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    dispatch({ type: "DEWATERMARK_START" });
+
+    removeWatermark(file, controller.signal)
+      .then((result) => {
+        const url = URL.createObjectURL(result.blob);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          dispatch({ type: "DEWATERMARK_COMPLETE", payload: img });
+        };
+        /* v8 ignore start */
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          dispatch({
+            type: "DEWATERMARK_ERROR",
+            payload: "Failed to load dewatermarked image",
+          });
+        };
+        /* v8 ignore stop */
+        img.src = url;
+      })
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        dispatch({
+          type: "DEWATERMARK_ERROR",
+          payload: err instanceof Error ? err.message : "Watermark removal failed",
+        });
+      });
+  }, []);
+
+  // Stage 5: Auto-merge effect
+  useEffect(() => {
+    if (
+      state.stage !== 5 ||
+      state.mergePhase !== "processing" ||
+      !state.originalImage ||
+      !state.grayBorderDataUrl ||
+      !state.dewatermarkedImage
+    ) {
+      return;
+    }
+
+    const ogImage = state.originalImage;
+    const dewatermarkedImage = state.dewatermarkedImage;
+    const grayBorderDataUrl = state.grayBorderDataUrl;
+    let cancelled = false;
+
+    const guideImg = new Image();
+    guideImg.onload = () => {
+      if (cancelled) return;
+
+      const guideCanvas = document.createElement("canvas");
+      guideCanvas.width = guideImg.naturalWidth;
+      guideCanvas.height = guideImg.naturalHeight;
+      const gCtx = guideCanvas.getContext("2d");
+      /* v8 ignore start */
+      if (!gCtx) {
+        dispatch({
+          type: "DEWATERMARK_ERROR",
+          payload: "Failed to create canvas context",
+        });
+        return;
+      }
+      /* v8 ignore stop */
+      gCtx.drawImage(guideImg, 0, 0);
+
+      const analysis = analyzeGuide(
+        guideCanvas,
+        ogImage.naturalWidth,
+        ogImage.naturalHeight,
+      );
+
+      if (!analysis) {
+        dispatch({
+          type: "DEWATERMARK_ERROR",
+          payload: "Could not analyze guide image",
+        });
+        return;
+      }
+
+      const mergerState = buildMergerState(
+        ogImage,
+        dewatermarkedImage,
+        analysis.canvasW,
+        analysis.canvasH,
+        analysis.ogX,
+        analysis.ogY,
+      );
+
+      const resultCanvas = document.createElement("canvas");
+      resultCanvas.width = analysis.canvasW;
+      resultCanvas.height = analysis.canvasH;
+      const rCtx = resultCanvas.getContext("2d");
+      /* v8 ignore start */
+      if (!rCtx) {
+        dispatch({
+          type: "DEWATERMARK_ERROR",
+          payload: "Failed to create result canvas context",
+        });
+        return;
+      }
+      /* v8 ignore stop */
+
+      drawMergerScene(rCtx, mergerState, 1);
+
+      const dataUrl = resultCanvas.toDataURL("image/png");
+      dispatch({ type: "MERGE_COMPLETE", payload: dataUrl });
+    };
+    guideImg.src = grayBorderDataUrl;
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    state.stage,
+    state.mergePhase,
+    state.originalImage,
+    state.grayBorderDataUrl,
+    state.dewatermarkedImage,
+  ]);
+
+  const downloadResult = useCallback(
+    (fileName: string) => {
+      if (!state.mergedCanvasDataUrl) return;
+
+      const link = document.createElement("a");
+      link.download = fileName;
+      link.href = state.mergedCanvasDataUrl;
+      link.click();
+
+      dispatch({ type: "MARK_DOWNLOADED" });
+    },
+    [state.mergedCanvasDataUrl],
+  );
+
+  const reset = useCallback(() => {
+    if (abortRef.current) {
+      abortRef.current.abort();
+      abortRef.current = null;
+    }
+    dispatch({ type: "RESET" });
+  }, []);
+
+  // Cleanup abort controller on unmount
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+    };
+  }, []);
+
+  return {
+    state,
+    selectTextBoxSize,
+    uploadOriginal,
+    uploadOutpaint,
+    downloadResult,
+    reset,
+    handshakePrompt: HANDSHAKE_PROMPT,
+    outpaintCommand: OUTPAINT_COMMAND,
+  };
+}
