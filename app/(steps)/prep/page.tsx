@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { PrepPageContent } from "@/components/prep/prep-page-content";
 
 export const metadata: Metadata = {
-  title: "Prepare Card Art | MPC Proxy Art",
+  title: "Prepare Art for Outpaint | MPC Tools",
   description:
-    "Crop, resize, and position your card art for outpainting. Step 1 of the MPC Proxy Art workflow.",
+    "Resize and position your art for outpainting. Step 1 of the MPC Tools image outpainting workflow.",
 };
 
 export default function PrepPage() {

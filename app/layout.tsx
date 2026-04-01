@@ -17,22 +17,22 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mpctools.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: "MPC Proxy Art — MTG Playtest Card Builder",
+  title: "MPC Tools Image outpainting using AI",
   description:
-    "Prepare, outpaint, and merge high-quality card art for print-ready playtest proxies.",
+    "Prepare, outpaint, and merge high-quality images for outpainting using AI.",
   openGraph: {
-    title: "MPC Proxy Art — MTG Playtest Card Builder",
+    title: "MPC Tools Image outpainting using AI",
     description:
-      "Prepare, outpaint, and merge high-quality card art for print-ready playtest proxies.",
+      "Prepare, outpaint, and merge high-quality images for outpainting using AI.",
     url: "/",
     type: "website",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MPC Proxy Art — MTG Playtest Card Builder",
+    title: "MPC Tools Image outpainting using AI",
     description:
-      "Prepare, outpaint, and merge high-quality card art for print-ready playtest proxies.",
+      "Prepare, outpaint, and merge high-quality images for outpainting using AI.",
     images: ["/og-image.png"],
   },
 };
@@ -54,11 +54,11 @@ export default function RootLayout({
             __html: JSON.stringify({
               "@context": "https://schema.org",
               "@type": "SoftwareApplication",
-              name: "MPC Proxy Art",
+              name: "MPC Tools Image outpainting using AI",
               applicationCategory: "DesignApplication",
               operatingSystem: "Web",
               description:
-                "Prepare, outpaint, and merge card art for print-ready MTG playtest proxies.",
+                "Prepare, outpaint, and merge images for outpainting using AI.",
               url: siteUrl,
             }),
           }}

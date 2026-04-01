@@ -11,14 +11,14 @@ export const HeroSection = () => {
           variant="secondary"
           className="font-medium uppercase tracking-extra-wide text-brand"
         >
-          Image Outpainting Tool
+          NBP ❤️
         </Badge>
         <h1 className="scroll-m-20 text-center font-black tracking-display text-balance text-foreground text-4xl sm:text-display-lg">
-          Prep, Outpaint, Merge
+          From source art to print-ready image.
         </h1>
         <p className="text-center text-base leading-7 font-light text-text-secondary">
-          Extend any image with Gemini AI. Three steps from source art to
-          print-ready result.
+          Upload any artwork. AI fills beyond the edges. Exports ready to use in
+          your render.
         </p>
       </div>
 
@@ -28,7 +28,7 @@ export const HeroSection = () => {
         className="h-13 gap-2.5 rounded-lg bg-brand px-9 text-base font-semibold text-brand-foreground hover:bg-brand-hover"
       >
         <Link href="/prep">
-          Get Started
+          Start Building
           <ArrowRight className="size-4.5" />
         </Link>
       </Button>

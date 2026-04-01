@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { OutpaintPageContent } from "@/components/outpaint/outpaint-page-content";
 
 export const metadata: Metadata = {
-  title: "Extend Card Art with AI | MPC Proxy Art",
+  title: "Extend Card Art with AI | MPC Tools",
   description:
-    "Use Gemini AI to outpaint your card art to full bleed. Step 2 of the MPC Proxy Art workflow.",
+    "Use Gemini AI to outpaint your card art to full bleed. Step 2 of the MPC Tools image outpainting workflow.",
 };
 
 export default function OutpaintPage() {

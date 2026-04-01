@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { MergerPageContent } from "@/components/merger/merger-page-content";
 
 export const metadata: Metadata = {
-  title: "Merge Outpainted Cards | MPC Proxy Art",
+  title: "Merge Outpainted Image | MPC Tools",
   description:
-    "Overlay your outpainted card art onto the original for a print-ready result. Step 3 of the MPC Proxy Art workflow.",
+    "Overlay your outpainted image onto the original for a print-ready result. Step 3 of the MPC Tools image outpainting workflow.",
 };
 
 export default function MergerPage() {

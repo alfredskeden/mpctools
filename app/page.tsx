@@ -3,15 +3,12 @@ export const dynamic = "force-dynamic";
 import { GhostCard } from "@/components/GhostCard";
 import { HeroSection } from "@/components/HeroSection";
 import { StepIndicator } from "@/components/StepIndicator";
-
-const GHOST_IMAGE_COUNT = 6;
-
-function pickTwoDistinct(count: number): [number, number] {
-  const a = Math.floor(Math.random() * count);
-  let b = Math.floor(Math.random() * (count - 1));
-  if (b >= a) b++;
-  return [a, b];
-}
+import { LandingNav } from "@/components/landing/landing-nav";
+import { WorkflowSection } from "@/components/landing/workflow-section";
+import { FeatureGrid } from "@/components/landing/feature-grid";
+import { LandingCta } from "@/components/landing/landing-cta";
+import { LandingFooter } from "@/components/landing/landing-footer";
+import { getGhostCardImageSets } from "@/lib/ghost-card-images";
 
 const steps = [
   { label: "Prep", active: true },
@@ -19,23 +16,29 @@ const steps = [
   { label: "Merge", active: false },
 ];
 
-function ghostImages(index: number): string[] {
-  return [
-    `/outpaint-animation/${index}_prepper.webp`,
-    `/outpaint-animation/${index}_outpaint.webp`,
-    `/outpaint-animation/${index}_full_card.webp`,
-  ];
-}
-
 export default async function Home() {
-  const [leftIndex, rightIndex] = pickTwoDistinct(GHOST_IMAGE_COUNT);
+  const [leftImages, rightImages] = getGhostCardImageSets();
 
   return (
-    <main className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-background">
-      <GhostCard side="left" images={ghostImages(leftIndex)} />
-      <GhostCard side="right" images={ghostImages(rightIndex)} />
-      <HeroSection />
-      <StepIndicator steps={steps} variant="landing" />
-    </main>
+    <div className="bg-surface-ground">
+      <LandingNav />
+      <main className="-mt-14">
+        {/* Hero */}
+        <section className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden">
+          <div className="hidden lg:block">
+            <GhostCard side="left" images={leftImages} />
+          </div>
+          <div className="hidden lg:block">
+            <GhostCard side="right" images={rightImages} />
+          </div>
+          <HeroSection />
+          <StepIndicator steps={steps} variant="landing" />
+        </section>
+        <WorkflowSection />
+        <FeatureGrid />
+        <LandingCta />
+      </main>
+      <LandingFooter />
+    </div>
   );
 }
