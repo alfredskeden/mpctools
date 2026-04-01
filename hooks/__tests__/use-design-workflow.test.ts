@@ -32,6 +32,8 @@ import {
   computeAutoPosition,
   useDesignWorkflow,
   TEXTBOX_AVAILABLE_HEIGHTS,
+  CLASSIC_BORDERLESS_TEXTBOX_HEIGHTS,
+  DESIGN_CANVAS_PRESETS,
   type DesignState,
 } from "../use-design-workflow";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
@@ -128,23 +130,68 @@ describe("designReducer", () => {
     expect(result).toEqual(initialDesignState);
   });
 
-  it("handles SELECT_TEXT_BOX_SIZE", () => {
+  it("handles SELECT_CANVAS_SIZE", () => {
     // When
     const result = designReducer(initialDesignState, {
+      type: "SELECT_CANVAS_SIZE",
+      payload: "default",
+    });
+
+    // Then
+    expect(result.stage).toBe(2);
+    expect(result.canvasSize).toBe("default");
+  });
+
+  it("resets downstream state when selecting a new canvas size", () => {
+    // Given
+    const midState: DesignState = {
+      ...initialDesignState,
+      stage: 5,
+      canvasSize: "default",
+      textBoxSize: "normal",
+      originalImage: makeImage(),
+      grayBorderDataUrl: "data:old",
+    };
+
+    // When
+    const result = designReducer(midState, {
+      type: "SELECT_CANVAS_SIZE",
+      payload: "classic-borderless",
+    });
+
+    // Then
+    expect(result.stage).toBe(2);
+    expect(result.canvasSize).toBe("classic-borderless");
+    expect(result.textBoxSize).toBeNull();
+    expect(result.originalImage).toBeNull();
+  });
+
+  it("handles SELECT_TEXT_BOX_SIZE", () => {
+    // Given
+    const stateWithCanvas: DesignState = {
+      ...initialDesignState,
+      stage: 2,
+      canvasSize: "default",
+    };
+
+    // When
+    const result = designReducer(stateWithCanvas, {
       type: "SELECT_TEXT_BOX_SIZE",
       payload: "tall",
     });
 
     // Then
-    expect(result.stage).toBe(2);
+    expect(result.stage).toBe(3);
     expect(result.textBoxSize).toBe("tall");
+    expect(result.canvasSize).toBe("default");
   });
 
   it("resets downstream state when selecting a new text box size", () => {
     // Given
     const midState: DesignState = {
       ...initialDesignState,
-      stage: 4,
+      stage: 5,
+      canvasSize: "default",
       textBoxSize: "normal",
       originalImage: makeImage(),
       grayBorderDataUrl: "data:old",
@@ -157,8 +204,9 @@ describe("designReducer", () => {
     });
 
     // Then
-    expect(result.stage).toBe(2);
+    expect(result.stage).toBe(3);
     expect(result.textBoxSize).toBe("short");
+    expect(result.canvasSize).toBe("default");
     expect(result.originalImage).toBeNull();
     expect(result.grayBorderDataUrl).toBeNull();
   });
@@ -167,7 +215,8 @@ describe("designReducer", () => {
     // Given
     const stateWithSize: DesignState = {
       ...initialDesignState,
-      stage: 2,
+      stage: 3,
+      canvasSize: "default",
       textBoxSize: "tall",
     };
     const img = makeImage();
@@ -179,7 +228,7 @@ describe("designReducer", () => {
     });
 
     // Then
-    expect(result.stage).toBe(3);
+    expect(result.stage).toBe(4);
     expect(result.originalImage).toBe(img);
     expect(result.originalFileName).toBe("card.png");
     expect(result.isProcessing).toBe(true);
@@ -199,7 +248,7 @@ describe("designReducer", () => {
     // Given
     const processingState: DesignState = {
       ...initialDesignState,
-      stage: 3,
+      stage: 4,
       isProcessing: true,
     };
 
@@ -210,7 +259,7 @@ describe("designReducer", () => {
     });
 
     // Then
-    expect(result.stage).toBe(4);
+    expect(result.stage).toBe(5);
     expect(result.isProcessing).toBe(false);
     expect(result.grayBorderDataUrl).toBe("data:image/png;base64,result");
   });
@@ -233,12 +282,12 @@ describe("designReducer", () => {
 
     // When
     const result = designReducer(
-      { ...initialDesignState, stage: 4, dewatermarkPhase: "processing" },
+      { ...initialDesignState, stage: 5, dewatermarkPhase: "processing" },
       { type: "DEWATERMARK_COMPLETE", payload: img },
     );
 
     // Then
-    expect(result.stage).toBe(5);
+    expect(result.stage).toBe(6);
     expect(result.dewatermarkPhase).toBe("done");
     expect(result.dewatermarkedImage).toBe(img);
     expect(result.mergePhase).toBe("processing");
@@ -268,7 +317,7 @@ describe("designReducer", () => {
     // Given
     const merging: DesignState = {
       ...initialDesignState,
-      stage: 5,
+      stage: 6,
       mergePhase: "processing",
     };
 
@@ -279,7 +328,7 @@ describe("designReducer", () => {
     });
 
     // Then
-    expect(result.stage).toBe(6);
+    expect(result.stage).toBe(7);
     expect(result.mergePhase).toBe("done");
     expect(result.mergedCanvasDataUrl).toBe("data:image/png;base64,merged");
   });
@@ -298,7 +347,8 @@ describe("designReducer", () => {
     // Given
     const dirty: DesignState = {
       ...initialDesignState,
-      stage: 6,
+      stage: 7,
+      canvasSize: "default",
       textBoxSize: "tall",
       isDownloaded: true,
     };
@@ -329,7 +379,8 @@ describe("computeAutoPosition", () => {
     expect(position.x).toBe(expectedX);
 
     const pixelFromBottom = VERTICAL_PRESET_CENTERS.tall;
-    const yCanvas = Math.round(CANVAS_HEIGHT - pixelFromBottom);
+    const scaleX = CANVAS_WIDTH / CANVAS_WIDTH; // 1.0 for default
+    const yCanvas = Math.round((CANVAS_HEIGHT - pixelFromBottom) * scaleX);
     const imgH = img.naturalHeight * scale;
     const expectedY = Math.max(
       0,
@@ -376,6 +427,47 @@ describe("computeAutoPosition", () => {
       expect(scale).toBeCloseTo(expectedScale, 5);
     }
   });
+
+  it("uses classic borderless heights when canvas height matches", () => {
+    // Given
+    const img = makeImage(800, 1100);
+    const { width, height } = DESIGN_CANVAS_PRESETS["classic-borderless"];
+
+    // When
+    const { scale } = computeAutoPosition(img, "short", width, height);
+
+    // Then
+    const expectedScale =
+      CLASSIC_BORDERLESS_TEXTBOX_HEIGHTS.short / img.naturalHeight;
+    expect(scale).toBeCloseTo(expectedScale, 5);
+  });
+
+  it("uses actual canvas dimensions for positioning with classic borderless", () => {
+    // Given
+    const img = makeImage(5000, 7000);
+    const { width, height } = DESIGN_CANVAS_PRESETS["classic-borderless"];
+
+    // When
+    const { position, scale } = computeAutoPosition(img, "tall", width, height);
+
+    // Then
+    const expectedScale =
+      CLASSIC_BORDERLESS_TEXTBOX_HEIGHTS.tall / img.naturalHeight;
+    expect(scale).toBeCloseTo(expectedScale, 5);
+
+    const expectedX = Math.round((width - img.naturalWidth * scale) / 2);
+    expect(position.x).toBe(expectedX);
+
+    const pixelFromBottom = VERTICAL_PRESET_CENTERS.tall;
+    const scaleX = width / CANVAS_WIDTH;
+    const yCanvas = Math.round((CANVAS_HEIGHT - pixelFromBottom) * scaleX);
+    const imgH = img.naturalHeight * scale;
+    const expectedY = Math.max(
+      0,
+      Math.min(Math.round(yCanvas - imgH / 2), height - imgH),
+    );
+    expect(position.y).toBe(expectedY);
+  });
 });
 
 describe("useDesignWorkflow", () => {
@@ -385,7 +477,22 @@ describe("useDesignWorkflow", () => {
 
     // Then
     expect(result.current.state.stage).toBe(1);
+    expect(result.current.state.canvasSize).toBeNull();
     expect(result.current.state.textBoxSize).toBeNull();
+  });
+
+  it("selectCanvasSize advances to stage 2", () => {
+    // Given
+    const { result } = renderHook(() => useDesignWorkflow());
+
+    // When
+    act(() => {
+      result.current.selectCanvasSize("default");
+    });
+
+    // Then
+    expect(result.current.state.stage).toBe(2);
+    expect(result.current.state.canvasSize).toBe("default");
   });
 
   it("exposes handshake prompt and outpaint command", () => {
@@ -397,9 +504,13 @@ describe("useDesignWorkflow", () => {
     expect(result.current.outpaintCommand).toBe(OUTPAINT_COMMAND);
   });
 
-  it("selectTextBoxSize advances to stage 2", () => {
+  it("selectTextBoxSize advances to stage 3", () => {
     // Given
     const { result } = renderHook(() => useDesignWorkflow());
+
+    act(() => {
+      result.current.selectCanvasSize("default");
+    });
 
     // When
     act(() => {
@@ -407,15 +518,19 @@ describe("useDesignWorkflow", () => {
     });
 
     // Then
-    expect(result.current.state.stage).toBe(2);
+    expect(result.current.state.stage).toBe(3);
     expect(result.current.state.textBoxSize).toBe("medium");
+    expect(result.current.state.canvasSize).toBe("default");
   });
 
-  it("uploadOriginal advances to stage 3 and triggers processing", () => {
+  it("uploadOriginal advances to stage 4 and triggers processing", () => {
     // Given
     const { result } = renderHook(() => useDesignWorkflow());
     const img = makeImage();
 
+    act(() => {
+      result.current.selectCanvasSize("default");
+    });
     act(() => {
       result.current.selectTextBoxSize("normal");
     });
@@ -426,15 +541,18 @@ describe("useDesignWorkflow", () => {
     });
 
     // Then
-    expect(result.current.state.stage).toBe(3);
+    expect(result.current.state.stage).toBe(4);
     expect(result.current.state.isProcessing).toBe(true);
   });
 
-  it("auto-process runs via requestAnimationFrame and advances to stage 4", () => {
+  it("auto-process runs via requestAnimationFrame and advances to stage 5", () => {
     // Given
     const { result } = renderHook(() => useDesignWorkflow());
     const img = makeImage(800, 1100);
 
+    act(() => {
+      result.current.selectCanvasSize("default");
+    });
     act(() => {
       result.current.selectTextBoxSize("tall");
     });
@@ -449,7 +567,7 @@ describe("useDesignWorkflow", () => {
 
     // Then
     expect(mockExportFullResolution).toHaveBeenCalledOnce();
-    expect(result.current.state.stage).toBe(4);
+    expect(result.current.state.stage).toBe(5);
     expect(result.current.state.isProcessing).toBe(false);
     expect(result.current.state.grayBorderDataUrl).toBe(
       "data:image/png;base64,grayborder",
@@ -482,7 +600,7 @@ describe("useDesignWorkflow", () => {
     // Then
     expect(mockRemoveWatermark).toHaveBeenCalledOnce();
     expect(result.current.state.dewatermarkPhase).toBe("done");
-    expect(result.current.state.stage).toBe(5);
+    expect(result.current.state.stage).toBe(6);
     expect(mockRevokeObjectURL).toHaveBeenCalledOnce();
 
     vi.restoreAllMocks();
@@ -576,7 +694,7 @@ describe("useDesignWorkflow", () => {
     expect(mockExportFullResolution).not.toHaveBeenCalled();
   });
 
-  it("full flow through auto-merge completes at stage 6", async () => {
+  it("full flow through auto-merge completes at stage 7", async () => {
     // Given
     mockImageAutoLoad();
     mockCanvasElement();
@@ -603,29 +721,34 @@ describe("useDesignWorkflow", () => {
 
     // Stage 1 -> 2
     act(() => {
-      result.current.selectTextBoxSize("tall");
+      result.current.selectCanvasSize("default");
     });
 
     // Stage 2 -> 3
+    act(() => {
+      result.current.selectTextBoxSize("tall");
+    });
+
+    // Stage 3 -> 4
     const ogImg = makeImage(800, 1100);
     act(() => {
       result.current.uploadOriginal(ogImg, "card.png");
     });
 
-    // Stage 3 -> 4 (auto-process via raf)
+    // Stage 4 -> 5 (auto-process via raf)
     act(() => {
       if (rafCallback) rafCallback(0);
     });
-    expect(result.current.state.stage).toBe(4);
+    expect(result.current.state.stage).toBe(5);
 
-    // Stage 4 -> 5 -> 6 (dewatermark + auto-merge)
+    // Stage 5 -> 6 -> 7 (dewatermark + auto-merge)
     const file = new File(["px"], "outpaint.png", { type: "image/png" });
     await act(async () => {
       result.current.uploadOutpaint(file);
     });
 
     // Then
-    expect(result.current.state.stage).toBe(6);
+    expect(result.current.state.stage).toBe(7);
     expect(result.current.state.mergePhase).toBe("done");
     expect(result.current.state.mergedCanvasDataUrl).toBe(
       "data:image/png;base64,merged",
@@ -654,7 +777,10 @@ describe("useDesignWorkflow", () => {
 
     const { result } = renderHook(() => useDesignWorkflow());
 
-    // Full flow to stage 5
+    // Full flow to stage 6
+    act(() => {
+      result.current.selectCanvasSize("default");
+    });
     act(() => {
       result.current.selectTextBoxSize("tall");
     });
@@ -744,7 +870,7 @@ describe("useDesignWorkflow", () => {
     // The hook's downloadResult checks mergedCanvasDataUrl before acting
     const stateWithMerge: DesignState = {
       ...initialDesignState,
-      stage: 6,
+      stage: 7,
       mergedCanvasDataUrl: "data:image/png;base64,merged",
     };
     const afterDownload = designReducer(stateWithMerge, {

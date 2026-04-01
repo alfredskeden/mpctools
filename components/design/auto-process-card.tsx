@@ -6,12 +6,16 @@ type AutoProcessCardProps = {
   isProcessing: boolean;
   grayBorderDataUrl: string | null;
   fileName: string | null;
+  canvasWidth: number;
+  canvasHeight: number;
 };
 
 export function AutoProcessCard({
   isProcessing,
   grayBorderDataUrl,
   fileName,
+  canvasWidth,
+  canvasHeight,
 }: AutoProcessCardProps) {
   if (isProcessing) {
     return (
@@ -50,7 +54,7 @@ export function AutoProcessCard({
           <span className="text-sm font-medium text-text-primary">
             {fileName ?? "outpaint-canvas.png"}
           </span>
-          <span className="text-caption text-text-tertiary">3520 x 4800</span>
+          <span className="text-caption text-text-tertiary">{canvasWidth} x {canvasHeight}</span>
         </div>
       </div>
     </div>

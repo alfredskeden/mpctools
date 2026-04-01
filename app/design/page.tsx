@@ -1,6 +1,7 @@
 "use client";
 
-import { useDesignWorkflow } from "@/hooks/use-design-workflow";
+import { useDesignWorkflow, DESIGN_CANVAS_PRESETS } from "@/hooks/use-design-workflow";
+import { CanvasSizeSelector } from "@/components/design/canvas-size-selector";
 import { SizeSelector } from "@/components/design/size-selector";
 import { ImageUploader } from "@/components/design/image-uploader";
 import { AutoProcessCard } from "@/components/design/auto-process-card";
@@ -11,6 +12,7 @@ import { StepCircle } from "@/components/ui/StepCircle";
 import type { StepStatus } from "@/lib/step-types";
 
 const STAGE_LABELS = [
+  "Canvas size",
   "Text size",
   "Upload",
   "Process",
@@ -31,6 +33,7 @@ function getStageStatuses(currentStage: number): StepStatus[] {
 export default function DesignPage() {
   const {
     state,
+    selectCanvasSize,
     selectTextBoxSize,
     uploadOriginal,
     uploadOutpaint,
@@ -72,9 +75,22 @@ export default function DesignPage() {
 
         {state.stage >= 1 && (
           <section
-            aria-label="Text size selection"
+            aria-label="Canvas size selection"
             data-stage="1"
             className={state.stage > 1 ? "opacity-50" : undefined}
+          >
+            <CanvasSizeSelector
+              selected={state.canvasSize}
+              onSelect={selectCanvasSize}
+            />
+          </section>
+        )}
+
+        {state.stage >= 2 && (
+          <section
+            aria-label="Text size selection"
+            data-stage="2"
+            className={state.stage > 2 ? "opacity-50" : undefined}
           >
             <SizeSelector
               selected={state.textBoxSize}
@@ -83,16 +99,16 @@ export default function DesignPage() {
           </section>
         )}
 
-        {state.stage >= 2 && state.stage <= 2 && (
-          <section aria-label="Image upload" data-stage="2">
+        {state.stage >= 3 && state.stage <= 3 && (
+          <section aria-label="Image upload" data-stage="3">
             <ImageUploader onUpload={uploadOriginal} />
           </section>
         )}
 
-        {state.stage >= 2 && state.originalFileName && state.stage > 2 && (
+        {state.stage >= 3 && state.originalFileName && state.stage > 3 && (
           <section
             aria-label="Uploaded image"
-            data-stage="2-summary"
+            data-stage="3-summary"
             className="flex items-center gap-2 rounded-lg border border-surface-border bg-surface-raised p-3 opacity-50"
           >
             <div className="flex size-5 items-center justify-center rounded-full bg-status-success-dark">
@@ -113,18 +129,20 @@ export default function DesignPage() {
           </section>
         )}
 
-        {state.stage >= 3 && state.stage <= 4 && (
-          <section aria-label="Auto processing" data-stage="3">
+        {state.stage >= 4 && state.stage <= 5 && (
+          <section aria-label="Auto processing" data-stage="4">
             <AutoProcessCard
               isProcessing={state.isProcessing}
               grayBorderDataUrl={state.grayBorderDataUrl}
               fileName={state.originalFileName}
+              canvasWidth={state.canvasSize ? DESIGN_CANVAS_PRESETS[state.canvasSize].width : DESIGN_CANVAS_PRESETS.default.width}
+              canvasHeight={state.canvasSize ? DESIGN_CANVAS_PRESETS[state.canvasSize].height : DESIGN_CANVAS_PRESETS.default.height}
             />
           </section>
         )}
 
-        {state.stage >= 4 && state.stage <= 4 && (
-          <section aria-label="Outpaint handoff" data-stage="4">
+        {state.stage >= 5 && state.stage <= 5 && (
+          <section aria-label="Outpaint handoff" data-stage="5">
             <OutpaintHandoff
               handshakePrompt={handshakePrompt}
               outpaintCommand={outpaintCommand}
@@ -136,14 +154,14 @@ export default function DesignPage() {
           </section>
         )}
 
-        {state.stage >= 5 && state.stage <= 5 && (
-          <section aria-label="Auto merge" data-stage="5">
+        {state.stage >= 6 && state.stage <= 6 && (
+          <section aria-label="Auto merge" data-stage="6">
             <AutoMergeCard mergePhase={state.mergePhase} />
           </section>
         )}
 
-        {state.stage >= 6 && state.mergedCanvasDataUrl && (
-          <section aria-label="Final result" data-stage="6">
+        {state.stage >= 7 && state.mergedCanvasDataUrl && (
+          <section aria-label="Final result" data-stage="7">
             <FinalResultCard
               mergedCanvasDataUrl={state.mergedCanvasDataUrl}
               isDownloaded={state.isDownloaded}
