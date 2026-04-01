@@ -12,6 +12,10 @@ vi.mock("@/lib/merger-utils", () => ({
   downloadCanvasAsBlob: vi.fn(),
 }));
 
+vi.mock("@/lib/psd-export", () => ({
+  downloadPsd: vi.fn(),
+}));
+
 function setupImageMocks(dataUrl: string) {
   const OriginalFileReader = globalThis.FileReader;
   const OriginalImage = globalThis.Image;
@@ -162,6 +166,32 @@ describe(MergerPageContent.name, () => {
     expect(downloadCanvasAsBlob).toHaveBeenCalledWith(
       expect.any(HTMLCanvasElement),
       "merged_card.png",
+    );
+
+    mocks.restore();
+  });
+
+  it("triggers PSD download after all uploads", async () => {
+    const mocks = setupImageMocks("data:image/png;base64,abc");
+    const { downloadPsd } = vi.mocked(await import("@/lib/psd-export"));
+    render(<MergerPageContent />);
+
+    act(() => {
+      uploadFile("og-file-input", "card.png");
+    });
+    act(() => {
+      uploadFile("guide-file-input", "guide.png");
+    });
+    act(() => {
+      uploadFile("outpaint-file-input", "outpaint.png");
+    });
+
+    const psdBtns = screen.getAllByRole("button", { name: /download psd/i });
+    fireEvent.click(psdBtns[0]);
+
+    expect(downloadPsd).toHaveBeenCalledWith(
+      expect.objectContaining({ ogImage: expect.any(Object) }),
+      "merged_card.psd",
     );
 
     mocks.restore();

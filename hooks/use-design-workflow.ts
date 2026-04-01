@@ -13,6 +13,7 @@ import {
 } from "@/hooks/use-outpaint-workflow";
 import { removeWatermark } from "@/lib/watermark-api";
 import { analyzeGuide, downloadCanvasAsBlob } from "@/lib/merger-utils";
+import { downloadPsd } from "@/lib/psd-export";
 import { drawMergerScene } from "@/components/merger/MergerCanvas";
 import type { MergerState } from "@/hooks/use-merger-workflow";
 
@@ -44,6 +45,12 @@ export const CLASSIC_BORDERLESS_TEXTBOX_HEIGHTS: Record<TextBoxSize, number> = {
   medium: 2506,
 };
 
+export type MergeAnalysis = {
+  ogPosition: { x: number; y: number; w: number; h: number };
+  canvasW: number;
+  canvasH: number;
+};
+
 export type DesignState = {
   stage: DesignStage;
   canvasSize: CanvasSizePreset | null;
@@ -57,6 +64,7 @@ export type DesignState = {
   dewatermarkError: string | null;
   mergePhase: "idle" | "processing" | "done";
   mergedCanvasDataUrl: string | null;
+  mergeAnalysis: MergeAnalysis | null;
   isDownloaded: boolean;
 };
 
@@ -76,7 +84,7 @@ export type DesignAction =
     }
   | { type: "DEWATERMARK_ERROR"; payload: string }
   | { type: "START_MERGE" }
-  | { type: "MERGE_COMPLETE"; payload: string }
+  | { type: "MERGE_COMPLETE"; payload: { dataUrl: string; mergeAnalysis: MergeAnalysis } }
   | { type: "MARK_DOWNLOADED" }
   | { type: "RESET" };
 
@@ -93,6 +101,7 @@ export const initialDesignState: DesignState = {
   dewatermarkError: null,
   mergePhase: "idle",
   mergedCanvasDataUrl: null,
+  mergeAnalysis: null,
   isDownloaded: false,
 };
 
@@ -172,7 +181,8 @@ export function designReducer(
         ...state,
         stage: 7,
         mergePhase: "done",
-        mergedCanvasDataUrl: action.payload,
+        mergedCanvasDataUrl: action.payload.dataUrl,
+        mergeAnalysis: action.payload.mergeAnalysis,
       };
     case "MARK_DOWNLOADED":
       return {
@@ -416,7 +426,17 @@ export function useDesignWorkflow() {
       drawMergerScene(rCtx, mergerState, 1);
 
       const dataUrl = resultCanvas.toDataURL("image/png");
-      dispatch({ type: "MERGE_COMPLETE", payload: dataUrl });
+      dispatch({
+        type: "MERGE_COMPLETE",
+        payload: {
+          dataUrl,
+          mergeAnalysis: {
+            ogPosition: mergerState.ogPosition,
+            canvasW: analysis.canvasW,
+            canvasH: analysis.canvasH,
+          },
+        },
+      });
     };
     guideImg.src = grayBorderDataUrl;
 
@@ -430,6 +450,35 @@ export function useDesignWorkflow() {
     state.grayBorderDataUrl,
     state.dewatermarkedImage,
   ]);
+
+  const exportPsd = useCallback(
+    (fileName: string) => {
+      if (
+        !state.originalImage ||
+        !state.dewatermarkedImage ||
+        !state.mergeAnalysis
+      )
+        return;
+
+      downloadPsd(
+        {
+          ogImage: state.originalImage,
+          outpaintImage: state.dewatermarkedImage,
+          ogPosition: state.mergeAnalysis.ogPosition,
+          canvasW: state.mergeAnalysis.canvasW,
+          canvasH: state.mergeAnalysis.canvasH,
+          featherStrength: 40,
+          irregMagnitude: 100,
+          irregRadius: 0,
+          irregDensity: 100,
+          irregSeed: 42,
+          irregBlur: 12,
+        },
+        fileName,
+      );
+    },
+    [state.originalImage, state.dewatermarkedImage, state.mergeAnalysis],
+  );
 
   const downloadResult = useCallback(
     (fileName: string) => {
@@ -469,6 +518,7 @@ export function useDesignWorkflow() {
     uploadOriginal,
     uploadOutpaint,
     downloadResult,
+    exportPsd,
     reset,
     handshakePrompt: HANDSHAKE_PROMPT,
     outpaintCommand: OUTPAINT_COMMAND,

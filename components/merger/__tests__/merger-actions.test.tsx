@@ -13,6 +13,7 @@ const defaultProps = {
   irregRadius: 0,
   irregBlur: 12,
   onDownload: vi.fn(),
+  onDownloadPsd: vi.fn(),
   onFeatherChange: vi.fn(),
   onIrregMagnitudeChange: vi.fn(),
   onIrregDensityChange: vi.fn(),
@@ -232,5 +233,27 @@ describe("MergerActions", () => {
     fireEvent.pointerUp(slider, { target: { value: "30" } });
 
     expect(vi.mocked(track)).toHaveBeenCalledWith("merger_blending_adjusted", { param: "irreg_blur", value: expect.any(Number) });
+  });
+
+  it("shows disabled PSD button when cannot download", () => {
+    render(<MergerActions {...defaultProps} />);
+
+    expect(screen.getByRole("button", { name: /download psd/i })).toBeDisabled();
+  });
+
+  it("shows enabled PSD button when can download", () => {
+    render(<MergerActions {...defaultProps} canDownload />);
+
+    expect(screen.getByRole("button", { name: /download psd/i })).not.toBeDisabled();
+  });
+
+  it("calls onDownloadPsd when PSD button clicked", () => {
+    const onDownloadPsd = vi.fn();
+    render(
+      <MergerActions {...defaultProps} canDownload onDownloadPsd={onDownloadPsd} />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /download psd/i }));
+    expect(onDownloadPsd).toHaveBeenCalledOnce();
   });
 });

@@ -7,6 +7,7 @@ import { MergerActions } from "./merger-actions";
 import { MergerCanvas } from "./MergerCanvas";
 import type { MergerCanvasHandle } from "./MergerCanvas";
 import { downloadCanvasAsBlob } from "@/lib/merger-utils";
+import { downloadPsd } from "@/lib/psd-export";
 
 export function MergerPageContent() {
   const {
@@ -44,6 +45,34 @@ export function MergerPageContent() {
     markDownloaded();
   }, [canDownload, state.ogFileName, markDownloaded]);
 
+  const handleDownloadPsd = useCallback(() => {
+    if (
+      !canDownload ||
+      !state.ogImage ||
+      !state.outpaintImage ||
+      !state.ogPosition
+    )
+      return;
+
+    const baseName = state.ogFileName?.replace(/\.[^.]+$/, "") ?? "card";
+    downloadPsd(
+      {
+        ogImage: state.ogImage,
+        outpaintImage: state.outpaintImage,
+        ogPosition: state.ogPosition,
+        canvasW: state.canvasW,
+        canvasH: state.canvasH,
+        featherStrength: state.featherStrength,
+        irregMagnitude: state.irregMagnitude,
+        irregRadius: state.irregRadius,
+        irregDensity: state.irregDensity,
+        irregSeed: state.irregSeed,
+        irregBlur: state.irregBlur,
+      },
+      `merged_${baseName}.psd`,
+    );
+  }, [canDownload, state]);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col md:flex-row">
       {/* Canvas area */}
@@ -70,6 +99,7 @@ export function MergerPageContent() {
                 irregRadius={state.irregRadius}
                 irregBlur={state.irregBlur}
                 onDownload={handleDownload}
+                onDownloadPsd={handleDownloadPsd}
                 onFeatherChange={setFeather}
                 onIrregMagnitudeChange={setIrregMagnitude}
                 onIrregDensityChange={setIrregDensity}
@@ -91,6 +121,7 @@ export function MergerPageContent() {
             irregRadius={state.irregRadius}
             irregBlur={state.irregBlur}
             onDownload={handleDownload}
+            onDownloadPsd={handleDownloadPsd}
             onFeatherChange={setFeather}
             onIrregMagnitudeChange={setIrregMagnitude}
             onIrregDensityChange={setIrregDensity}

@@ -8,6 +8,7 @@ type FinalResultCardProps = {
   isDownloaded: boolean;
   originalFileName: string | null;
   onDownload: (fileName: string) => void;
+  onExportPsd: (fileName: string) => void;
   onReset: () => void;
 };
 
@@ -16,11 +17,16 @@ export function FinalResultCard({
   isDownloaded,
   originalFileName,
   onDownload,
+  onExportPsd,
   onReset,
 }: FinalResultCardProps) {
   const downloadName = originalFileName
     ? originalFileName.replace(/\.[^.]+$/, "-merged.png")
     : "merged-outpaint.png";
+
+  const psdName = originalFileName
+    ? originalFileName.replace(/\.[^.]+$/, "-merged.psd")
+    : "merged-outpaint.psd";
 
   return (
     <div className="flex flex-col gap-4">
@@ -42,6 +48,10 @@ export function FinalResultCard({
         >
           <Download className="size-4" />
           {isDownloaded ? "Downloaded" : "Download PNG"}
+        </Button>
+        <Button variant="outline" onClick={() => onExportPsd(psdName)}>
+          <Download className="size-4" />
+          Download PSD
         </Button>
         <Button variant="outline" onClick={onReset}>
           <RotateCcw className="size-4" />

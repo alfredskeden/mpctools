@@ -38,6 +38,7 @@ export default function DesignPage() {
     uploadOriginal,
     uploadOutpaint,
     downloadResult,
+    exportPsd,
     reset,
     handshakePrompt,
     outpaintCommand,
@@ -167,6 +168,7 @@ export default function DesignPage() {
               isDownloaded={state.isDownloaded}
               originalFileName={state.originalFileName}
               onDownload={downloadResult}
+              onExportPsd={exportPsd}
               onReset={reset}
             />
           </section>

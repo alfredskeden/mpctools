@@ -26,6 +26,11 @@ vi.mock("@/components/merger/MergerCanvas", () => ({
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
 
+const mockDownloadPsd = vi.fn();
+vi.mock("@/lib/psd-export", () => ({
+  downloadPsd: (...args: unknown[]) => mockDownloadPsd(...args),
+}));
+
 import {
   designReducer,
   initialDesignState,
@@ -320,17 +325,26 @@ describe("designReducer", () => {
       stage: 6,
       mergePhase: "processing",
     };
+    const ogPosition = { x: 100, y: 200, w: 800, h: 1100 };
 
     // When
     const result = designReducer(merging, {
       type: "MERGE_COMPLETE",
-      payload: "data:image/png;base64,merged",
+      payload: {
+        dataUrl: "data:image/png;base64,merged",
+        mergeAnalysis: { ogPosition, canvasW: 3520, canvasH: 4800 },
+      },
     });
 
     // Then
     expect(result.stage).toBe(7);
     expect(result.mergePhase).toBe("done");
     expect(result.mergedCanvasDataUrl).toBe("data:image/png;base64,merged");
+    expect(result.mergeAnalysis).toEqual({
+      ogPosition,
+      canvasW: 3520,
+      canvasH: 4800,
+    });
   });
 
   it("handles MARK_DOWNLOADED", () => {
@@ -668,6 +682,77 @@ describe("useDesignWorkflow", () => {
 
     // Then
     expect(result.current.state.isDownloaded).toBe(false);
+  });
+
+  it("exportPsd does nothing without required images", () => {
+    // Given
+    const { result } = renderHook(() => useDesignWorkflow());
+
+    // When
+    act(() => {
+      result.current.exportPsd("test.psd");
+    });
+
+    // Then
+    expect(mockDownloadPsd).not.toHaveBeenCalled();
+  });
+
+  it("exportPsd calls downloadPsd with correct params after full flow", async () => {
+    // Given
+    mockImageAutoLoad();
+    mockCanvasElement();
+
+    mockRemoveWatermark.mockResolvedValue({
+      blob: new Blob(["px"], { type: "image/png" }),
+      metadata: {
+        corner: "bottom-right",
+        confidence: 0.9,
+        alphaGain: 1.0,
+        source: "default",
+      },
+      pixelData: { pixels: new Uint8ClampedArray([]), width: 1, height: 1 },
+    });
+
+    mockAnalyzeGuide.mockReturnValue({
+      canvasW: 3520,
+      canvasH: 4800,
+      ogX: 100,
+      ogY: 200,
+    });
+
+    const { result } = renderHook(() => useDesignWorkflow());
+
+    act(() => { result.current.selectCanvasSize("default"); });
+    act(() => { result.current.selectTextBoxSize("tall"); });
+    const ogImg = makeImage(800, 1100);
+    act(() => { result.current.uploadOriginal(ogImg, "card.png"); });
+    act(() => { if (rafCallback) rafCallback(0); });
+
+    const file = new File(["px"], "outpaint.png", { type: "image/png" });
+    await act(async () => { result.current.uploadOutpaint(file); });
+
+    expect(result.current.state.stage).toBe(7);
+    expect(result.current.state.mergeAnalysis).not.toBeNull();
+
+    // When
+    act(() => {
+      result.current.exportPsd("card-merged.psd");
+    });
+
+    // Then
+    expect(mockDownloadPsd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        featherStrength: 40,
+        irregMagnitude: 100,
+        irregRadius: 0,
+        irregDensity: 100,
+        irregSeed: 42,
+        irregBlur: 12,
+      }),
+      "card-merged.psd",
+    );
+
+    vi.restoreAllMocks();
   });
 
   it("reset returns to initial state", () => {

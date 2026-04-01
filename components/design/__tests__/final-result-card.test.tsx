@@ -8,6 +8,7 @@ describe("FinalResultCard", () => {
     isDownloaded: false,
     originalFileName: "card.png",
     onDownload: vi.fn(),
+    onExportPsd: vi.fn(),
     onReset: vi.fn(),
   };
 
@@ -61,7 +62,7 @@ describe("FinalResultCard", () => {
 
     // When
     const buttons = screen.getAllByRole("button");
-    await user.click(buttons[1]); // Start over button
+    await user.click(buttons[2]); // Start over button (index 2 after PSD button was added)
 
     // Then
     expect(onReset).toHaveBeenCalledOnce();
@@ -74,5 +75,37 @@ describe("FinalResultCard", () => {
     // Then
     const buttons = screen.getAllByRole("button");
     expect(buttons[0]).toBeDefined();
+  });
+
+  it("calls onExportPsd with derived PSD file name", async () => {
+    // Given
+    const onExportPsd = vi.fn();
+    render(<FinalResultCard {...defaultProps} onExportPsd={onExportPsd} />);
+    const user = userEvent.setup();
+
+    // When
+    await user.click(screen.getByRole("button", { name: /download psd/i }));
+
+    // Then
+    expect(onExportPsd).toHaveBeenCalledWith("card-merged.psd");
+  });
+
+  it("calls onExportPsd with default PSD name when no original file name", async () => {
+    // Given
+    const onExportPsd = vi.fn();
+    render(
+      <FinalResultCard
+        {...defaultProps}
+        originalFileName={null}
+        onExportPsd={onExportPsd}
+      />,
+    );
+    const user = userEvent.setup();
+
+    // When
+    await user.click(screen.getByRole("button", { name: /download psd/i }));
+
+    // Then
+    expect(onExportPsd).toHaveBeenCalledWith("merged-outpaint.psd");
   });
 });

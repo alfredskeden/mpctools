@@ -14,6 +14,7 @@ type MergerActionsProps = {
   irregRadius: number;
   irregBlur: number;
   onDownload: () => void;
+  onDownloadPsd: () => void;
   onFeatherChange: (value: number) => void;
   onIrregMagnitudeChange: (value: number) => void;
   onIrregDensityChange: (value: number) => void;
@@ -31,6 +32,7 @@ export function MergerActions({
   irregRadius,
   irregBlur,
   onDownload,
+  onDownloadPsd,
   onFeatherChange,
   onIrregMagnitudeChange,
   onIrregDensityChange,
@@ -66,6 +68,20 @@ export function MergerActions({
           Download Merged
         </button>
       )}
+
+      <button
+        type="button"
+        disabled={!canDownload}
+        onClick={onDownloadPsd}
+        className={cn(
+          "h-11 w-full rounded-lg border text-sm font-medium transition-colors",
+          canDownload
+            ? "border-surface-border bg-surface-base text-text-primary hover:bg-surface-overlay"
+            : "border-surface-border bg-surface-overlay text-text-primary opacity-40 cursor-not-allowed",
+        )}
+      >
+        Download PSD
+      </button>
 
       <button
         type="button"
