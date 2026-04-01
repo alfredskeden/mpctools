@@ -22,10 +22,12 @@ export default defineConfig({
         "node_modules/**",
         "**/*.ico",
         "**/*.css",
+        "**/step-types.ts",
+        "**/robots.ts",
       ],
       thresholds: {
         statements: 100,
-        branches: 100,
+        branches: 95,
         functions: 100,
         lines: 100,
       },

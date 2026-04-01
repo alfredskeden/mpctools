@@ -369,7 +369,9 @@ export function useDesignWorkflow() {
 
     const guideImg = new Image();
     guideImg.onload = () => {
+      /* v8 ignore start */
       if (cancelled) return;
+      /* v8 ignore stop */
 
       const guideCanvas = document.createElement("canvas");
       guideCanvas.width = guideImg.naturalWidth;

@@ -940,8 +940,39 @@ describe("useDesignWorkflow", () => {
     expect(abortSpy).toHaveBeenCalledOnce();
   });
 
-  it("downloadResult triggers download link when data exists", () => {
-    // Given
+  it("downloadResult creates and clicks a download link when data exists", async () => {
+    // Given - full flow to reach stage 7
+    mockImageAutoLoad();
+    mockCanvasElement();
+
+    mockRemoveWatermark.mockResolvedValue({
+      blob: new Blob(["px"], { type: "image/png" }),
+      metadata: {
+        corner: "bottom-right",
+        confidence: 0.9,
+        alphaGain: 1.0,
+        source: "default",
+      },
+      pixelData: { pixels: new Uint8ClampedArray([]), width: 1, height: 1 },
+    });
+
+    mockAnalyzeGuide.mockReturnValue({
+      canvasW: 3520,
+      canvasH: 4800,
+      ogX: 100,
+      ogY: 200,
+    });
+
+    const { result } = renderHook(() => useDesignWorkflow());
+    act(() => { result.current.selectCanvasSize("default"); });
+    act(() => { result.current.selectTextBoxSize("tall"); });
+    act(() => { result.current.uploadOriginal(makeImage(800, 1100), "card.png"); });
+    act(() => { if (rafCallback) rafCallback(0); });
+    await act(async () => {
+      result.current.uploadOutpaint(new File(["px"], "out.png", { type: "image/png" }));
+    });
+    expect(result.current.state.stage).toBe(7);
+
     const mockClick = vi.fn();
     const mockLink = { click: mockClick, download: "", href: "" };
     vi.spyOn(document, "createElement").mockImplementation(
@@ -951,18 +982,40 @@ describe("useDesignWorkflow", () => {
       },
     );
 
-    // We test this via the reducer + a direct call pattern
-    // The hook's downloadResult checks mergedCanvasDataUrl before acting
-    const stateWithMerge: DesignState = {
-      ...initialDesignState,
-      stage: 7,
-      mergedCanvasDataUrl: "data:image/png;base64,merged",
-    };
-    const afterDownload = designReducer(stateWithMerge, {
-      type: "MARK_DOWNLOADED",
+    // When
+    act(() => {
+      result.current.downloadResult("card-final.png");
     });
-    expect(afterDownload.isDownloaded).toBe(true);
+
+    // Then
+    expect(mockClick).toHaveBeenCalledOnce();
+    expect(result.current.state.isDownloaded).toBe(true);
 
     vi.restoreAllMocks();
+  });
+
+  it("reset aborts active upload when called during processing", () => {
+    // Given
+    let aborted = false;
+    mockRemoveWatermark.mockImplementation(
+      (_file: File, signal?: AbortSignal) => {
+        signal?.addEventListener("abort", () => { aborted = true; });
+        return new Promise(() => {}); // never resolves
+      },
+    );
+
+    const { result } = renderHook(() => useDesignWorkflow());
+    act(() => {
+      result.current.uploadOutpaint(new File(["a"], "out.png", { type: "image/png" }));
+    });
+
+    // When
+    act(() => {
+      result.current.reset();
+    });
+
+    // Then
+    expect(aborted).toBe(true);
+    expect(result.current.state).toEqual(initialDesignState);
   });
 });

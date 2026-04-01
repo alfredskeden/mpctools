@@ -22,16 +22,25 @@ export const HeroSection = () => {
         </p>
       </div>
 
-      <Button
-        asChild
-        size="lg"
-        className="h-13 gap-2.5 rounded-lg bg-brand px-9 text-base font-semibold text-brand-foreground hover:bg-brand-hover"
-      >
-        <Link href="/prep">
-          Start Building
-          <ArrowRight className="size-4.5" />
+      <div className="flex flex-col items-center gap-3">
+        <Button
+          asChild
+          size="lg"
+          className="h-13 gap-2.5 rounded-lg bg-brand px-9 text-base font-semibold text-brand-foreground hover:bg-brand-hover"
+        >
+          <Link href="/prep">
+            Start Building
+            <ArrowRight className="size-4.5" />
+          </Link>
+        </Button>
+        <Link
+          href="/design"
+          className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
+        >
+          Automatic building
+          <ArrowRight className="size-3.5" />
         </Link>
-      </Button>
+      </div>
     </div>
   );
 };

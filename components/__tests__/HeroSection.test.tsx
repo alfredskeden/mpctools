@@ -17,9 +17,17 @@ describe("HeroSection", () => {
     expect(container.querySelector("p")).not.toBeNull();
   });
 
-  it("renders a CTA link to start the workflow", () => {
+  it("renders a primary CTA link to start the manual workflow", () => {
     render(<HeroSection />);
-    const link = screen.getByRole("link");
-    expect(link.getAttribute("href")).toBe("/prep");
+    const links = screen.getAllByRole("link");
+    const prepLink = links.find((l) => l.getAttribute("href") === "/prep");
+    expect(prepLink).not.toBeUndefined();
+  });
+
+  it("renders a secondary link to the automatic design workflow", () => {
+    render(<HeroSection />);
+    const links = screen.getAllByRole("link");
+    const designLink = links.find((l) => l.getAttribute("href") === "/design");
+    expect(designLink).not.toBeUndefined();
   });
 });

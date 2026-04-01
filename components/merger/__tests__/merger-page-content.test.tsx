@@ -141,6 +141,15 @@ describe(MergerPageContent.name, () => {
     expect(downloadBtn).toBeDefined();
   });
 
+  it("does not crash when PSD download is clicked without canvas data", () => {
+    render(<MergerPageContent />);
+
+    const psdBtn = screen.getAllByRole("button", { name: /download psd/i })[0];
+    fireEvent.click(psdBtn);
+
+    expect(psdBtn).toBeDefined();
+  });
+
   it("triggers download after all uploads", async () => {
     const mocks = setupImageMocks("data:image/png;base64,abc");
     const { downloadCanvasAsBlob } = vi.mocked(

@@ -2,11 +2,13 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { OutpaintHandoff } from "../outpaint-handoff";
 
+const mockCopyText = vi.fn();
 const mockCopyImage = vi.fn();
 let mockImageCopied = false;
+let mockTextCopied = false;
 
 vi.mock("@/hooks/use-clipboard", () => ({
-  useCopyToClipboard: () => ({ copied: false, copy: vi.fn() }),
+  useCopyToClipboard: () => ({ copied: mockTextCopied, copy: mockCopyText }),
   useCopyImageToClipboard: () => ({
     copied: mockImageCopied,
     copyImage: mockCopyImage,
@@ -30,6 +32,30 @@ describe("OutpaintHandoff", () => {
     // Then
     const copyButtons = screen.getAllByRole("button");
     expect(copyButtons).toHaveLength(2);
+  });
+
+  it("calls copy with handshake prompt when first block is clicked", () => {
+    // Given
+    render(<OutpaintHandoff {...defaultProps} />);
+    const [handshakeBtn] = screen.getAllByRole("button");
+
+    // When
+    fireEvent.click(handshakeBtn);
+
+    // Then
+    expect(mockCopyText).toHaveBeenCalledWith("handshake text");
+  });
+
+  it("calls copy with outpaint command when second block is clicked", () => {
+    // Given
+    render(<OutpaintHandoff {...defaultProps} />);
+    const [, commandBtn] = screen.getAllByRole("button");
+
+    // When
+    fireEvent.click(commandBtn);
+
+    // Then
+    expect(mockCopyText).toHaveBeenCalledWith("outpaint command text");
   });
 
   it("shows upload zone when dewatermark is idle", () => {
@@ -193,6 +219,21 @@ describe("OutpaintHandoff", () => {
 
     // Cleanup
     mockImageCopied = false;
+  });
+
+  it("shows copied state in prompt blocks when copied is true", () => {
+    // Given
+    mockTextCopied = true;
+
+    // When
+    render(<OutpaintHandoff {...defaultProps} />);
+
+    // Then
+    const buttons = screen.getAllByRole("button");
+    expect(buttons).toHaveLength(2);
+
+    // Cleanup
+    mockTextCopied = false;
   });
 
   it("ignores empty file selection", () => {

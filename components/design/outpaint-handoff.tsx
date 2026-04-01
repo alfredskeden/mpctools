@@ -92,9 +92,14 @@ export function OutpaintHandoff({
       )}
 
       <div className="flex flex-col gap-3">
-        <span className="text-label font-semibold tracking-wide text-text-primary">
-          Upload outpaint result
-        </span>
+        <div className="flex flex-col gap-1">
+          <span className="text-label font-semibold tracking-wide text-text-primary">
+            Upload outpaint result
+          </span>
+          <span className="text-caption text-text-tertiary">
+            Watermark removal will happen automatically when you upload.
+          </span>
+        </div>
 
         {dewatermarkPhase === "idle" && (
           <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-surface-muted bg-surface-raised px-4 py-6 transition-colors hover:border-accent-blue hover:bg-accent-blue/5">

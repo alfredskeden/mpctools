@@ -1,5 +1,19 @@
-import { Header } from "@/components/Header";
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Automatic Design — MPC Tools",
+  description:
+    "Upload your card art and let AI handle the full outpainting workflow automatically. Canvas sizing, processing, outpainting, and merging in one seamless flow.",
+  openGraph: {
+    title: "Automatic Design — MPC Tools",
+    description:
+      "Upload your card art and let AI handle the full outpainting workflow automatically.",
+  },
+  alternates: {
+    canonical: "/design",
+  },
+};
 
 export const DesignLayout = ({
   children,

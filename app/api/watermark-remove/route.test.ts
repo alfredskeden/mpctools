@@ -220,6 +220,18 @@ describe("POST /api/watermark-remove", () => {
       // Then
       expect(response.status).toBe(500);
     });
+
+    it("returns 500 when pipeline throws a non-Error value", async () => {
+      // Given
+      vi.mocked(runWatermarkPipeline).mockRejectedValue("string error");
+      const request = makeRequest();
+
+      // When
+      const response = await POST(request);
+
+      // Then
+      expect(response.status).toBe(500);
+    });
   });
 
   describe("processing", () => {

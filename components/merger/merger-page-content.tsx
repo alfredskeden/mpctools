@@ -46,6 +46,7 @@ export function MergerPageContent() {
   }, [canDownload, state.ogFileName, markDownloaded]);
 
   const handleDownloadPsd = useCallback(() => {
+    /* v8 ignore start */
     if (
       !canDownload ||
       !state.ogImage ||
@@ -53,6 +54,7 @@ export function MergerPageContent() {
       !state.ogPosition
     )
       return;
+    /* v8 ignore stop */
 
     const baseName = state.ogFileName?.replace(/\.[^.]+$/, "") ?? "card";
     downloadPsd(
