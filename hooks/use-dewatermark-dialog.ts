@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useReducer, useRef } from "react";
-import { removeMergerWatermark } from "@/app/(steps)/merger/actions";
+import { removeWatermark } from "@/lib/watermark-api";
 import { track } from "@/lib/analytics";
-import type { WatermarkActionResult } from "@/app/(steps)/merger/actions";
 
 type WatermarkMetadata = {
   corner: string;
@@ -57,15 +56,6 @@ function reducer(state: DewatermarkState, action: Action): DewatermarkState {
 
 const initialState: DewatermarkState = { phase: "idle" };
 
-function buildMetadata(result: WatermarkActionResult): WatermarkMetadata {
-  return {
-    corner: result.corner,
-    confidence: result.confidence,
-    alphaGain: result.alphaGain,
-    source: result.source,
-  };
-}
-
 export function useDewatermarkDialog() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const previewUrlRef = useRef<string | null>(null);
@@ -77,21 +67,20 @@ export function useDewatermarkDialog() {
     dispatch({ type: "START_PROCESSING" });
     track("dewatermark_started", { fileName: file.name });
 
-    removeMergerWatermark(file, { adaptive: false })
+    removeWatermark(file, undefined, { adaptive: false })
       .then((result) => {
-        const blob = new Blob([new Uint8Array(result.pngBytes)], { type: "image/png" });
-        const url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(result.blob);
         previewUrlRef.current = url;
 
         dispatch({
           type: "SET_RESULT",
-          blob,
+          blob: result.blob,
           previewUrl: url,
-          metadata: buildMetadata(result),
+          metadata: result.metadata,
         });
         track("dewatermark_succeeded", {
-          corner: result.corner,
-          confidence: result.confidence,
+          corner: result.metadata.corner,
+          confidence: result.metadata.confidence,
         });
       })
       .catch((error: unknown) => {
@@ -109,22 +98,21 @@ export function useDewatermarkDialog() {
     dispatch({ type: "START_PROCESSING" });
     track("dewatermark_adaptive_started");
 
-    removeMergerWatermark(file, { adaptive: true })
+    removeWatermark(file, undefined, { adaptive: true })
       .then((result) => {
         URL.revokeObjectURL(previewUrlRef.current!);
-        const blob = new Blob([new Uint8Array(result.pngBytes)], { type: "image/png" });
-        const url = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(result.blob);
         previewUrlRef.current = url;
 
         dispatch({
           type: "SET_RESULT",
-          blob,
+          blob: result.blob,
           previewUrl: url,
-          metadata: buildMetadata(result),
+          metadata: result.metadata,
         });
         track("dewatermark_adaptive_succeeded", {
-          corner: result.corner,
-          confidence: result.confidence,
+          corner: result.metadata.corner,
+          confidence: result.metadata.confidence,
         });
       })
       .catch((error: unknown) => {

@@ -1,8 +1,8 @@
 import { renderHook, act } from "@testing-library/react";
 
-const mockRemoveMergerWatermark = vi.fn();
-vi.mock("@/app/(steps)/merger/actions", () => ({
-  removeMergerWatermark: (...args: unknown[]) => mockRemoveMergerWatermark(...args),
+const mockRemoveWatermark = vi.fn();
+vi.mock("@/lib/watermark-api", () => ({
+  removeWatermark: (...args: unknown[]) => mockRemoveWatermark(...args),
 }));
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
@@ -24,13 +24,15 @@ afterEach(() => {
 
 function makeActionResult(overrides: Record<string, unknown> = {}) {
   return {
-    pngBytes: new Uint8Array([137, 80, 78, 71]),
-    corner: "bottom-right",
-    confidence: 0.87,
-    alphaGain: 1.05,
-    source: "adaptive",
-    accepted: true,
-    ...overrides,
+    blob: new Blob([new Uint8Array([137, 80, 78, 71])], { type: "image/png" }),
+    metadata: {
+      corner: "bottom-right",
+      confidence: 0.87,
+      alphaGain: 1.05,
+      source: "adaptive",
+      ...overrides,
+    },
+    pixelData: { pixels: new Uint8ClampedArray([]), width: 1, height: 1 },
   };
 }
 
@@ -46,7 +48,7 @@ describe("useDewatermarkDialog", () => {
   it("transitions to processing then result on success", async () => {
     // Given
     const actionResult = makeActionResult();
-    mockRemoveMergerWatermark.mockResolvedValue(actionResult);
+    mockRemoveWatermark.mockResolvedValue(actionResult);
     const { result } = renderHook(() => useDewatermarkDialog());
     const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
 
@@ -71,7 +73,7 @@ describe("useDewatermarkDialog", () => {
 
   it("transitions to error on action failure", async () => {
     // Given
-    mockRemoveMergerWatermark.mockRejectedValue(new Error("Failed to decode image"));
+    mockRemoveWatermark.mockRejectedValue(new Error("Failed to decode image"));
     const { result } = renderHook(() => useDewatermarkDialog());
     const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
 
@@ -87,9 +89,9 @@ describe("useDewatermarkDialog", () => {
     }
   });
 
-  it("creates object URL from reconstructed blob on success", async () => {
+  it("creates object URL from result blob on success", async () => {
     // Given
-    mockRemoveMergerWatermark.mockResolvedValue(makeActionResult());
+    mockRemoveWatermark.mockResolvedValue(makeActionResult());
     const { result } = renderHook(() => useDewatermarkDialog());
 
     // When
@@ -103,9 +105,9 @@ describe("useDewatermarkDialog", () => {
     expect(mockCreateObjectURL).toHaveBeenCalledWith(expect.any(Blob));
   });
 
-  it("calls removeMergerWatermark with adaptive=false for processFile", async () => {
+  it("calls removeWatermark with adaptive=false for processFile", async () => {
     // Given
-    mockRemoveMergerWatermark.mockResolvedValue(makeActionResult());
+    mockRemoveWatermark.mockResolvedValue(makeActionResult());
     const { result } = renderHook(() => useDewatermarkDialog());
     const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
 
@@ -115,12 +117,12 @@ describe("useDewatermarkDialog", () => {
     });
 
     // Then
-    expect(mockRemoveMergerWatermark).toHaveBeenCalledWith(file, { adaptive: false });
+    expect(mockRemoveWatermark).toHaveBeenCalledWith(file, undefined, { adaptive: false });
   });
 
   it("reset returns to idle and revokes object URL", async () => {
     // Given
-    mockRemoveMergerWatermark.mockResolvedValue(makeActionResult());
+    mockRemoveWatermark.mockResolvedValue(makeActionResult());
     const { result } = renderHook(() => useDewatermarkDialog());
 
     await act(async () => {
@@ -156,7 +158,7 @@ describe("useDewatermarkDialog", () => {
 
   it("tracks dewatermark_started on processFile", async () => {
     // Given
-    mockRemoveMergerWatermark.mockResolvedValue(makeActionResult());
+    mockRemoveWatermark.mockResolvedValue(makeActionResult());
     const { result } = renderHook(() => useDewatermarkDialog());
 
     // When
@@ -174,7 +176,7 @@ describe("useDewatermarkDialog", () => {
 
   it("tracks dewatermark_succeeded on success", async () => {
     // Given
-    mockRemoveMergerWatermark.mockResolvedValue(makeActionResult());
+    mockRemoveWatermark.mockResolvedValue(makeActionResult());
     const { result } = renderHook(() => useDewatermarkDialog());
 
     // When
@@ -193,7 +195,7 @@ describe("useDewatermarkDialog", () => {
 
   it("tracks dewatermark_failed on error", async () => {
     // Given
-    mockRemoveMergerWatermark.mockRejectedValue(new Error("decode failure"));
+    mockRemoveWatermark.mockRejectedValue(new Error("decode failure"));
     const { result } = renderHook(() => useDewatermarkDialog());
 
     // When
@@ -211,7 +213,7 @@ describe("useDewatermarkDialog", () => {
 
   it("handles non-Error rejection with fallback message", async () => {
     // Given
-    mockRemoveMergerWatermark.mockRejectedValue("string error");
+    mockRemoveWatermark.mockRejectedValue("string error");
     const { result } = renderHook(() => useDewatermarkDialog());
 
     // When
@@ -231,7 +233,7 @@ describe("useDewatermarkDialog", () => {
   describe("runAdaptiveDetection", () => {
     it("transitions to processing then result with adaptive metadata", async () => {
       // Given
-      mockRemoveMergerWatermark
+      mockRemoveWatermark
         .mockResolvedValueOnce(makeActionResult({ corner: "", source: "preset", confidence: 0.74 }))
         .mockResolvedValueOnce(makeActionResult({ corner: "bottom-right", confidence: 0.92, source: "adaptive" }));
 
@@ -257,9 +259,9 @@ describe("useDewatermarkDialog", () => {
       }
     });
 
-    it("calls removeMergerWatermark with stored file and adaptive=true", async () => {
+    it("calls removeWatermark with stored file and adaptive=true", async () => {
       // Given
-      mockRemoveMergerWatermark.mockResolvedValue(makeActionResult());
+      mockRemoveWatermark.mockResolvedValue(makeActionResult());
       const { result } = renderHook(() => useDewatermarkDialog());
       const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
 
@@ -273,7 +275,7 @@ describe("useDewatermarkDialog", () => {
       });
 
       // Then
-      expect(mockRemoveMergerWatermark).toHaveBeenCalledWith(file, { adaptive: true });
+      expect(mockRemoveWatermark).toHaveBeenCalledWith(file, undefined, { adaptive: true });
     });
 
     it("is a no-op when no file has been processed", async () => {
@@ -287,12 +289,12 @@ describe("useDewatermarkDialog", () => {
 
       // Then
       expect(result.current.state.phase).toBe("idle");
-      expect(mockRemoveMergerWatermark).not.toHaveBeenCalled();
+      expect(mockRemoveWatermark).not.toHaveBeenCalled();
     });
 
     it("revokes previous preview URL before setting new one", async () => {
       // Given
-      mockRemoveMergerWatermark.mockResolvedValue(makeActionResult());
+      mockRemoveWatermark.mockResolvedValue(makeActionResult());
       let callCount = 0;
       mockCreateObjectURL.mockImplementation(() => {
         callCount++;
@@ -318,7 +320,7 @@ describe("useDewatermarkDialog", () => {
 
     it("tracks dewatermark_adaptive_started", async () => {
       // Given
-      mockRemoveMergerWatermark.mockResolvedValue(makeActionResult());
+      mockRemoveWatermark.mockResolvedValue(makeActionResult());
       const { result } = renderHook(() => useDewatermarkDialog());
 
       await act(async () => {
@@ -338,7 +340,7 @@ describe("useDewatermarkDialog", () => {
 
     it("tracks dewatermark_adaptive_succeeded on success", async () => {
       // Given
-      mockRemoveMergerWatermark
+      mockRemoveWatermark
         .mockResolvedValueOnce(makeActionResult())
         .mockResolvedValueOnce(makeActionResult({ corner: "top-left", confidence: 0.95 }));
 
@@ -364,7 +366,7 @@ describe("useDewatermarkDialog", () => {
 
     it("transitions to error on failure", async () => {
       // Given
-      mockRemoveMergerWatermark
+      mockRemoveWatermark
         .mockResolvedValueOnce(makeActionResult())
         .mockRejectedValueOnce(new Error("Detection failed"));
 
@@ -390,7 +392,7 @@ describe("useDewatermarkDialog", () => {
 
     it("tracks dewatermark_adaptive_failed on error", async () => {
       // Given
-      mockRemoveMergerWatermark
+      mockRemoveWatermark
         .mockResolvedValueOnce(makeActionResult())
         .mockRejectedValueOnce(new Error("Detection failed"));
 
@@ -415,7 +417,7 @@ describe("useDewatermarkDialog", () => {
 
     it("handles non-Error rejection with fallback message", async () => {
       // Given
-      mockRemoveMergerWatermark
+      mockRemoveWatermark
         .mockResolvedValueOnce(makeActionResult())
         .mockRejectedValueOnce("string error");
 
@@ -454,7 +456,7 @@ describe("useDewatermarkDialog", () => {
       }
     });
 
-    mockRemoveMergerWatermark.mockResolvedValue(makeActionResult());
+    mockRemoveWatermark.mockResolvedValue(makeActionResult());
     const { result } = renderHook(() => useDewatermarkDialog());
 
     await act(async () => {
@@ -499,7 +501,7 @@ describe("useDewatermarkDialog", () => {
     });
 
     try {
-      mockRemoveMergerWatermark.mockResolvedValue(makeActionResult());
+      mockRemoveWatermark.mockResolvedValue(makeActionResult());
       const { result } = renderHook(() => useDewatermarkDialog());
 
       await act(async () => {
