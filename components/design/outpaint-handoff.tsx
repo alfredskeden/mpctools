@@ -2,7 +2,10 @@
 
 import { useCallback, useRef } from "react";
 import { Upload, Loader2, Check } from "lucide-react";
-import { useCopyToClipboard } from "@/hooks/use-clipboard";
+import {
+  useCopyToClipboard,
+  useCopyImageToClipboard,
+} from "@/hooks/use-clipboard";
 
 type OutpaintHandoffProps = {
   handshakePrompt: string;
@@ -23,6 +26,7 @@ export function OutpaintHandoff({
 }: OutpaintHandoffProps) {
   const handshakeClipboard = useCopyToClipboard();
   const commandClipboard = useCopyToClipboard();
+  const imageClipboard = useCopyImageToClipboard();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = useCallback(
@@ -66,13 +70,23 @@ export function OutpaintHandoff({
             <span className="text-sm font-medium text-text-primary">
               Send this image to Gemini
             </span>
-            <a
-              href={grayBorderDataUrl}
-              download="outpaint-canvas.png"
-              className="text-caption text-accent-blue hover:underline"
-            >
-              Download to send
-            </a>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => imageClipboard.copyImage(grayBorderDataUrl!)}
+                className="text-caption text-accent-blue hover:underline"
+              >
+                {imageClipboard.copied ? "Copied!" : "Copy to clipboard"}
+              </button>
+              <span className="text-caption text-text-tertiary">or</span>
+              <a
+                href={grayBorderDataUrl}
+                download="outpaint-canvas.png"
+                className="text-caption text-accent-blue hover:underline"
+              >
+                Download
+              </a>
+            </div>
           </div>
         </div>
       )}

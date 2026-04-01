@@ -62,7 +62,7 @@ export default function DesignPage() {
               )}
               <div className="flex items-center gap-1.5">
                 <StepCircle status={statuses[i]} number={i + 1} />
-                <span className="hidden text-caption text-text-secondary sm:inline">
+                <span className="hidden text-caption text-text-secondary md:inline text-nowrap">
                   {label}
                 </span>
               </div>

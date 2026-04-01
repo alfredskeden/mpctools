@@ -1,11 +1,7 @@
 "use client";
 
 import { useReducer, useCallback, useEffect, useRef } from "react";
-import {
-  calculateInitialScale,
-  CANVAS_WIDTH,
-  CANVAS_HEIGHT,
-} from "@/lib/canvas-utils";
+import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
 import { exportFullResolution } from "@/lib/prep-renderer";
 import {
   VERTICAL_PRESET_CENTERS,
@@ -23,6 +19,13 @@ import type { MergerState } from "@/hooks/use-merger-workflow";
 export type DesignStage = 1 | 2 | 3 | 4 | 5 | 6;
 
 export type TextBoxSize = VerticalPreset;
+
+export const TEXTBOX_AVAILABLE_HEIGHTS: Record<TextBoxSize, number> = {
+  tall: 1857,
+  normal: 2180,
+  short: 2596,
+  medium: 2374,
+};
 
 export type DesignState = {
   stage: DesignStage;
@@ -160,16 +163,15 @@ export function computeAutoPosition(
   image: HTMLImageElement,
   textBoxSize: TextBoxSize,
 ): { position: { x: number; y: number }; scale: number } {
-  const scale = calculateInitialScale(image, {
-    width: CANVAS_WIDTH,
-    height: CANVAS_HEIGHT,
-  });
+  const availableHeight = TEXTBOX_AVAILABLE_HEIGHTS[textBoxSize];
+  const scale = availableHeight / image.naturalHeight;
+  console.log(`[computeAutoPosition] textBoxSize=${textBoxSize}, availableHeight=${availableHeight}, imageNaturalHeight=${image.naturalHeight}, scale=${scale}`);
 
-  const x = Math.round((CANVAS_WIDTH - image.width * scale) / 2);
+  const x = Math.round((CANVAS_WIDTH - image.naturalWidth * scale) / 2);
 
   const pixelFromBottom = VERTICAL_PRESET_CENTERS[textBoxSize];
   const yCanvas = Math.round(CANVAS_HEIGHT - pixelFromBottom);
-  const imgH = image.height * scale;
+  const imgH = image.naturalHeight * scale;
   const y = Math.max(0, Math.min(Math.round(yCanvas - imgH / 2), CANVAS_HEIGHT - imgH));
 
   return { position: { x, y }, scale };

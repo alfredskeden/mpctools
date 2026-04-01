@@ -31,6 +31,7 @@ import {
   initialDesignState,
   computeAutoPosition,
   useDesignWorkflow,
+  TEXTBOX_AVAILABLE_HEIGHTS,
   type DesignState,
 } from "../use-design-workflow";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
@@ -311,26 +312,25 @@ describe("designReducer", () => {
 });
 
 describe("computeAutoPosition", () => {
-  it("centers image horizontally and positions vertically for tall preset", () => {
-    // Given - use a large image that requires downscaling
+  it("scales image height to match available vertical space for tall preset", () => {
+    // Given
     const img = makeImage(5000, 7000);
 
     // When
     const { position, scale } = computeAutoPosition(img, "tall");
 
-    // Then - calculateInitialScale caps at 1 when image fits, otherwise returns fit scale
-    const scaleX = (CANVAS_WIDTH * 0.8) / img.width;
-    const scaleY = (CANVAS_HEIGHT * 0.8) / img.height;
-    const fitScale = Math.min(scaleX, scaleY);
-    const expectedScale = fitScale >= 1 ? 1 : fitScale;
+    // Then
+    const expectedScale = TEXTBOX_AVAILABLE_HEIGHTS.tall / img.naturalHeight;
     expect(scale).toBeCloseTo(expectedScale, 5);
 
-    const expectedX = Math.round((CANVAS_WIDTH - img.width * scale) / 2);
+    const expectedX = Math.round(
+      (CANVAS_WIDTH - img.naturalWidth * scale) / 2,
+    );
     expect(position.x).toBe(expectedX);
 
     const pixelFromBottom = VERTICAL_PRESET_CENTERS.tall;
     const yCanvas = Math.round(CANVAS_HEIGHT - pixelFromBottom);
-    const imgH = img.height * scale;
+    const imgH = img.naturalHeight * scale;
     const expectedY = Math.max(
       0,
       Math.min(Math.round(yCanvas - imgH / 2), CANVAS_HEIGHT - imgH),
@@ -357,19 +357,23 @@ describe("computeAutoPosition", () => {
     const { position, scale } = computeAutoPosition(img, "tall");
 
     // Then
-    const maxY = CANVAS_HEIGHT - img.height * scale;
+    const maxY = CANVAS_HEIGHT - img.naturalHeight * scale;
     expect(position.y).toBeLessThanOrEqual(maxY);
   });
 
-  it("works for each preset", () => {
+  it("produces correct scale for each preset", () => {
+    // Given
     const img = makeImage(800, 1100);
     const presets = ["short", "medium", "normal", "tall"] as const;
 
     for (const preset of presets) {
-      const { position, scale } = computeAutoPosition(img, preset);
-      expect(scale).toBeGreaterThan(0);
-      expect(position.x).toBeGreaterThanOrEqual(0);
-      expect(position.y).toBeGreaterThanOrEqual(0);
+      // When
+      const { scale } = computeAutoPosition(img, preset);
+
+      // Then
+      const expectedScale =
+        TEXTBOX_AVAILABLE_HEIGHTS[preset] / img.naturalHeight;
+      expect(scale).toBeCloseTo(expectedScale, 5);
     }
   });
 });
