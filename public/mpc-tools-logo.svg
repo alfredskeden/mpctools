@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#1a2340"/>
+  <text x="256" y="230" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="195" fill="#e8eaf0" letter-spacing="-4">MPC</text>
+  <text x="256" y="410" text-anchor="middle" font-family="Arial Black, Arial, Helvetica, sans-serif" font-weight="900" font-size="165" fill="#7b9bbf" letter-spacing="-2">Tools</text>
+</svg>

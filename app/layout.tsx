@@ -17,6 +17,14 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mpctools.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "16x16 32x32" },
+    ],
+    apple: { url: "/apple-touch-icon.png", sizes: "180x180" },
+  },
+  manifest: "/site.webmanifest",
   title: "MPC Tools Image outpainting using AI",
   description:
     "Prepare, outpaint, and merge high-quality images for outpainting using AI.",

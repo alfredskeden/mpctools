@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "favicon-gen": {
+      "source": "jezweb/claude-skills",
+      "sourceType": "github",
+      "computedHash": "4e3d5464503a1cdccb188ccd0d4b894cd2bb70b4a47bf68e8d67589813241d9c"
+    },
     "seo-audit": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",
