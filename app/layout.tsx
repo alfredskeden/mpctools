@@ -13,10 +13,28 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://mpctools.com";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: "MPC Proxy Art — MTG Playtest Card Builder",
   description:
     "Prepare, outpaint, and merge high-quality card art for print-ready playtest proxies.",
+  openGraph: {
+    title: "MPC Proxy Art — MTG Playtest Card Builder",
+    description:
+      "Prepare, outpaint, and merge high-quality card art for print-ready playtest proxies.",
+    url: "/",
+    type: "website",
+    images: [{ url: "/og-image.png", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MPC Proxy Art — MTG Playtest Card Builder",
+    description:
+      "Prepare, outpaint, and merge high-quality card art for print-ready playtest proxies.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({
@@ -30,6 +48,21 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         {children}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              name: "MPC Proxy Art",
+              applicationCategory: "DesignApplication",
+              operatingSystem: "Web",
+              description:
+                "Prepare, outpaint, and merge card art for print-ready MTG playtest proxies.",
+              url: siteUrl,
+            }),
+          }}
+        />
         {process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID && (
           <Script
             src="https://cloud.umami.is/script.js"
