@@ -166,10 +166,10 @@
   --brand: oklch(0.55 0.18 253);
   --brand-hover: oklch(0.48 0.16 253);
   --brand-foreground: oklch(1 0 0);
-  --status-success: #22C55E;
-  --status-success-dark: #2D7A3A;
-  --text-code: #AAAAAA;
-  --accent-blue-muted: #6699EE;
+  --status-success: #22c55e;
+  --status-success-dark: #2d7a3a;
+  --text-code: #aaaaaa;
+  --accent-blue-muted: #6699ee;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -208,36 +208,36 @@
   --brand-hover: oklch(0.62 0.15 253);
   --brand-foreground: oklch(1 0 0);
   /* Instructions panel */
-  --instructions-panel: #14161D;
-  --instructions-card: #1A1C24;
+  --instructions-panel: #14161d;
+  --instructions-card: #1a1c24;
 
   /* Surface scale */
-  --surface-ground: #0A0A0A;
-  --surface-header: #0F0F0F;
+  --surface-ground: #0a0a0a;
+  --surface-header: #0f0f0f;
   --surface-base: #111111;
-  --surface-raised: #1A1A1A;
+  --surface-raised: #1a1a1a;
   --surface-overlay: #222222;
-  --surface-border: #2A2A2A;
+  --surface-border: #2a2a2a;
   --surface-subtle: #333333;
   --surface-muted: #444444;
 
   /* Text scale */
-  --text-primary: #EEEEEE;
+  --text-primary: #eeeeee;
   --text-secondary: #888888;
   --text-tertiary: #666666;
   --text-disabled: #555555;
   --text-faint: #444444;
 
   /* Accent */
-  --accent-blue: #4488FF;
-  --accent-blue-muted: #6699EE;
+  --accent-blue: #4488ff;
+  --accent-blue-muted: #6699ee;
 
   /* Status */
-  --status-success: #22C55E;
-  --status-success-dark: #2D7A3A;
+  --status-success: #22c55e;
+  --status-success-dark: #2d7a3a;
 
   /* Code text */
-  --text-code: #AAAAAA;
+  --text-code: #aaaaaa;
 
   /* Canvas */
   --canvas-bg: #808080;

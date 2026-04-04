@@ -23,6 +23,7 @@ export default defineConfig({
         "**/*.ico",
         "**/*.css",
         "**/step-types.ts",
+        "**/scryfall-types.ts",
         "**/robots.ts",
       ],
       thresholds: {
