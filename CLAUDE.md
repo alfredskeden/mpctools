@@ -1,4 +1,4 @@
-# Project: mpcproxy-art-nextjs-frontend
+# Project: mpctools
 
 ## Stack
 

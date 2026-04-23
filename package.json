@@ -1,6 +1,6 @@
 {
-  "name": "mpcproxy-art-nextjs-frontend",
-  "version": "0.1.0",
+  "name": "mpctools",
+  "version": "0.5.1",
   "private": true,
   "license": "MIT",
   "scripts": {
