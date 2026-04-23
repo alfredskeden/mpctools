@@ -2,18 +2,29 @@
 
 ## Stack
 
-- Next.js 16 (App Router)
+- Next.js 16 (App Router, standalone output)
 - React 19
 - TypeScript (strict mode)
 - Tailwind CSS 4
-- shadcn/ui components
-- pnpm package manager
+- shadcn/ui components (radix-nova style, `components.json`)
+- `sharp` + Web Workers for image processing
+- `ag-psd` for PSD export
+- pnpm package manager (Node 22, see `.nvmrc`)
+
+## Environment Variables
+
+Defined in `.env.example` (copy to `.env.local`):
+
+- `NEXT_PUBLIC_SITE_URL` — base URL for metadata / sitemap / robots (defaults to `https://mpctools.com`)
+- `NEXT_PUBLIC_UMAMI_WEBSITE_ID` — optional; when set, loads Umami analytics script
+- `WATERMARK_API_SECRET` — required only for `/api/watermark-remove`; request must include `Authorization: Bearer $WATERMARK_API_SECRET`
 
 ## Project Conventions
 
 - TypeScript with strict mode — PascalCase for composable UI components, kebab-case for everything else
 - Tests live alongside source files in `__tests__/` subdirectories
 - Use `pnpm` as the package manager — never `npm` or `yarn`
+- Dev server runs on port **3050** (not 3000) — see `package.json` scripts
 
 ## Testing
 
@@ -57,31 +68,34 @@ Use `/behavior-tests [file]` to audit and fix brittle tests in an existing file.
 app/
   (steps)/              # Route group for step-based workflow
     layout.tsx          # Shared layout for all steps
-    prep/               # Step 1: Image preparation (page.tsx + page.test.tsx)
-    outpaint/           # Step 2: Outpainting (page.tsx + page.test.tsx)
-    merger/             # Step 3: Merging (page.tsx + page.test.tsx)
-  layout.tsx            # Root layout (Server Component, loads fonts/metadata)
+    prep/               # Step 1: Image preparation
+    outpaint/           # Step 2: Outpainting
+    merger/             # Step 3: Merging
+  api/
+    watermark-remove/   # POST endpoint — server-side watermark pipeline (Bearer auth)
+  borderless-svg/       # Borderless card SVG tool
+  design/               # Design prompt handshake
+  layout.tsx            # Root layout (fonts, metadata, JSON-LD, Umami script)
   page.tsx              # Landing page
+  sitemap.ts            # Next.js MetadataRoute.Sitemap
+  robots.ts             # Next.js MetadataRoute.Robots
   globals.css           # Global styles & Tailwind design tokens
 components/
-  ui/                   # shadcn/ui primitives (Button, Card, Badge, Separator, StepCircle)
-    __tests__/          # Tests for ui components
-  prep/                 # Prep step components
-    toolbar/            # Toolbar sub-components and panels
-      panels/           # Individual panel components (CanvasSizePanel, DpiOverridePanel, etc.)
-      __tests__/
-    __tests__/
+  ui/                   # shadcn/ui primitives
+  prep/                 # Prep step components (includes toolbar/panels/)
   outpaint/             # Outpaint step components
-    __tests__/
   merger/               # Merger step components
-    __tests__/
-  __tests__/            # Tests for root-level components
+  landing/              # Landing page sections (nav, workflow, features, CTA, footer)
 hooks/                  # Custom React hooks (always kebab-case)
-  __tests__/            # Hook tests
-lib/                    # Utilities, canvas logic, worker client, type definitions
-  image.worker.ts       # Web Worker for image processing
-  worker-client.ts      # Manages worker communication
+lib/                    # Canvas/image/worker utilities and business logic
+  image.worker.ts       # Web Worker (watermark removal runs here)
+  worker-client.ts      # Worker communication wrapper
+  watermark-*.ts        # Detection, removal, math, config, pipeline, alpha maps
+  psd-export.ts         # PSD export via ag-psd
+  analytics.ts          # Umami tracking wrapper
   step-types.ts         # Shared type definitions
+green-light/            # GreenLight E2E scenarios (YAML)
+public/                 # Static assets (favicons, og-image, fonts, overlays)
 __mocks__/              # Global test mocks
 ```
 
@@ -238,8 +252,22 @@ describe("ComponentName", () => {
 
 ## MCP Tools
 
-- When using Paper MCP for design work, always take a screenshot after writing HTML to verify the result
-- If Paper crashes during a `write_html` call, retry the call before reporting failure
+- Only MCP configured by default is `shadcn` (see `.mcp.json`) — use it when adding / inspecting shadcn primitives
+- When using Paper MCP for design work (if configured locally), always take a screenshot after writing HTML to verify the result. Retry `write_html` once on crash before reporting failure.
+
+## E2E Tests (GreenLight)
+
+- Scenarios live in `green-light/*.yaml`
+- Run against a local dev server on port 3050 with a local Ollama (`qwen2.5:14b` at `http://localhost:11434`)
+- Scripts: `pnpm greenlight`, `pnpm greenlight:pilot`, `pnpm greenlight:headed`, `pnpm greenlight:pilot:headed`
+- `@eidra-umain/greenlight` is currently linked via a local filesystem path in `package.json` — this **only works on the maintainer's machine**. Anyone cloning a public version must either remove/skip these scripts or publish the linked package.
+
+## Deployment
+
+- `next.config.ts` sets `output: "standalone"` — produces a self-contained `.next/standalone` bundle
+- Server Actions body limit raised to `100mb` (large images)
+- `sharp` is marked `serverExternalPackages` — native binary loaded from `node_modules` at runtime
+- `Dockerfile` + `docker-compose.yml` build and run on port 3050 (container :3000 → host :3050)
 
 ## Design Context
 

@@ -42,8 +42,7 @@ yarn-error.log*
 next-env.d.ts
 
 /references
-/.claude/plans
-/.claude/skills
+/.claude/
 /designs/
 # GreenLight cached plans
 .greenlight/
