@@ -205,40 +205,6 @@ describe("DewatermarkSettingsRail", () => {
     ).toBe(true);
   });
 
-  it("shows the locked-while-rendering caption while processing", () => {
-    // Given/When
-    renderRail({ isProcessing: true });
-
-    // Then
-    expect(screen.getByTestId("rail-footer-meta").textContent).toContain(
-      "Settings locked while rendering",
-    );
-  });
-
-  it("derives the default-state download caption from the image name and export format", () => {
-    // Given/When
-    renderRail({
-      settings: { ...DEWATERMARK_DEFAULTS, exportFormat: "webp" },
-    });
-
-    // Then
-    expect(screen.getByTestId("rail-footer-meta").textContent).toContain(
-      "card_dewatermarked.webp",
-    );
-  });
-
-  it("falls back to 'image' in the caption when imageMeta has no name", () => {
-    // Given/When
-    renderRail({
-      imageMeta: { ...baseImage, name: "" },
-    });
-
-    // Then
-    expect(screen.getByTestId("rail-footer-meta").textContent).toContain(
-      "_dewatermarked.png",
-    );
-  });
-
   it("disables the auto-detect link when corner is already auto", () => {
     // Given/When
     renderRail();

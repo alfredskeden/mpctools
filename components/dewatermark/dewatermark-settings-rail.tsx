@@ -276,28 +276,18 @@ export function DewatermarkSettingsRail({
 
       <footer className="shrink-0 border-t border-surface-border bg-surface-base px-5 py-3.5">
         {hasImage && imageMeta ? (
-          <>
-            <Button
-              type="button"
-              variant="default"
-              size="lg"
-              className="w-full justify-center"
-              disabled={isProcessing}
-              onClick={onDownload}
-              data-testid="rail-download"
-            >
-              <Download className="size-3.5" aria-hidden="true" />
-              {isProcessing ? "Rendering…" : "Download cleaned image"}
-            </Button>
-            <p
-              className="mt-2 text-center font-mono text-micro text-text-tertiary"
-              data-testid="rail-footer-meta"
-            >
-              {isProcessing
-                ? "Settings locked while rendering"
-                : `Saved as ${imageMeta.name.replace(/\.[^.]+$/, "") || "image"}_dewatermarked.${settings.exportFormat}`}
-            </p>
-          </>
+          <Button
+            type="button"
+            variant="default"
+            size="lg"
+            className="w-full justify-center"
+            disabled={isProcessing}
+            onClick={onDownload}
+            data-testid="rail-download"
+          >
+            <Download className="size-3.5" aria-hidden="true" />
+            {isProcessing ? "Rendering…" : "Download"}
+          </Button>
         ) : (
           <RailUploadCta onFile={onUploadFile} />
         )}
@@ -308,29 +298,24 @@ export function DewatermarkSettingsRail({
 
 function RailUploadCta({ onFile }: { onFile: (file: File) => void }) {
   return (
-    <>
-      <label
-        data-testid="rail-upload-label"
-        className="flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary/80"
-      >
-        <Upload className="size-3.5" aria-hidden="true" />
-        Upload image
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          data-testid="rail-upload-input"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onFile(file);
-            e.target.value = "";
-          }}
-        />
-      </label>
-      <p className="mt-2 text-center font-mono text-micro text-text-tertiary">
-        PNG, JPEG or WebP · runs in your browser
-      </p>
-    </>
+    <label
+      data-testid="rail-upload-label"
+      className="flex h-9 w-full cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-label font-semibold text-primary-foreground transition-colors hover:bg-primary/80"
+    >
+      <Upload className="size-3.5" aria-hidden="true" />
+      Upload image
+      <input
+        type="file"
+        accept="image/*"
+        className="hidden"
+        data-testid="rail-upload-input"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) onFile(file);
+          e.target.value = "";
+        }}
+      />
+    </label>
   );
 }
 
@@ -370,4 +355,3 @@ function RailSection({
     </section>
   );
 }
-

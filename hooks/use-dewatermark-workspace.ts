@@ -28,9 +28,9 @@ export const DEWATERMARK_DEFAULTS: DewatermarkSettings = {
   adaptive: false,
   corner: "auto",
   confidenceThreshold: 0.72,
-  maskExpand: 4,
-  feather: 0.5,
-  postLightness: 0,
+  maskExpand: 1.5,
+  feather: 4,
+  postLightness: 2.75,
   alphaGain: 1,
   exportFormat: "png",
 };
