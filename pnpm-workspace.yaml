@@ -1,4 +1,7 @@
-ignoredBuiltDependencies:
+onlyBuiltDependencies:
+  - '@eidra-umain/greenlight'
+  - esbuild
+  - msw
   - sharp
   - unrs-resolver
 
@@ -12,3 +15,4 @@ overrides:
   picomatch@>=4.0.0 <4.0.4: '>=4.0.4'
   brace-expansion@<1.1.13: '>=1.1.13'
   brace-expansion@>=4.0.0 <5.0.5: '>=5.0.5'
+  postcss@<8.5.10: '>=8.5.10'
