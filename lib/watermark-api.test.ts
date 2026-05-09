@@ -139,7 +139,7 @@ describe("removeWatermark", () => {
       expect.any(Uint8ClampedArray),
       200,
       150,
-      undefined,
+      { adaptive: undefined, settings: undefined, confidenceThreshold: undefined },
     );
   });
 
@@ -156,7 +156,35 @@ describe("removeWatermark", () => {
       expect.any(Uint8ClampedArray),
       200,
       150,
-      true,
+      { adaptive: true, settings: undefined, confidenceThreshold: undefined },
+    );
+  });
+
+  it("forwards settings and confidenceThreshold to the worker", async () => {
+    // Given
+    setupDefaults();
+    const file = new File(["pixels"], "test.png", { type: "image/png" });
+    const settings = {
+      corner: "top-left" as const,
+      alphaGain: 1.4,
+      feather: 0.5,
+      postLightness: 0.1,
+      maskExpand: 8,
+    };
+
+    // When
+    await removeWatermark(file, undefined, {
+      adaptive: true,
+      settings,
+      confidenceThreshold: 0.6,
+    });
+
+    // Then
+    expect(mockRemoveWatermarkInWorker).toHaveBeenCalledWith(
+      expect.any(Uint8ClampedArray),
+      100,
+      100,
+      { adaptive: true, settings, confidenceThreshold: 0.6 },
     );
   });
 
@@ -278,7 +306,35 @@ describe("removeWatermarkFromPixels", () => {
       expect.any(Uint8ClampedArray),
       100,
       100,
-      true,
+      { adaptive: true, settings: undefined, confidenceThreshold: undefined },
+    );
+  });
+
+  it("forwards settings and confidenceThreshold from pixels API", async () => {
+    // Given
+    setupDefaults();
+    const pixels = new Uint8ClampedArray(100 * 100 * 4);
+    const settings = {
+      corner: "bottom-left" as const,
+      alphaGain: 0.9,
+      feather: 0.7,
+      postLightness: -0.1,
+      maskExpand: 3,
+    };
+
+    // When
+    await removeWatermarkFromPixels(pixels, 100, 100, {
+      adaptive: false,
+      settings,
+      confidenceThreshold: 0.4,
+    });
+
+    // Then
+    expect(mockRemoveWatermarkInWorker).toHaveBeenCalledWith(
+      expect.any(Uint8ClampedArray),
+      100,
+      100,
+      { adaptive: false, settings, confidenceThreshold: 0.4 },
     );
   });
 

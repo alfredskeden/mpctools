@@ -133,11 +133,10 @@ describe("image worker handleMessage", () => {
       // Then
       expect(response.type).toBe("REMOVE_WATERMARK");
       expect(response.id).toBe(5);
-      expect(detectBestCandidate).toHaveBeenCalledWith({
-        data: pixels,
-        width: 4,
-        height: 4,
-      });
+      expect(detectBestCandidate).toHaveBeenCalledWith(
+        { data: pixels, width: 4, height: 4 },
+        { corner: undefined },
+      );
       expect(runPipeline).toHaveBeenCalledWith(
         { data: pixels, width: 4, height: 4 },
         { postLightness: 2.75, maskExpand: 1.5, feather: 4 },
@@ -219,6 +218,95 @@ describe("image worker handleMessage", () => {
 
       // Then
       expect(detectBestCandidate).not.toHaveBeenCalled();
+      expect(runPipeline).toHaveBeenCalledWith(
+        { data: pixels, width: 4, height: 4 },
+        { postLightness: 2.75, maskExpand: 1.5, feather: 4 },
+        null,
+      );
+    });
+
+    it("forwards custom settings and threshold-passes detection through", () => {
+      // Given
+      const pixels = new Uint8ClampedArray(4 * 4 * 4);
+      const resultPixels = new Uint8ClampedArray(4 * 4 * 4);
+      const customSettings = {
+        corner: "top-left" as const,
+        alphaGain: 1.4,
+        feather: 0.5,
+        postLightness: 0.1,
+        maskExpand: 8,
+      };
+      const mockDetection = {
+        corner: "top-left",
+        accepted: true,
+        confidence: 0.9,
+      };
+      vi.mocked(detectBestCandidate).mockReturnValue(mockDetection as never);
+      vi.mocked(runPipeline).mockReturnValue({
+        imageData: { data: resultPixels, width: 4, height: 4 },
+        position: { x: 0, y: 0, width: 4, height: 4 },
+        alphaMap: new Float32Array(16),
+        alphaGain: 1.4,
+        confidence: 0.9,
+        accepted: true,
+        detectionSource: "adaptive",
+      });
+
+      // When
+      handleMessage({
+        type: "REMOVE_WATERMARK",
+        id: 11,
+        pixels,
+        width: 4,
+        height: 4,
+        adaptive: true,
+        settings: customSettings,
+        confidenceThreshold: 0.5,
+      });
+
+      // Then
+      expect(detectBestCandidate).toHaveBeenCalledWith(
+        { data: pixels, width: 4, height: 4 },
+        { corner: "top-left" },
+      );
+      expect(runPipeline).toHaveBeenCalledWith(
+        { data: pixels, width: 4, height: 4 },
+        customSettings,
+        mockDetection,
+      );
+    });
+
+    it("drops detection when confidence is below threshold", () => {
+      // Given
+      const pixels = new Uint8ClampedArray(4 * 4 * 4);
+      const resultPixels = new Uint8ClampedArray(4 * 4 * 4);
+      vi.mocked(detectBestCandidate).mockReturnValue({
+        corner: "bottom-right",
+        accepted: true,
+        confidence: 0.4,
+      } as never);
+      vi.mocked(runPipeline).mockReturnValue({
+        imageData: { data: resultPixels, width: 4, height: 4 },
+        position: { x: 0, y: 0, width: 4, height: 4 },
+        alphaMap: new Float32Array(16),
+        alphaGain: 1,
+        confidence: 0.74,
+        accepted: false,
+        detectionSource: "preset",
+      });
+
+      // When
+      handleMessage({
+        type: "REMOVE_WATERMARK",
+        id: 12,
+        pixels,
+        width: 4,
+        height: 4,
+        adaptive: true,
+        confidenceThreshold: 0.6,
+      });
+
+      // Then
       expect(runPipeline).toHaveBeenCalledWith(
         { data: pixels, width: 4, height: 4 },
         { postLightness: 2.75, maskExpand: 1.5, feather: 4 },

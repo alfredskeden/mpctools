@@ -21,6 +21,12 @@ describe("sitemap", () => {
     expect(paths).toContain("/merger");
   });
 
+  it("includes the /dewatermark route", () => {
+    const entries = sitemap();
+    const paths = entries.map((e) => new URL(e.url).pathname);
+    expect(paths).toContain("/dewatermark");
+  });
+
   it("assigns /design a higher priority than other workflow routes", () => {
     const entries = sitemap();
     const design = entries.find((e) => new URL(e.url).pathname === "/design");

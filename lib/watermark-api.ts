@@ -1,4 +1,5 @@
 import { removeWatermarkInWorker } from "./worker-client";
+import type { RemovalSettings } from "./watermark-removal";
 
 export type WatermarkMetadata = {
   corner: string;
@@ -19,10 +20,16 @@ export type WatermarkResult = {
   pixelData: PixelData;
 };
 
+export type RemoveWatermarkApiOptions = {
+  adaptive?: boolean;
+  settings?: RemovalSettings;
+  confidenceThreshold?: number;
+};
+
 export async function removeWatermark(
   file: File,
   signal?: AbortSignal,
-  options?: { adaptive?: boolean },
+  options?: RemoveWatermarkApiOptions,
 ): Promise<WatermarkResult> {
   if (signal?.aborted) {
     throw new DOMException("Aborted", "AbortError");
@@ -39,12 +46,11 @@ export async function removeWatermark(
 
   const originalPixels = new Uint8ClampedArray(imageData.data);
 
-  const result = await removeWatermarkInWorker(
-    imageData.data,
-    width,
-    height,
-    options?.adaptive,
-  );
+  const result = await removeWatermarkInWorker(imageData.data, width, height, {
+    adaptive: options?.adaptive,
+    settings: options?.settings,
+    confidenceThreshold: options?.confidenceThreshold,
+  });
 
   if (signal?.aborted) {
     throw new DOMException("Aborted", "AbortError");
@@ -71,16 +77,15 @@ export async function removeWatermarkFromPixels(
   pixels: Uint8ClampedArray,
   width: number,
   height: number,
-  options?: { adaptive?: boolean },
+  options?: RemoveWatermarkApiOptions,
 ): Promise<WatermarkResult> {
   const copy = new Uint8ClampedArray(pixels);
 
-  const result = await removeWatermarkInWorker(
-    copy,
-    width,
-    height,
-    options?.adaptive,
-  );
+  const result = await removeWatermarkInWorker(copy, width, height, {
+    adaptive: options?.adaptive,
+    settings: options?.settings,
+    confidenceThreshold: options?.confidenceThreshold,
+  });
 
   const outCanvas = new OffscreenCanvas(result.width, result.height);
   const outCtx = outCanvas.getContext("2d")!;

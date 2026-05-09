@@ -1,8 +1,20 @@
 import { sharpenPixelData, analyzeGuideData } from "./image-processing";
 import { detectBestCandidate } from "./watermark-detection";
-import { runPipeline } from "./watermark-removal";
+import { runPipeline, type RemovalSettings } from "./watermark-removal";
 import type { GuideAnalysis } from "./merger-utils";
 import type { WorkerMessage, WorkerResponse, WatermarkWorkerMetadata } from "./image.worker";
+
+const DEFAULT_REMOVAL_SETTINGS: RemovalSettings = {
+  postLightness: 2.75,
+  maskExpand: 1.5,
+  feather: 4,
+};
+
+export type RemoveWatermarkOptions = {
+  adaptive?: boolean;
+  settings?: RemovalSettings;
+  confidenceThreshold?: number;
+};
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>
@@ -102,13 +114,23 @@ export async function removeWatermarkInWorker(
   pixels: Uint8ClampedArray,
   width: number,
   height: number,
-  adaptive?: boolean,
+  options?: RemoveWatermarkOptions | boolean,
 ): Promise<RemoveWatermarkWorkerResult> {
+  const opts: RemoveWatermarkOptions =
+    typeof options === "boolean" ? { adaptive: options } : options ?? {};
   /* v8 ignore start -- Worker path requires real Web Worker */
   try {
     const copy = new Uint8ClampedArray(pixels);
     const response = await postToWorker(
-      { type: "REMOVE_WATERMARK", pixels: copy, width, height, adaptive: adaptive ?? false },
+      {
+        type: "REMOVE_WATERMARK",
+        pixels: copy,
+        width,
+        height,
+        adaptive: opts.adaptive ?? false,
+        settings: opts.settings,
+        confidenceThreshold: opts.confidenceThreshold,
+      },
       [copy.buffer],
     );
     if (response.type === "REMOVE_WATERMARK") {
@@ -124,12 +146,18 @@ export async function removeWatermarkInWorker(
   }
   /* v8 ignore stop */
   const img = { data: pixels, width, height };
-  const detection = adaptive ? detectBestCandidate(img) : null;
-  const result = runPipeline(
-    img,
-    { postLightness: 2.75, maskExpand: 1.5, feather: 4 },
-    detection,
-  );
+  const settings = opts.settings ?? DEFAULT_REMOVAL_SETTINGS;
+  let detection = opts.adaptive
+    ? detectBestCandidate(img, { corner: settings.corner })
+    : null;
+  if (
+    detection &&
+    opts.confidenceThreshold !== undefined &&
+    detection.confidence < opts.confidenceThreshold
+  ) {
+    detection = null;
+  }
+  const result = runPipeline(img, settings, detection);
   return {
     pixels: result.imageData.data,
     width: result.imageData.width,

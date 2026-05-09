@@ -38,4 +38,11 @@ describe("LandingNav", () => {
     const anchor = nav.querySelector('a[href="#how-it-works"]');
     expect(anchor).not.toBeNull();
   });
+
+  it("renders a Dewatermark link to the standalone tool", () => {
+    render(<LandingNav />);
+    const nav = screen.getByRole("navigation", { name: "Site navigation" });
+    const link = nav.querySelector('a[href="/dewatermark"]');
+    expect(link).not.toBeNull();
+  });
 });

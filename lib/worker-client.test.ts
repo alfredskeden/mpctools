@@ -209,6 +209,128 @@ describe("worker-client", () => {
       globalThis.Worker = originalWorker;
     });
 
+    it("forwards options object (adaptive + settings + threshold) to worker payload", async () => {
+      const originalWorker = globalThis.Worker;
+      const captured: { settings?: unknown; confidenceThreshold?: unknown; adaptive?: unknown } = {};
+      let onMessageHandler: ((e: MessageEvent) => void) | null = null;
+
+      globalThis.Worker = class MockWorker {
+        onmessage: ((e: MessageEvent) => void) | null = null;
+        constructor() {
+          setTimeout(() => {
+            onMessageHandler = this.onmessage;
+          }, 0);
+        }
+        postMessage(data: {
+          type: string;
+          id: number;
+          settings?: unknown;
+          confidenceThreshold?: unknown;
+          adaptive?: unknown;
+        }) {
+          captured.settings = data.settings;
+          captured.confidenceThreshold = data.confidenceThreshold;
+          captured.adaptive = data.adaptive;
+          const resultPixels = new Uint8ClampedArray(2 * 2 * 4);
+          setTimeout(() => {
+            onMessageHandler?.({
+              data: {
+                type: "REMOVE_WATERMARK",
+                id: data.id,
+                pixels: resultPixels,
+                width: 2,
+                height: 2,
+                metadata: { corner: "top-left", confidence: 0.8, alphaGain: 1.2, source: "adaptive" },
+              },
+            } as MessageEvent);
+          }, 0);
+        }
+      } as unknown as typeof Worker;
+
+      const { removeWatermarkInWorker: fn } = await import("./worker-client");
+
+      const pixels = new Uint8ClampedArray(2 * 2 * 4);
+      const settings = { corner: "top-left" as const, alphaGain: 1.2, feather: 0.3, postLightness: 0, maskExpand: 5 };
+      await fn(pixels, 2, 2, { adaptive: true, settings, confidenceThreshold: 0.6 });
+
+      expect(captured.adaptive).toBe(true);
+      expect(captured.settings).toEqual(settings);
+      expect(captured.confidenceThreshold).toBe(0.6);
+
+      globalThis.Worker = originalWorker;
+    });
+
+    it("falls back honouring confidenceThreshold when worker is unavailable", async () => {
+      const originalWorker = globalThis.Worker;
+      // @ts-expect-error - intentionally removing Worker
+      delete globalThis.Worker;
+
+      const { removeWatermarkInWorker: fn } = await import("./worker-client");
+
+      const pixels = new Uint8ClampedArray(2 * 2 * 4);
+      // Adaptive on with an impossibly high threshold → detection (if any) gets dropped → preset source
+      const result = await fn(pixels, 2, 2, { adaptive: true, confidenceThreshold: 1.5 });
+
+      expect(result.metadata.source).toBe("preset");
+
+      globalThis.Worker = originalWorker;
+    });
+
+    it("drops a non-null fallback detection when confidence is below the threshold", async () => {
+      const originalWorker = globalThis.Worker;
+      // @ts-expect-error - intentionally removing Worker
+      delete globalThis.Worker;
+
+      vi.doMock("./watermark-detection", async (importOriginal) => {
+        const actual = await importOriginal<
+          typeof import("./watermark-detection")
+        >();
+        return {
+          ...actual,
+          detectBestCandidate: vi.fn(() => ({
+            corner: "bottom-right",
+            confidence: 0.2,
+            accepted: true,
+            alphaGain: 1,
+            position: { x: 0, y: 0, width: 2, height: 2 },
+            alphaMap: new Float32Array(4),
+          })),
+        };
+      });
+
+      const { removeWatermarkInWorker: fn } = await import("./worker-client");
+
+      const pixels = new Uint8ClampedArray(2 * 2 * 4);
+      const result = await fn(pixels, 2, 2, {
+        adaptive: true,
+        confidenceThreshold: 0.9,
+      });
+
+      // detection.confidence (0.2) < threshold (0.9) → detection gets nulled → preset path
+      expect(result.metadata.source).toBe("preset");
+
+      vi.doUnmock("./watermark-detection");
+      globalThis.Worker = originalWorker;
+    });
+
+    it("falls back forwarding custom settings when worker is unavailable", async () => {
+      const originalWorker = globalThis.Worker;
+      // @ts-expect-error - intentionally removing Worker
+      delete globalThis.Worker;
+
+      const { removeWatermarkInWorker: fn } = await import("./worker-client");
+
+      const pixels = new Uint8ClampedArray(2 * 2 * 4);
+      const result = await fn(pixels, 2, 2, {
+        settings: { corner: "top-right", alphaGain: 1.3, feather: 0.2, postLightness: 0, maskExpand: 6 },
+      });
+
+      expect(result.pixels).toBeInstanceOf(Uint8ClampedArray);
+      expect(result.metadata.source).toBe("preset");
+
+      globalThis.Worker = originalWorker;
+    });
+
     it("uses worker when available and resolves with removal result", async () => {
       const originalWorker = globalThis.Worker;
       let onMessageHandler: ((e: MessageEvent) => void) | null = null;

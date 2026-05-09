@@ -20,6 +20,14 @@ export function LandingNav() {
                 How it works
               </a>
             </li>
+            <li className="hidden sm:block">
+              <Link
+                href="/dewatermark"
+                className="text-sm font-medium text-text-secondary px-3 py-2 transition-colors hover:text-text-primary"
+              >
+                Dewatermark
+              </Link>
+            </li>
             <li>
               <Link
                 href="/prep"

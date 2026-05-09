@@ -1,7 +1,13 @@
 import { sharpenPixelData, analyzeGuideData } from "./image-processing";
 import { detectBestCandidate } from "./watermark-detection";
-import { runPipeline } from "./watermark-removal";
+import { runPipeline, type RemovalSettings } from "./watermark-removal";
 import type { GuideAnalysis } from "./merger-utils";
+
+const DEFAULT_REMOVAL_SETTINGS: RemovalSettings = {
+  postLightness: 2.75,
+  maskExpand: 1.5,
+  feather: 4,
+};
 
 export type WatermarkWorkerMetadata = {
   corner: string;
@@ -36,6 +42,8 @@ export type WorkerMessage =
       width: number;
       height: number;
       adaptive?: boolean;
+      settings?: RemovalSettings;
+      confidenceThreshold?: number;
     };
 
 export type WorkerResponse =
@@ -74,12 +82,18 @@ export function handleMessage(msg: WorkerMessage): WorkerResponse {
     }
     case "REMOVE_WATERMARK": {
       const img = { data: msg.pixels, width: msg.width, height: msg.height };
-      const detection = msg.adaptive ? detectBestCandidate(img) : null;
-      const result = runPipeline(
-        img,
-        { postLightness: 2.75, maskExpand: 1.5, feather: 4 },
-        detection,
-      );
+      const settings = msg.settings ?? DEFAULT_REMOVAL_SETTINGS;
+      let detection = msg.adaptive
+        ? detectBestCandidate(img, { corner: settings.corner })
+        : null;
+      if (
+        detection &&
+        msg.confidenceThreshold !== undefined &&
+        detection.confidence < msg.confidenceThreshold
+      ) {
+        detection = null;
+      }
+      const result = runPipeline(img, settings, detection);
       return {
         type: "REMOVE_WATERMARK",
         id: msg.id,
