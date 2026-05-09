@@ -55,5 +55,14 @@
   },
   "peerDependencies": {
     "@eidra-umain/greenlight": "^0.8.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@eidra-umain/greenlight",
+      "esbuild",
+      "msw",
+      "sharp",
+      "unrs-resolver"
+    ]
   }
 }
