@@ -43,20 +43,20 @@ describe("watermark-config", () => {
       expect(GEMINI_PRESETS["auto"].logoSize).toBeUndefined();
     });
 
-    it("48 preset has logoSize 48 and margins 32", () => {
+    it("48 preset has logoSize 48 and margins 96", () => {
       const p = GEMINI_PRESETS["48"];
       expect(p.logoSize).toBe(48);
-      expect(p.marginRight).toBe(32);
-      expect(p.marginBottom).toBe(32);
-      expect(p.marginLeft).toBe(32);
-      expect(p.marginTop).toBe(32);
+      expect(p.marginRight).toBe(96);
+      expect(p.marginBottom).toBe(96);
+      expect(p.marginLeft).toBe(96);
+      expect(p.marginTop).toBe(96);
     });
 
-    it("96 preset has logoSize 96 and margins 64", () => {
+    it("96 preset has logoSize 96 and margins 192", () => {
       const p = GEMINI_PRESETS["96"];
       expect(p.logoSize).toBe(96);
-      expect(p.marginRight).toBe(64);
-      expect(p.marginBottom).toBe(64);
+      expect(p.marginRight).toBe(192);
+      expect(p.marginBottom).toBe(192);
     });
   });
 

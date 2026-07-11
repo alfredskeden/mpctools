@@ -144,6 +144,32 @@ describe("getDefaultConfig", () => {
   });
 });
 
+// ─── new Gemini watermark placement ───────────────────────────────────────────
+
+describe("new Gemini watermark anchor placement", () => {
+  it("anchors at the new inset position for a 1760x2400 upload", () => {
+    // Given
+    const config = getDefaultConfig(1760, 2400);
+
+    // When
+    const pos = getAnchorPosition(config, "bottom-right", 1760, 2400);
+
+    // Then
+    expect(pos).toEqual({ x: 1472, y: 2112, width: 96, height: 96 });
+  });
+
+  it("anchors at the new inset position for an official 1856x2304 upload", () => {
+    // Given
+    const config = getDefaultConfig(1856, 2304);
+
+    // When
+    const pos = getAnchorPosition(config, "bottom-right", 1856, 2304);
+
+    // Then
+    expect(pos).toEqual({ x: 1568, y: 2016, width: 96, height: 96 });
+  });
+});
+
 // ─── resolveOfficialGeminiSearchConfigs ───────────────────────────────────────
 
 describe("resolveOfficialGeminiSearchConfigs", () => {
