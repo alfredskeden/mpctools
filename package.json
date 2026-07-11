@@ -55,5 +55,10 @@
   },
   "peerDependencies": {
     "@eidra-umain/greenlight": "^0.8.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "undici": "^7.24.0"
+    }
   }
 }
