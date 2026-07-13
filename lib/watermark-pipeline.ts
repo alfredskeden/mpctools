@@ -10,11 +10,6 @@ export type PipelineOptions = {
   corner?: WatermarkCorner | "auto";
   forcedVariant?: WatermarkVariant;
   alphaGain?: number;
-  feather?: number;
-  postLightness?: number;
-  edgeReveal?: number;
-  innerPunch?: number;
-  maskExpand?: number;
 };
 
 export type PipelineOutput = {
@@ -49,16 +44,10 @@ export async function runWatermarkPipeline(
         })
       : null;
 
-  const settings: RemovalSettings = {
-    feather: options.feather ?? 4,
-    postLightness: options.postLightness ?? 2.75,
-    maskExpand: options.maskExpand ?? 1.5,
-  };
+  const settings: RemovalSettings = {};
 
   if (options.corner) settings.corner = options.corner;
   if (options.alphaGain !== undefined) settings.alphaGain = options.alphaGain;
-  if (options.edgeReveal !== undefined) settings.edgeReveal = options.edgeReveal;
-  if (options.innerPunch !== undefined) settings.innerPunch = options.innerPunch;
 
   const result = runPipeline(img, settings, detection);
 

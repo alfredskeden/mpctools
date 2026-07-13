@@ -70,17 +70,8 @@ describe("DewatermarkSettingsRail", () => {
     // Pick a corner
     await user.click(screen.getAllByRole("radio")[2]);
     // Move every slider
-    fireEvent.change(screen.getByLabelText("Mask expansion"), {
-      target: { value: "9" },
-    });
     fireEvent.change(screen.getByLabelText("Confidence threshold"), {
       target: { value: "0.55" },
-    });
-    fireEvent.change(screen.getByLabelText("Feather"), {
-      target: { value: "0.3" },
-    });
-    fireEvent.change(screen.getByLabelText("Post lightness"), {
-      target: { value: "-0.2" },
     });
     fireEvent.change(screen.getByLabelText("Alpha gain"), {
       target: { value: "1.4" },
@@ -93,27 +84,9 @@ describe("DewatermarkSettingsRail", () => {
     // Then
     expect(props.onPatch).toHaveBeenCalledWith({ adaptive: true });
     expect(props.onPatch).toHaveBeenCalledWith({ corner: "tr" });
-    expect(props.onPatch).toHaveBeenCalledWith({ maskExpand: 9 });
     expect(props.onPatch).toHaveBeenCalledWith({ confidenceThreshold: 0.55 });
-    expect(props.onPatch).toHaveBeenCalledWith({ feather: 0.3 });
-    expect(props.onPatch).toHaveBeenCalledWith({ postLightness: -0.2 });
     expect(props.onPatch).toHaveBeenCalledWith({ alphaGain: 1.4 });
     expect(props.onPatch).toHaveBeenCalledWith({ exportFormat: "jpeg" });
-  });
-
-  it("formats post-lightness with explicit + sign for positive values and bytes appropriately", () => {
-    // Given/When
-    renderRail({
-      settings: {
-        ...DEWATERMARK_DEFAULTS,
-        postLightness: 0.25,
-      },
-    });
-
-    // Then — value chip on the post-lightness slider shows the +0.25 prefix
-    expect(
-      screen.getByTestId("rail-post-lightness-value").textContent,
-    ).toBe("+0.25");
   });
 
   it("renders source size with KB-formatted bytes", () => {
@@ -152,18 +125,6 @@ describe("DewatermarkSettingsRail", () => {
     );
   });
 
-  it("formats negative post-lightness without a leading + sign", () => {
-    // Given/When
-    renderRail({
-      settings: { ...DEWATERMARK_DEFAULTS, postLightness: -0.15 },
-    });
-
-    // Then
-    expect(
-      screen.getByTestId("rail-post-lightness-value").textContent,
-    ).toBe("-0.15");
-  });
-
   it("ignores rail upload-input change when no file is selected", () => {
     // Given
     const props = renderRail({ hasImage: false, imageMeta: null });
@@ -195,7 +156,7 @@ describe("DewatermarkSettingsRail", () => {
       (screen.getByTestId("rail-toggle-adaptive") as HTMLButtonElement).disabled,
     ).toBe(true);
     expect(
-      (screen.getByLabelText("Mask expansion") as HTMLInputElement).disabled,
+      (screen.getByLabelText("Alpha gain") as HTMLInputElement).disabled,
     ).toBe(true);
     expect(
       (screen.getByTestId("rail-output-format") as HTMLSelectElement).disabled,

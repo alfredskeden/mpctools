@@ -12,8 +12,6 @@ type DewatermarkPreviewCellProps = {
   imageWidth: number;
   imageHeight: number;
   resolvedCorner: DewatermarkCornerChoice;
-  maskExpand: number;
-  feather: number;
   variant: "original" | "result";
   isProcessing?: boolean;
   detectionMeta?: { corner: string; confidence: number } | null;
@@ -67,8 +65,6 @@ export function DewatermarkPreviewCell({
   imageWidth,
   imageHeight,
   resolvedCorner,
-  maskExpand,
-  feather,
   variant,
   isProcessing,
   detectionMeta,
@@ -100,8 +96,8 @@ export function DewatermarkPreviewCell({
     size.w > 0 && size.h > 0
       ? cornerRect(resolvedCorner, size.w, size.h)
       : null;
-  const expandPx = maskExpand * 1.6;
-  const featherBlurPx = feather * 6;
+  // Fixed framing pad for the watermark-region indicator overlays.
+  const expandPx = 4;
 
   return (
     <section
@@ -173,7 +169,6 @@ export function DewatermarkPreviewCell({
                 top: overlay.y - expandPx,
                 width: overlay.w + expandPx * 2,
                 height: overlay.h + expandPx * 2,
-                filter: `blur(${featherBlurPx}px)`,
               }}
             />
           ) : null}

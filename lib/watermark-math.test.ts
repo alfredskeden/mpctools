@@ -13,8 +13,6 @@ import {
   computeRegionSpatialCorrelation,
   computeRegionGradientCorrelation,
   removeWatermarkReverseAlpha,
-  compositeWithMask,
-  applyMaskedLightness,
   extractRegion,
   type RawImageData,
 } from "@/lib/watermark-math";
@@ -370,79 +368,67 @@ describe("watermark-math", () => {
         expect(img.data[i]).toBeLessThanOrEqual(255);
       }
     });
-  });
 
-  describe("compositeWithMask", () => {
-    it("returns base pixel when mask alpha is 0", () => {
-      const base = makeImage(1, 1, 100, 100, 100);
-      const overlay = makeImage(1, 1, 200, 200, 200);
-      const mask = new Uint8ClampedArray([0, 0, 0, 0]); // alpha=0
-      const result = compositeWithMask(base, overlay, mask);
-      expect(result.data[0]).toBe(100);
+    it("brightens a pixel by the divide map even where alpha is zero", () => {
+      const img = makeImage(2, 2, 100, 100, 100);
+      const alphaMap = new Float32Array(4).fill(0); // gated out by threshold
+      const divideMap = new Float32Array(4).fill(0.5);
+      removeWatermarkReverseAlpha(
+        img,
+        alphaMap,
+        { x: 0, y: 0, width: 2, height: 2 },
+        { divideMap },
+      );
+      // 100 / 0.5 = 200
+      expect(img.data[0]).toBe(200);
     });
 
-    it("returns overlay pixel when mask alpha is 255", () => {
-      const base = makeImage(1, 1, 100, 100, 100);
-      const overlay = makeImage(1, 1, 200, 200, 200);
-      const mask = new Uint8ClampedArray([0, 0, 0, 255]); // alpha=255
-      const result = compositeWithMask(base, overlay, mask);
-      expect(result.data[0]).toBe(200);
+    it("leaves a pixel unchanged where the divide map is 1", () => {
+      const img = makeImage(2, 2, 120, 120, 120);
+      const alphaMap = new Float32Array(4).fill(0);
+      const divideMap = new Float32Array(4).fill(1);
+      removeWatermarkReverseAlpha(
+        img,
+        alphaMap,
+        { x: 0, y: 0, width: 2, height: 2 },
+        { divideMap },
+      );
+      expect(img.data[0]).toBe(120);
     });
 
-    it("blends at 50% mask alpha", () => {
-      const base = makeImage(1, 1, 0, 0, 0);
-      const overlay = makeImage(1, 1, 200, 200, 200);
-      const mask = new Uint8ClampedArray([0, 0, 0, 128]); // ~50%
-      const result = compositeWithMask(base, overlay, mask);
-      // 0 * 0.498 + 200 * 0.498 ≈ 100
-      expect(result.data[0]).toBeGreaterThan(90);
-      expect(result.data[0]).toBeLessThan(110);
+    it("applies the divide step after reverse-alpha unblend", () => {
+      const withDivide = makeImage(2, 2, 180, 180, 180);
+      const withoutDivide = makeImage(2, 2, 180, 180, 180);
+      const alphaMap = new Float32Array(4).fill(0.5);
+      const divideMap = new Float32Array(4).fill(0.8);
+      removeWatermarkReverseAlpha(withoutDivide, alphaMap, {
+        x: 0,
+        y: 0,
+        width: 2,
+        height: 2,
+      });
+      removeWatermarkReverseAlpha(
+        withDivide,
+        alphaMap,
+        { x: 0, y: 0, width: 2, height: 2 },
+        { divideMap },
+      );
+      // reverse-alpha result: (180 - 0.5*255)/0.5 = 105; then /0.8 = 131
+      expect(withoutDivide.data[0]).toBe(105);
+      expect(withDivide.data[0]).toBe(131);
     });
 
-    it("returns RawImageData with correct dimensions", () => {
-      const base = makeImage(3, 4);
-      const overlay = makeImage(3, 4);
-      const mask = new Uint8ClampedArray(3 * 4 * 4).fill(0);
-      const result = compositeWithMask(base, overlay, mask);
-      expect(result.width).toBe(3);
-      expect(result.height).toBe(4);
-    });
-  });
-
-  describe("applyMaskedLightness", () => {
-    it("does not change pixels where mask alpha is 0", () => {
-      const img = makeImage(1, 1, 100, 100, 100);
-      const mask = new Uint8ClampedArray([0, 0, 0, 0]);
-      applyMaskedLightness(img, mask, 50);
-      expect(img.data[0]).toBe(100);
-    });
-
-    it("brightens pixels where mask alpha is 255", () => {
-      const img = makeImage(1, 1, 100, 100, 100);
-      const mask = new Uint8ClampedArray([0, 0, 0, 255]);
-      applyMaskedLightness(img, mask, 20); // +20% = +51 brightness
-      expect(img.data[0]).toBeGreaterThan(100);
-    });
-
-    it("darkens pixels with negative amount", () => {
+    it("clamps divide-brightened values to 255", () => {
       const img = makeImage(1, 1, 200, 200, 200);
-      const mask = new Uint8ClampedArray([0, 0, 0, 255]);
-      applyMaskedLightness(img, mask, -20);
-      expect(img.data[0]).toBeLessThan(200);
-    });
-
-    it("clamps brightened values to 255", () => {
-      const img = makeImage(1, 1, 250, 250, 250);
-      const mask = new Uint8ClampedArray([0, 0, 0, 255]);
-      applyMaskedLightness(img, mask, 100);
+      const alphaMap = new Float32Array(1).fill(0);
+      const divideMap = new Float32Array(1).fill(0.5); // 200/0.5 = 400
+      removeWatermarkReverseAlpha(
+        img,
+        alphaMap,
+        { x: 0, y: 0, width: 1, height: 1 },
+        { divideMap },
+      );
       expect(img.data[0]).toBe(255);
-    });
-
-    it("clamps darkened values to 0", () => {
-      const img = makeImage(1, 1, 5, 5, 5);
-      const mask = new Uint8ClampedArray([0, 0, 0, 255]);
-      applyMaskedLightness(img, mask, -100);
-      expect(img.data[0]).toBe(0);
     });
   });
 

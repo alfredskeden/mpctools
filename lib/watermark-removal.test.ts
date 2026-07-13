@@ -1,12 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
-  dilateBinary,
-  buildWeightedMaskData,
-  buildVisibilityMaskData,
-  buildCorrectionMaskData,
   runPipeline,
   type RemovalSettings,
-  type PipelineResult,
 } from "@/lib/watermark-removal";
 import type { RawImageData } from "@/lib/watermark-math";
 import type { DetectionResult } from "@/lib/watermark-detection";
@@ -29,19 +24,6 @@ function makeImage(
     data[i * 4 + 3] = a;
   }
   return { data, width, height };
-}
-
-function makeRect(
-  x = 0,
-  y = 0,
-  width = 4,
-  height = 4,
-): { x: number; y: number; width: number; height: number } {
-  return { x, y, width, height };
-}
-
-function makeAlphaMap(size: number, value = 0.5): Float32Array {
-  return new Float32Array(size * size).fill(value);
 }
 
 function makeDetection(
@@ -82,445 +64,6 @@ function makeDetection(
   };
   return { ...base, ...overrides };
 }
-
-// ─── dilateBinary ─────────────────────────────────────────────────────────────
-
-describe("dilateBinary", () => {
-  it("returns a copy when radius is 0", () => {
-    // Given
-    const source = new Uint8Array([1, 0, 0, 1]);
-
-    // When
-    const result = dilateBinary(source, 2, 2, 0);
-
-    // Then
-    expect(Array.from(result)).toEqual([1, 0, 0, 1]);
-    expect(result).not.toBe(source);
-  });
-
-  it("returns a copy when radius is negative", () => {
-    // Given
-    const source = new Uint8Array([1, 0, 0, 0]);
-
-    // When
-    const result = dilateBinary(source, 2, 2, -1);
-
-    // Then
-    expect(Array.from(result)).toEqual([1, 0, 0, 0]);
-  });
-
-  it("dilates a single active pixel to neighbors", () => {
-    // Given: 3×3 grid, center pixel active
-    const source = new Uint8Array([0, 0, 0, 0, 1, 0, 0, 0, 0]);
-
-    // When: radius 1
-    const result = dilateBinary(source, 3, 3, 1);
-
-    // Then: all 9 pixels should be active
-    expect(Array.from(result)).toEqual([1, 1, 1, 1, 1, 1, 1, 1, 1]);
-  });
-
-  it("does not dilate beyond boundary", () => {
-    // Given: 3×3 grid, top-left pixel active
-    const source = new Uint8Array([1, 0, 0, 0, 0, 0, 0, 0, 0]);
-
-    // When: radius 1
-    const result = dilateBinary(source, 3, 3, 1);
-
-    // Then: only top-left 2×2 should be active
-    expect(result[0]).toBe(1);
-    expect(result[1]).toBe(1);
-    expect(result[2]).toBe(0);
-    expect(result[3]).toBe(1);
-    expect(result[4]).toBe(1);
-    expect(result[5]).toBe(0);
-    expect(result[6]).toBe(0);
-    expect(result[7]).toBe(0);
-    expect(result[8]).toBe(0);
-  });
-
-  it("source with all zeros stays all zeros", () => {
-    // Given
-    const source = new Uint8Array(9);
-
-    // When
-    const result = dilateBinary(source, 3, 3, 2);
-
-    // Then
-    expect(result.every((v) => v === 0)).toBe(true);
-  });
-
-  it("preserves all-active source", () => {
-    // Given
-    const source = new Uint8Array(9).fill(1);
-
-    // When
-    const result = dilateBinary(source, 3, 3, 1);
-
-    // Then
-    expect(result.every((v) => v === 1)).toBe(true);
-  });
-});
-
-// ─── buildWeightedMaskData ────────────────────────────────────────────────────
-
-describe("buildWeightedMaskData", () => {
-  it("returns RGBA buffer of full image size", () => {
-    // Given
-    const rect = makeRect(0, 0, 4, 4);
-    const alphaMap = makeAlphaMap(4, 0.5);
-
-    // When
-    const result = buildWeightedMaskData(rect, 8, 8, 0, alphaMap);
-
-    // Then
-    expect(result.length).toBe(8 * 8 * 4);
-  });
-
-  it("sets RGB channels to 255 where alpha > 0", () => {
-    // Given
-    const rect = makeRect(0, 0, 4, 4);
-    const alphaMap = makeAlphaMap(4, 0.5);
-
-    // When
-    const result = buildWeightedMaskData(rect, 4, 4, 0, alphaMap);
-
-    // Then: check first pixel RGB
-    expect(result[0]).toBe(255);
-    expect(result[1]).toBe(255);
-    expect(result[2]).toBe(255);
-  });
-
-  it("produces zero alpha for pixels below threshold", () => {
-    // Given: alpha map with values 0.01, threshold 0.5
-    const rect = makeRect(0, 0, 2, 2);
-    const alphaMap = new Float32Array([0.01, 0.01, 0.01, 0.01]);
-
-    // When
-    const result = buildWeightedMaskData(rect, 2, 2, 0, alphaMap, {
-      threshold: 0.5,
-    });
-
-    // Then: all alpha channels should be 0
-    expect(result[3]).toBe(0);
-    expect(result[7]).toBe(0);
-  });
-
-  it("produces non-zero alpha for pixels above threshold", () => {
-    // Given
-    const rect = makeRect(0, 0, 2, 2);
-    const alphaMap = new Float32Array([0.8, 0.8, 0.8, 0.8]);
-
-    // When
-    const result = buildWeightedMaskData(rect, 2, 2, 0, alphaMap, {
-      threshold: 0.5,
-    });
-
-    // Then: alpha should be > 0
-    expect(result[3]).toBeGreaterThan(0);
-  });
-
-  it("applies gamma to weight computation", () => {
-    // Given: same alpha map, different gamma values
-    const rect = makeRect(0, 0, 1, 1);
-    const alphaMap = new Float32Array([0.8]);
-
-    // When
-    const result1 = buildWeightedMaskData(rect, 1, 1, 0, alphaMap, {
-      gamma: 1,
-    });
-    const result2 = buildWeightedMaskData(rect, 1, 1, 0, alphaMap, {
-      gamma: 2,
-    });
-
-    // Then: higher gamma → lower alpha (for values < 1)
-    expect(result1[3]).toBeGreaterThan(result2[3]);
-  });
-
-  it("applies opacityScale", () => {
-    // Given
-    const rect = makeRect(0, 0, 1, 1);
-    const alphaMap = new Float32Array([1.0]);
-
-    // When
-    const full = buildWeightedMaskData(rect, 1, 1, 0, alphaMap, {
-      opacityScale: 1,
-    });
-    const half = buildWeightedMaskData(rect, 1, 1, 0, alphaMap, {
-      opacityScale: 0.5,
-    });
-
-    // Then
-    expect(full[3]).toBe(255);
-    expect(half[3]).toBe(128);
-  });
-
-  it("applies feather blur (non-zero passes reduce edge sharpness)", () => {
-    // Given: 4×4 image, 2×2 active rect at corner with full alpha
-    const rect = makeRect(0, 0, 2, 2);
-    const alphaMap = new Float32Array([1, 1, 1, 1]);
-
-    // When: blur vs no blur
-    const noBlur = buildWeightedMaskData(rect, 4, 4, 0, alphaMap);
-    const withBlur = buildWeightedMaskData(rect, 4, 4, 2, alphaMap);
-
-    // Then: adjacent pixels outside rect should be influenced by blur
-    const adjIdx = (1 * 4 + 2) * 4 + 3; // pixel (2,1) which is outside rect
-    expect(noBlur[adjIdx]).toBe(0);
-    expect(withBlur[adjIdx]).toBeGreaterThan(0);
-  });
-
-  it("clamps raw alpha values to [0, 1] range", () => {
-    // Given: alpha map exceeding 1
-    const rect = makeRect(0, 0, 1, 1);
-    const alphaMap = new Float32Array([2.0]);
-
-    // When
-    const result = buildWeightedMaskData(rect, 1, 1, 0, alphaMap);
-
-    // Then: should still be 255 not overflow
-    expect(result[3]).toBe(255);
-  });
-
-  it("uses gamma=1 when gamma option is 0 or negative", () => {
-    // Given
-    const rect = makeRect(0, 0, 1, 1);
-    const alphaMap = new Float32Array([0.5]);
-
-    // When: gamma=0 should fall back to 1
-    const result = buildWeightedMaskData(rect, 1, 1, 0, alphaMap, {
-      gamma: 0,
-    });
-    const expected = buildWeightedMaskData(rect, 1, 1, 0, alphaMap, {
-      gamma: 1,
-    });
-
-    // Then
-    expect(result[3]).toBe(expected[3]);
-  });
-
-  it("positions pixels at correct offset in larger image", () => {
-    // Given: 1×1 rect at (3, 3) in a 4×4 image
-    const rect = makeRect(3, 3, 1, 1);
-    const alphaMap = new Float32Array([1.0]);
-
-    // When
-    const result = buildWeightedMaskData(rect, 4, 4, 0, alphaMap);
-
-    // Then: only pixel (3,3) should be active
-    expect(result[(3 * 4 + 3) * 4 + 3]).toBe(255);
-    expect(result[3]).toBe(0); // pixel (0,0) should be zero
-  });
-});
-
-// ─── buildVisibilityMaskData ──────────────────────────────────────────────────
-
-describe("buildVisibilityMaskData", () => {
-  it("returns RGBA buffer of full image size", () => {
-    // Given
-    const rect = makeRect(0, 0, 4, 4);
-    const alphaMap = makeAlphaMap(4, 0.1);
-
-    // When
-    const result = buildVisibilityMaskData(rect, 8, 8, alphaMap);
-
-    // Then
-    expect(result.length).toBe(8 * 8 * 4);
-  });
-
-  it("produces zero buffer for all-zero alpha map", () => {
-    // Given
-    const rect = makeRect(0, 0, 4, 4);
-    const alphaMap = new Float32Array(16).fill(0);
-
-    // When
-    const result = buildVisibilityMaskData(rect, 4, 4, alphaMap, {
-      feather: 0,
-      maskExpand: 0,
-    });
-
-    // Then: no active pixels
-    const anyAlpha = Array.from(result).filter((_, i) => i % 4 === 3);
-    expect(anyAlpha.every((v) => v === 0)).toBe(true);
-  });
-
-  it("sets core pixels to fully opaque after blur", () => {
-    // Given: alpha map with high values (above coreThreshold ~0.09 for defaults)
-    const rect = makeRect(0, 0, 3, 3);
-    const alphaMap = new Float32Array(9).fill(0.5);
-
-    // When
-    const result = buildVisibilityMaskData(rect, 3, 3, alphaMap, {
-      feather: 0,
-      maskExpand: 0,
-      edgeReveal: 0.92,
-      innerPunch: 1.02,
-    });
-
-    // Then: center pixel should be fully opaque (it's above coreThreshold)
-    const centerAlpha = result[(1 * 3 + 1) * 4 + 3];
-    expect(centerAlpha).toBe(255);
-  });
-
-  it("uses default edgeReveal and innerPunch when not provided", () => {
-    // Given
-    const rect = makeRect(0, 0, 4, 4);
-    const alphaMap = makeAlphaMap(4, 0.5);
-
-    // When: no opts (defaults apply)
-    const result = buildVisibilityMaskData(rect, 4, 4, alphaMap);
-
-    // Then: should produce non-empty output
-    const alphas = Array.from(result).filter((_, i) => i % 4 === 3);
-    expect(alphas.some((v) => v > 0)).toBe(true);
-  });
-
-  it("expands edge mask when edgeReveal > 1", () => {
-    // Given: tiny alpha spot
-    const rect = makeRect(0, 0, 5, 5);
-    const alphaMap = new Float32Array(25).fill(0);
-    alphaMap[12] = 0.5; // only center pixel active
-
-    // When: standard vs high edgeReveal
-    const standard = buildVisibilityMaskData(rect, 5, 5, alphaMap, {
-      feather: 0,
-      edgeReveal: 0.92,
-      maskExpand: 0,
-    });
-    const expanded = buildVisibilityMaskData(rect, 5, 5, alphaMap, {
-      feather: 0,
-      edgeReveal: 1.5,
-      maskExpand: 0,
-    });
-
-    // Then: expanded should have more active pixels
-    const countActive = (d: Uint8ClampedArray) =>
-      Array.from(d)
-        .filter((_, i) => i % 4 === 3)
-        .filter((v) => v > 0).length;
-    expect(countActive(expanded)).toBeGreaterThanOrEqual(countActive(standard));
-  });
-
-  it("expands core mask when innerPunch > 1", () => {
-    // Given: spot with moderate alpha
-    const rect = makeRect(0, 0, 5, 5);
-    const alphaMap = new Float32Array(25).fill(0);
-    alphaMap[12] = 0.15; // above coreThreshold for default innerPunch
-
-    // When
-    const standard = buildVisibilityMaskData(rect, 5, 5, alphaMap, {
-      feather: 0,
-      innerPunch: 1.0,
-      maskExpand: 0,
-    });
-    const punched = buildVisibilityMaskData(rect, 5, 5, alphaMap, {
-      feather: 0,
-      innerPunch: 1.5,
-      maskExpand: 0,
-    });
-
-    // Then: punched should have >= active pixels
-    const countActive = (d: Uint8ClampedArray) =>
-      Array.from(d)
-        .filter((_, i) => i % 4 === 3)
-        .filter((v) => v > 0).length;
-    expect(countActive(punched)).toBeGreaterThanOrEqual(
-      countActive(standard),
-    );
-  });
-
-  it("feather smooths edges (adjacent pixels are non-zero)", () => {
-    // Given: single pixel active at (2,2)
-    const rect = makeRect(0, 0, 5, 5);
-    const alphaMap = new Float32Array(25).fill(0);
-    alphaMap[12] = 0.5;
-
-    // When
-    const result = buildVisibilityMaskData(rect, 5, 5, alphaMap, {
-      feather: 3,
-      maskExpand: 0,
-    });
-
-    // Then: pixels adjacent to center should have non-zero alpha
-    const above = result[(1 * 5 + 2) * 4 + 3];
-    const below = result[(3 * 5 + 2) * 4 + 3];
-    expect(above + below).toBeGreaterThan(0);
-  });
-
-  it("maskExpand=0 and edgeReveal=0 uses minimum expand", () => {
-    // Given: all-zero alpha map
-    const rect = makeRect(0, 0, 3, 3);
-    const alphaMap = new Float32Array(9).fill(0);
-
-    // When
-    const result = buildVisibilityMaskData(rect, 3, 3, alphaMap, {
-      feather: 0,
-      maskExpand: 0,
-      edgeReveal: 0,
-      innerPunch: 0,
-    });
-
-    // Then: all pixels should be zero alpha
-    const alphas = Array.from(result).filter((_, i) => i % 4 === 3);
-    expect(alphas.every((v) => v === 0)).toBe(true);
-  });
-});
-
-// ─── buildCorrectionMaskData ──────────────────────────────────────────────────
-
-describe("buildCorrectionMaskData", () => {
-  it("returns RGBA buffer of full image size", () => {
-    // Given
-    const rect = makeRect(0, 0, 4, 4);
-    const alphaMap = makeAlphaMap(4, 0.5);
-
-    // When
-    const result = buildCorrectionMaskData(rect, 8, 8, 0, alphaMap);
-
-    // Then
-    expect(result.length).toBe(8 * 8 * 4);
-  });
-
-  it("uses GEMINI_CORRECTION_THRESHOLD (0.015): alpha values below are zeroed", () => {
-    // Given: all pixels at 0.01 (below 0.015)
-    const rect = makeRect(0, 0, 2, 2);
-    const alphaMap = new Float32Array([0.01, 0.01, 0.01, 0.01]);
-
-    // When
-    const result = buildCorrectionMaskData(rect, 2, 2, 0, alphaMap);
-
-    // Then: all alpha zero
-    expect(result[3]).toBe(0);
-    expect(result[7]).toBe(0);
-  });
-
-  it("produces non-zero alpha for pixels above correction threshold", () => {
-    // Given: all pixels at 0.5 (above 0.015)
-    const rect = makeRect(0, 0, 2, 2);
-    const alphaMap = new Float32Array([0.5, 0.5, 0.5, 0.5]);
-
-    // When
-    const result = buildCorrectionMaskData(rect, 2, 2, 0, alphaMap);
-
-    // Then
-    expect(result[3]).toBeGreaterThan(0);
-  });
-
-  it("delegates feather to buildWeightedMaskData", () => {
-    // Given: 4×4 active rect at (0,0) with full alpha
-    const rect = makeRect(0, 0, 4, 4);
-    const alphaMap = makeAlphaMap(4, 1.0);
-
-    // When
-    const noBlur = buildCorrectionMaskData(rect, 6, 6, 0, alphaMap);
-    const withBlur = buildCorrectionMaskData(rect, 6, 6, 2, alphaMap);
-
-    // Then: pixels outside rect are influenced by blur
-    const adjIdx = (0 * 6 + 4) * 4 + 3; // pixel (4,0), just outside rect
-    expect(noBlur[adjIdx]).toBe(0);
-    expect(withBlur[adjIdx]).toBeGreaterThan(0);
-  });
-});
 
 // ─── runPipeline ──────────────────────────────────────────────────────────────
 
@@ -660,24 +203,34 @@ describe("runPipeline", () => {
     expect(result.alphaGain).toBe(1.3);
   });
 
-  it("applies postLightness when non-zero", () => {
-    // Given: white image
-    const img = makeImage(8, 8, () => [255, 255, 255, 255]);
-    const detection = makeDetection({
-      accepted: true,
-      alphaMap: new Float32Array(16).fill(0.5),
-      position: { x: 0, y: 0, width: 4, height: 4 },
-    });
-    const settingsLight: RemovalSettings = { postLightness: 10 };
-    const settingsNone: RemovalSettings = { postLightness: 0 };
+  it("applies the DIVIDE edge-cleanup pass on a 96px-tier image", () => {
+    // Given: a 1k+ tier image whose preset logo size is 96px (the size the
+    // embedded DIVIDE map is authored for).
+    const img = makeImage(1024, 1024);
+    const settings: RemovalSettings = {};
 
     // When
-    const withLight = runPipeline(img, settingsLight, detection);
-    const withNone = runPipeline(img, settingsNone, detection);
+    const result = runPipeline(img, settings);
 
-    // Then: both return valid results; postLightness path was exercised
-    expect(withLight.imageData.width).toBe(8);
-    expect(withNone.imageData.width).toBe(8);
+    // Then: the anchored region is 96px and the pipeline produces flat output.
+    expect(result.position.width).toBe(96);
+    expect(result.imageData.width).toBe(1024);
+    expect(result.imageData.height).toBe(1024);
+  });
+
+  it("returns the flat repaired image without mask compositing", () => {
+    // Given: pixels far from the watermark region must be identical to the input
+    // (no feathered blend touches them).
+    const img = makeImage(512, 512, () => [40, 90, 160, 255]);
+    const settings: RemovalSettings = {};
+
+    // When
+    const result = runPipeline(img, settings);
+
+    // Then: top-left pixel (outside the bottom-right logo) is untouched.
+    expect(result.imageData.data[0]).toBe(40);
+    expect(result.imageData.data[1]).toBe(90);
+    expect(result.imageData.data[2]).toBe(160);
   });
 
   it("uses bottom-right corner as default when corner is auto", () => {
@@ -706,46 +259,6 @@ describe("runPipeline", () => {
     // Then: top-left position should have smaller x and y
     expect(tlResult.position.x).toBeLessThan(brResult.position.x);
     expect(tlResult.position.y).toBeLessThan(brResult.position.y);
-  });
-
-  it("uses default feather=4 when not provided", () => {
-    // Given
-    const img = makeImage(64, 64);
-    const settings: RemovalSettings = {};
-
-    // When: no error thrown
-    const result = runPipeline(img, settings);
-
-    // Then
-    expect(result.imageData).toBeDefined();
-  });
-
-  it("uses provided feather value", () => {
-    // Given
-    const img = makeImage(64, 64);
-    const settings: RemovalSettings = { feather: 0 };
-
-    // When
-    const result = runPipeline(img, settings);
-
-    // Then
-    expect(result.imageData).toBeDefined();
-  });
-
-  it("passes edgeReveal and innerPunch to visibility mask", () => {
-    // Given
-    const img = makeImage(64, 64);
-    const settings: RemovalSettings = {
-      edgeReveal: 1.5,
-      innerPunch: 1.5,
-      maskExpand: 3,
-    };
-
-    // When: no error thrown with extreme values
-    const result = runPipeline(img, settings);
-
-    // Then
-    expect(result.imageData.width).toBe(64);
   });
 
   it("returns position matching detection when detection is accepted", () => {

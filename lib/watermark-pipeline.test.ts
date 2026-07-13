@@ -151,7 +151,7 @@ describe("runWatermarkPipeline", () => {
   });
 
   describe("pipeline settings", () => {
-    it("uses worker-matching defaults (feather=4, postLightness=2.75, maskExpand=1.5)", async () => {
+    it("passes empty settings to runPipeline when no options are given", async () => {
       // Given
       const imageBuffer = Buffer.from([1, 2, 3, 4]);
 
@@ -159,11 +159,7 @@ describe("runWatermarkPipeline", () => {
       await runWatermarkPipeline(imageBuffer);
 
       // Then
-      expect(runPipeline).toHaveBeenCalledWith(
-        expect.anything(),
-        expect.objectContaining({ feather: 4, postLightness: 2.75, maskExpand: 1.5 }),
-        null,
-      );
+      expect(runPipeline).toHaveBeenCalledWith(expect.anything(), {}, null);
     });
 
     it("passes all explicit settings through to runPipeline", async () => {
@@ -173,11 +169,6 @@ describe("runWatermarkPipeline", () => {
       // When
       await runWatermarkPipeline(imageBuffer, {
         alphaGain: 1.2,
-        feather: 6,
-        postLightness: 3.0,
-        edgeReveal: 0.8,
-        innerPunch: 1.1,
-        maskExpand: 2.0,
         corner: "top-left",
       });
 
@@ -186,11 +177,6 @@ describe("runWatermarkPipeline", () => {
         expect.anything(),
         expect.objectContaining({
           alphaGain: 1.2,
-          feather: 6,
-          postLightness: 3.0,
-          edgeReveal: 0.8,
-          innerPunch: 1.1,
-          maskExpand: 2.0,
           corner: "top-left",
         }),
         null,

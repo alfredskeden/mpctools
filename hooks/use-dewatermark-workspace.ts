@@ -17,9 +17,6 @@ export type DewatermarkSettings = {
   adaptive: boolean;
   corner: DewatermarkCornerChoice;
   confidenceThreshold: number;
-  maskExpand: number;
-  feather: number;
-  postLightness: number;
   alphaGain: number;
   exportFormat: DewatermarkExportFormat;
 };
@@ -28,9 +25,6 @@ export const DEWATERMARK_DEFAULTS: DewatermarkSettings = {
   adaptive: false,
   corner: "auto",
   confidenceThreshold: 0.72,
-  maskExpand: 1.5,
-  feather: 4,
-  postLightness: 2.75,
   alphaGain: 1,
   exportFormat: "png",
 };
@@ -125,9 +119,6 @@ function settingsEqual(a: DewatermarkSettings, b: DewatermarkSettings): boolean 
     a.adaptive === b.adaptive &&
     a.corner === b.corner &&
     a.confidenceThreshold === b.confidenceThreshold &&
-    a.maskExpand === b.maskExpand &&
-    a.feather === b.feather &&
-    a.postLightness === b.postLightness &&
     a.alphaGain === b.alphaGain &&
     a.exportFormat === b.exportFormat
   );
@@ -141,9 +132,6 @@ function affectsRender(
     next.adaptive !== prev.adaptive ||
     next.corner !== prev.corner ||
     next.confidenceThreshold !== prev.confidenceThreshold ||
-    next.maskExpand !== prev.maskExpand ||
-    next.feather !== prev.feather ||
-    next.postLightness !== prev.postLightness ||
     next.alphaGain !== prev.alphaGain
   );
 }
@@ -152,9 +140,6 @@ export function toRemovalSettings(s: DewatermarkSettings): RemovalSettings {
   return {
     corner: CORNER_TO_REMOVAL[s.corner],
     alphaGain: s.alphaGain,
-    feather: s.feather,
-    postLightness: s.postLightness,
-    maskExpand: s.maskExpand,
   };
 }
 

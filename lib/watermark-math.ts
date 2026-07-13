@@ -272,13 +272,14 @@ export function removeWatermarkReverseAlpha(
   img: RawImageData,
   alphaMap: Float32Array,
   position: { x: number; y: number; width: number; height: number },
-  options: { alphaGain?: number } = {},
+  options: { alphaGain?: number; divideMap?: Float32Array } = {},
 ): void {
   const { x, y, width, height } = position;
   const alphaGain =
     Number.isFinite(options.alphaGain) && options.alphaGain! > 0
       ? options.alphaGain!
       : 1;
+  const divideMap = options.divideMap;
 
   for (let row = 0; row < height; row += 1) {
     for (let col = 0; col < width; col += 1) {
@@ -287,15 +288,27 @@ export function removeWatermarkReverseAlpha(
       const rawAlpha = alphaMap[alphaIdx];
       const signalAlpha =
         Math.max(0, rawAlpha - GEMINI_ALPHA_NOISE_FLOOR) * alphaGain;
-      if (signalAlpha < GEMINI_ALPHA_THRESHOLD) continue;
+      const applyReverse = signalAlpha >= GEMINI_ALPHA_THRESHOLD;
+
+      // Photoshop "divide" edge-cleanup pass. Applied independently of the
+      // reverse-alpha gate: the edge correction lands on pixels whose alpha is
+      // too small to unblend but which still carry a dark ring.
+      const divisor = divideMap ? divideMap[alphaIdx] : 1;
+      const applyDivide = divisor < 1;
+
+      if (!applyReverse && !applyDivide) continue;
 
       const alpha = Math.min(rawAlpha * alphaGain, GEMINI_MAX_ALPHA);
       const oneMinusAlpha = 1 - alpha;
       for (let c = 0; c < 3; c += 1) {
-        const watermarked = img.data[imgIdx + c];
-        const original =
-          (watermarked - alpha * GEMINI_LOGO_VALUE) / oneMinusAlpha;
-        img.data[imgIdx + c] = clamp(Math.round(original), 0, 255);
+        let value = img.data[imgIdx + c];
+        if (applyReverse) {
+          value = (value - alpha * GEMINI_LOGO_VALUE) / oneMinusAlpha;
+        }
+        if (applyDivide) {
+          value = value / divisor;
+        }
+        img.data[imgIdx + c] = clamp(Math.round(value), 0, 255);
       }
     }
   }
@@ -326,56 +339,4 @@ export function extractRegion(
     }
   }
   return { data, width, height };
-}
-
-// ─── Pixel-level composite ────────────────────────────────────────────────────
-
-export function compositeWithMask(
-  base: RawImageData,
-  overlay: RawImageData,
-  maskData: Uint8ClampedArray,
-): RawImageData {
-  const { width, height } = base;
-  const out = new Uint8ClampedArray(width * height * 4);
-  for (let i = 0; i < base.data.length; i += 4) {
-    const m = maskData[i + 3] / 255;
-    if (m <= 0) {
-      out[i] = base.data[i];
-      out[i + 1] = base.data[i + 1];
-      out[i + 2] = base.data[i + 2];
-      out[i + 3] = base.data[i + 3];
-    } else if (m >= 1) {
-      out[i] = overlay.data[i];
-      out[i + 1] = overlay.data[i + 1];
-      out[i + 2] = overlay.data[i + 2];
-      out[i + 3] = overlay.data[i + 3];
-    } else {
-      out[i] = Math.round(base.data[i] * (1 - m) + overlay.data[i] * m);
-      out[i + 1] = Math.round(
-        base.data[i + 1] * (1 - m) + overlay.data[i + 1] * m,
-      );
-      out[i + 2] = Math.round(
-        base.data[i + 2] * (1 - m) + overlay.data[i + 2] * m,
-      );
-      out[i + 3] = Math.round(
-        base.data[i + 3] * (1 - m) + overlay.data[i + 3] * m,
-      );
-    }
-  }
-  return { data: out, width, height };
-}
-
-export function applyMaskedLightness(
-  img: RawImageData,
-  maskData: Uint8ClampedArray,
-  amount: number,
-): void {
-  const delta = (amount * 255) / 100;
-  for (let i = 0; i < img.data.length; i += 4) {
-    const maskAlpha = maskData[i + 3] / 255;
-    if (maskAlpha <= 0) continue;
-    img.data[i] = clamp(img.data[i] + delta * maskAlpha, 0, 255);
-    img.data[i + 1] = clamp(img.data[i + 1] + delta * maskAlpha, 0, 255);
-    img.data[i + 2] = clamp(img.data[i + 2] + delta * maskAlpha, 0, 255);
-  }
 }

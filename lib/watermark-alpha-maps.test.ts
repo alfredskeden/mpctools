@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   decodeGeminiBase64,
   getEmbeddedGeminiAlphaMap,
+  getEmbeddedGeminiDivideMap,
 } from "@/lib/watermark-alpha-maps";
 
 describe("watermark-alpha-maps", () => {
@@ -78,6 +79,42 @@ describe("watermark-alpha-maps", () => {
       const map = getEmbeddedGeminiAlphaMap(96)!;
       const hasNonZero = Array.from(map).some((v) => v > 0);
       expect(hasNonZero).toBe(true);
+    });
+  });
+
+  describe("getEmbeddedGeminiDivideMap", () => {
+    it("returns a Float32Array for size 96", () => {
+      const map = getEmbeddedGeminiDivideMap(96);
+      expect(map).toBeInstanceOf(Float32Array);
+    });
+
+    it("returns 96×96 = 9216 values for size 96", () => {
+      const map = getEmbeddedGeminiDivideMap(96);
+      expect(map!.length).toBe(9216);
+    });
+
+    it("all values are in range (0, 1]", () => {
+      const map = getEmbeddedGeminiDivideMap(96)!;
+      for (let i = 0; i < map.length; i++) {
+        expect(map[i]).toBeGreaterThan(0);
+        expect(map[i]).toBeLessThanOrEqual(1);
+      }
+    });
+
+    it("contains edge-correction values below 1 (not a no-op map)", () => {
+      const map = getEmbeddedGeminiDivideMap(96)!;
+      const hasBelowOne = Array.from(map).some((v) => v < 1);
+      expect(hasBelowOne).toBe(true);
+    });
+
+    it("returns a fresh copy each call (not the same reference)", () => {
+      const a = getEmbeddedGeminiDivideMap(96)!;
+      const b = getEmbeddedGeminiDivideMap(96)!;
+      expect(a).not.toBe(b);
+    });
+
+    it("returns null for an unsupported size", () => {
+      expect(getEmbeddedGeminiDivideMap(48 as 96)).toBeNull();
     });
   });
 });

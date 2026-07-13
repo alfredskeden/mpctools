@@ -188,42 +188,6 @@ export function DewatermarkSettingsRail({
           }
         >
           <SliderField
-            label="Mask expansion"
-            value={settings.maskExpand}
-            min={0}
-            max={20}
-            step={1}
-            disabled={disabled}
-            onChange={(v) => onPatch({ maskExpand: v })}
-            format={(v) => `${v} px`}
-            testId="rail-mask-expand"
-          />
-          <div className="h-3.5" aria-hidden="true" />
-          <SliderField
-            label="Feather"
-            value={settings.feather}
-            min={0}
-            max={1}
-            step={0.01}
-            disabled={disabled}
-            onChange={(v) => onPatch({ feather: v })}
-            format={(v) => v.toFixed(2)}
-            testId="rail-feather"
-          />
-          <div className="h-3.5" aria-hidden="true" />
-          <SliderField
-            label="Post lightness"
-            value={settings.postLightness}
-            min={-0.5}
-            max={0.5}
-            step={0.01}
-            disabled={disabled}
-            onChange={(v) => onPatch({ postLightness: v })}
-            format={(v) => `${v >= 0 ? "+" : ""}${v.toFixed(2)}`}
-            testId="rail-post-lightness"
-          />
-          <div className="h-3.5" aria-hidden="true" />
-          <SliderField
             label="Alpha gain"
             value={settings.alphaGain}
             min={0.5}

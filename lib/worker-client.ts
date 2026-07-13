@@ -4,11 +4,7 @@ import { runPipeline, type RemovalSettings } from "./watermark-removal";
 import type { GuideAnalysis } from "./merger-utils";
 import type { WorkerMessage, WorkerResponse, WatermarkWorkerMetadata } from "./image.worker";
 
-const DEFAULT_REMOVAL_SETTINGS: RemovalSettings = {
-  postLightness: 2.75,
-  maskExpand: 1.5,
-  feather: 4,
-};
+const DEFAULT_REMOVAL_SETTINGS: RemovalSettings = {};
 
 export type RemoveWatermarkOptions = {
   adaptive?: boolean;

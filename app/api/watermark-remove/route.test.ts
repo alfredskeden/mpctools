@@ -279,16 +279,11 @@ describe("POST /api/watermark-remove", () => {
       );
     });
 
-    it("passes all explicit float settings to the pipeline", async () => {
+    it("passes the alpha gain to the pipeline", async () => {
       // Given
       const request = makeRequest({
         fields: {
           alphaGain: "1.2",
-          feather: "6",
-          postLightness: "3.0",
-          edgeReveal: "0.8",
-          innerPunch: "1.1",
-          maskExpand: "2.0",
         },
       });
 
@@ -300,11 +295,6 @@ describe("POST /api/watermark-remove", () => {
         expect.anything(),
         expect.objectContaining({
           alphaGain: 1.2,
-          feather: 6,
-          postLightness: 3.0,
-          edgeReveal: 0.8,
-          innerPunch: 1.1,
-          maskExpand: 2.0,
         }),
       );
     });

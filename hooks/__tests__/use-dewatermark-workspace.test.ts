@@ -57,19 +57,13 @@ describe("toRemovalSettings", () => {
     ]);
   });
 
-  it("forwards every numeric repair value verbatim", () => {
+  it("forwards the alpha gain verbatim", () => {
     const out = toRemovalSettings({
       ...DEWATERMARK_DEFAULTS,
       alphaGain: 1.4,
-      feather: 0.66,
-      postLightness: -0.3,
-      maskExpand: 12,
     });
     expect(out).toMatchObject({
       alphaGain: 1.4,
-      feather: 0.66,
-      postLightness: -0.3,
-      maskExpand: 12,
     });
   });
 });

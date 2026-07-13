@@ -57,12 +57,7 @@ export async function POST(request: Request): Promise<Response> {
     adaptive,
     corner: cornerField ?? undefined,
     forcedVariant: forcedVariantField ?? undefined,
-    feather: parseFloatField(formData, "feather"),
-    postLightness: parseFloatField(formData, "postLightness"),
-    maskExpand: parseFloatField(formData, "maskExpand"),
     alphaGain: parseFloatField(formData, "alphaGain"),
-    edgeReveal: parseFloatField(formData, "edgeReveal"),
-    innerPunch: parseFloatField(formData, "innerPunch"),
   };
 
   let output: Awaited<ReturnType<typeof runWatermarkPipeline>>;

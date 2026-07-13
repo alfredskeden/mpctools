@@ -3,11 +3,7 @@ import { detectBestCandidate } from "./watermark-detection";
 import { runPipeline, type RemovalSettings } from "./watermark-removal";
 import type { GuideAnalysis } from "./merger-utils";
 
-const DEFAULT_REMOVAL_SETTINGS: RemovalSettings = {
-  postLightness: 2.75,
-  maskExpand: 1.5,
-  feather: 4,
-};
+const DEFAULT_REMOVAL_SETTINGS: RemovalSettings = {};
 
 export type WatermarkWorkerMetadata = {
   corner: string;

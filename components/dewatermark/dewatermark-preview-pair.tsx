@@ -125,8 +125,6 @@ export function DewatermarkPreviewPair({
           imageWidth={imageMeta.width}
           imageHeight={imageMeta.height}
           resolvedCorner={draftCorner}
-          maskExpand={draftSettings.maskExpand}
-          feather={draftSettings.feather}
           variant="original"
           testId="preview-cell-original"
         />
@@ -152,8 +150,6 @@ export function DewatermarkPreviewPair({
           imageWidth={imageMeta.width}
           imageHeight={imageMeta.height}
           resolvedCorner={resultCorner}
-          maskExpand={committedSettings.maskExpand}
-          feather={committedSettings.feather}
           variant="result"
           isProcessing={isProcessing}
           detectionMeta={

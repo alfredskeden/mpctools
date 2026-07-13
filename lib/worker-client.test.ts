@@ -322,7 +322,7 @@ describe("worker-client", () => {
 
       const pixels = new Uint8ClampedArray(2 * 2 * 4);
       const result = await fn(pixels, 2, 2, {
-        settings: { corner: "top-right", alphaGain: 1.3, feather: 0.2, postLightness: 0, maskExpand: 6 },
+        settings: { corner: "top-right", alphaGain: 1.3 },
       });
 
       expect(result.pixels).toBeInstanceOf(Uint8ClampedArray);
