@@ -31,7 +31,6 @@ The Master Rules:
 3. Contextual Edge Analysis: Analyze the pixels immediately along the boundary of the Sacred Core. Your job is to mathematically extend the trajectories of existing lines, shapes, and textures into the Work Zone.
 4. Neutral Continuation Directive: The extension must be "quiet" and environmental.
    - ALLOWED: Completing objects cut off by the frame (e.g., finishing a pipe downwards, extending a wall sideways).
-   - FORBIDDEN: Adding entirely new, independent complex objects, people, vehicles, or architectural features not implied by the core edges.
 5. Anti-Mirror/Anti-Tile: Do not mirror or repeat the core image.
 6. ${ratio} ${orientationAdj} Ratio: Output in ${orientationNoun} orientation ${ratio} aspect ratio.
 
@@ -45,7 +44,6 @@ export const OUTPAINT_COMMAND = `NEW PROJECT / MEMORY FLUSH: Apply Universal Neu
 Strict Directives:
 - ANALYZE EDGES: Look at where the original image meets the grey border.
 - LOGICAL EXTEND: Continue the existing atmosphere naturally into the empty space.
-- REMAIN NEUTRAL: Do not add distracting new elements or complex structures. Keep it simple background continuation.
 - PROTECT CORE COLORS: Keep the center pristine.
 - HIGH FIDELITY: Seamless, high-resolution output.`;
 
