@@ -11,8 +11,8 @@ type OutpaintHandoffProps = {
   handshakePrompt: string;
   outpaintCommand: string;
   grayBorderDataUrl: string | null;
-  dewatermarkPhase: "idle" | "processing" | "done" | "error";
-  dewatermarkError: string | null;
+  outpaintPhase: "idle" | "processing" | "done" | "error";
+  outpaintError: string | null;
   onUploadOutpaint: (file: File) => void;
 };
 
@@ -20,8 +20,8 @@ export function OutpaintHandoff({
   handshakePrompt,
   outpaintCommand,
   grayBorderDataUrl,
-  dewatermarkPhase,
-  dewatermarkError,
+  outpaintPhase,
+  outpaintError,
   onUploadOutpaint,
 }: OutpaintHandoffProps) {
   const handshakeClipboard = useCopyToClipboard();
@@ -97,11 +97,11 @@ export function OutpaintHandoff({
             Upload outpaint result
           </span>
           <span className="text-caption text-text-tertiary">
-            Watermark removal will happen automatically when you upload.
+            Upload your outpainted image to merge automatically.
           </span>
         </div>
 
-        {dewatermarkPhase === "idle" && (
+        {outpaintPhase === "idle" && (
           <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-surface-muted bg-surface-raised px-4 py-6 transition-colors hover:border-accent-blue hover:bg-accent-blue/5">
             <Upload className="size-5 text-text-tertiary" />
             <span className="text-sm text-text-secondary">
@@ -117,36 +117,36 @@ export function OutpaintHandoff({
           </label>
         )}
 
-        {dewatermarkPhase === "processing" && (
+        {outpaintPhase === "processing" && (
           <div className="flex items-center gap-3 rounded-lg border border-surface-border bg-surface-raised p-4">
             <Loader2
               className="size-5 shrink-0 animate-spin text-accent-blue"
-              data-testid="dewatermark-spinner"
+              data-testid="outpaint-spinner"
             />
             <span className="text-sm text-text-secondary">
-              Removing watermark...
+              Loading image...
             </span>
           </div>
         )}
 
-        {dewatermarkPhase === "done" && (
+        {outpaintPhase === "done" && (
           <div className="flex items-center gap-2 rounded-lg border border-status-success-dark/30 bg-status-success/8 p-3">
             <div className="flex size-5 items-center justify-center rounded-full bg-status-success-dark">
               <Check className="size-3 text-white" strokeWidth={3} />
             </div>
             <span className="text-sm font-medium text-status-success">
-              Watermark removed
+              Image ready
             </span>
           </div>
         )}
 
-        {dewatermarkPhase === "error" && (
+        {outpaintPhase === "error" && (
           <div
             role="alert"
             className="rounded-lg border border-red-500/30 bg-red-500/8 p-3"
           >
             <span className="text-sm text-red-400">
-              {dewatermarkError ?? "Watermark removal failed"}
+              {outpaintError ?? "Failed to load image"}
             </span>
           </div>
         )}

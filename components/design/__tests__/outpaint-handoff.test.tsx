@@ -20,8 +20,8 @@ describe("OutpaintHandoff", () => {
     handshakePrompt: "handshake text",
     outpaintCommand: "outpaint command text",
     grayBorderDataUrl: null,
-    dewatermarkPhase: "idle" as const,
-    dewatermarkError: null,
+    outpaintPhase: "idle" as const,
+    outpaintError: null,
     onUploadOutpaint: vi.fn(),
   };
 
@@ -58,7 +58,7 @@ describe("OutpaintHandoff", () => {
     expect(mockCopyText).toHaveBeenCalledWith("outpaint command text");
   });
 
-  it("shows upload zone when dewatermark is idle", () => {
+  it("shows upload zone when outpaint phase is idle", () => {
     // When
     render(<OutpaintHandoff {...defaultProps} />);
 
@@ -67,33 +67,33 @@ describe("OutpaintHandoff", () => {
     expect(input).toBeDefined();
   });
 
-  it("shows spinner when dewatermark is processing", () => {
+  it("shows spinner when outpaint phase is processing", () => {
     // When
     render(
-      <OutpaintHandoff {...defaultProps} dewatermarkPhase="processing" />,
+      <OutpaintHandoff {...defaultProps} outpaintPhase="processing" />,
     );
 
     // Then
-    expect(screen.getByTestId("dewatermark-spinner")).toBeDefined();
+    expect(screen.getByTestId("outpaint-spinner")).toBeDefined();
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 
-  it("shows success when dewatermark is done", () => {
+  it("shows success when outpaint phase is done", () => {
     // When
-    render(<OutpaintHandoff {...defaultProps} dewatermarkPhase="done" />);
+    render(<OutpaintHandoff {...defaultProps} outpaintPhase="done" />);
 
     // Then
     expect(document.querySelector('input[type="file"]')).toBeNull();
-    expect(screen.queryByTestId("dewatermark-spinner")).toBeNull();
+    expect(screen.queryByTestId("outpaint-spinner")).toBeNull();
   });
 
-  it("shows error message when dewatermark fails", () => {
+  it("shows error message when outpaint phase fails", () => {
     // When
     render(
       <OutpaintHandoff
         {...defaultProps}
-        dewatermarkPhase="error"
-        dewatermarkError="Decode failed"
+        outpaintPhase="error"
+        outpaintError="Decode failed"
       />,
     );
 
@@ -101,13 +101,13 @@ describe("OutpaintHandoff", () => {
     expect(screen.getByRole("alert")).toBeDefined();
   });
 
-  it("shows fallback error when dewatermarkError is null", () => {
+  it("shows fallback error when outpaintError is null", () => {
     // When
     render(
       <OutpaintHandoff
         {...defaultProps}
-        dewatermarkPhase="error"
-        dewatermarkError={null}
+        outpaintPhase="error"
+        outpaintError={null}
       />,
     );
 

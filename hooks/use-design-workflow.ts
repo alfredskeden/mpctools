@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer, useCallback, useEffect, useRef } from "react";
+import { useReducer, useCallback, useEffect } from "react";
 import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
 import { exportFullResolution } from "@/lib/prep-renderer";
 import {
@@ -12,8 +12,7 @@ import {
   HANDSHAKE_PROMPT,
   OUTPAINT_COMMAND,
 } from "@/hooks/use-outpaint-workflow";
-import { removeWatermark } from "@/lib/watermark-api";
-import { analyzeGuide, downloadCanvasAsBlob } from "@/lib/merger-utils";
+import { analyzeGuide } from "@/lib/merger-utils";
 import { downloadPsd } from "@/lib/psd-export";
 import { drawMergerScene } from "@/components/merger/MergerCanvas";
 import type { MergerState } from "@/hooks/use-merger-workflow";
@@ -60,9 +59,9 @@ export type DesignState = {
   originalFileName: string | null;
   grayBorderDataUrl: string | null;
   isProcessing: boolean;
-  dewatermarkPhase: "idle" | "processing" | "done" | "error";
-  dewatermarkedImage: HTMLImageElement | null;
-  dewatermarkError: string | null;
+  outpaintPhase: "idle" | "processing" | "done" | "error";
+  outpaintImage: HTMLImageElement | null;
+  outpaintError: string | null;
   mergePhase: "idle" | "processing" | "done";
   mergedCanvasDataUrl: string | null;
   mergeAnalysis: MergeAnalysis | null;
@@ -78,12 +77,12 @@ export type DesignAction =
     }
   | { type: "START_AUTO_PROCESS" }
   | { type: "AUTO_PROCESS_COMPLETE"; payload: string }
-  | { type: "DEWATERMARK_START" }
+  | { type: "UPLOAD_OUTPAINT_START" }
   | {
-      type: "DEWATERMARK_COMPLETE";
+      type: "UPLOAD_OUTPAINT_COMPLETE";
       payload: HTMLImageElement;
     }
-  | { type: "DEWATERMARK_ERROR"; payload: string }
+  | { type: "UPLOAD_OUTPAINT_ERROR"; payload: string }
   | { type: "START_MERGE" }
   | { type: "MERGE_COMPLETE"; payload: { dataUrl: string; mergeAnalysis: MergeAnalysis } }
   | { type: "MARK_DOWNLOADED" }
@@ -97,9 +96,9 @@ export const initialDesignState: DesignState = {
   originalFileName: null,
   grayBorderDataUrl: null,
   isProcessing: false,
-  dewatermarkPhase: "idle",
-  dewatermarkedImage: null,
-  dewatermarkError: null,
+  outpaintPhase: "idle",
+  outpaintImage: null,
+  outpaintError: null,
   mergePhase: "idle",
   mergedCanvasDataUrl: null,
   mergeAnalysis: null,
@@ -132,9 +131,9 @@ export function designReducer(
         originalFileName: action.payload.fileName,
         isProcessing: true,
         grayBorderDataUrl: null,
-        dewatermarkPhase: "idle",
-        dewatermarkedImage: null,
-        dewatermarkError: null,
+        outpaintPhase: "idle",
+        outpaintImage: null,
+        outpaintError: null,
         mergePhase: "idle",
         mergedCanvasDataUrl: null,
         isDownloaded: false,
@@ -151,26 +150,26 @@ export function designReducer(
         isProcessing: false,
         grayBorderDataUrl: action.payload,
       };
-    case "DEWATERMARK_START":
+    case "UPLOAD_OUTPAINT_START":
       return {
         ...state,
-        dewatermarkPhase: "processing",
-        dewatermarkedImage: null,
-        dewatermarkError: null,
+        outpaintPhase: "processing",
+        outpaintImage: null,
+        outpaintError: null,
       };
-    case "DEWATERMARK_COMPLETE":
+    case "UPLOAD_OUTPAINT_COMPLETE":
       return {
         ...state,
         stage: 6,
-        dewatermarkPhase: "done",
-        dewatermarkedImage: action.payload,
+        outpaintPhase: "done",
+        outpaintImage: action.payload,
         mergePhase: "processing",
       };
-    case "DEWATERMARK_ERROR":
+    case "UPLOAD_OUTPAINT_ERROR":
       return {
         ...state,
-        dewatermarkPhase: "error",
-        dewatermarkError: action.payload,
+        outpaintPhase: "error",
+        outpaintError: action.payload,
       };
     case "START_MERGE":
       return {
@@ -260,7 +259,6 @@ function buildMergerState(
 
 export function useDesignWorkflow() {
   const [state, dispatch] = useReducer(designReducer, initialDesignState);
-  const abortRef = useRef<AbortController | null>(null);
 
   const selectCanvasSize = useCallback((preset: CanvasSizePreset) => {
     dispatch({ type: "SELECT_CANVAS_SIZE", payload: preset });
@@ -315,40 +313,24 @@ export function useDesignWorkflow() {
   }, [state.stage, state.isProcessing, state.originalImage, state.textBoxSize, state.canvasSize]);
 
   const uploadOutpaint = useCallback((file: File) => {
-    if (abortRef.current) {
-      abortRef.current.abort();
-    }
-    const controller = new AbortController();
-    abortRef.current = controller;
+    dispatch({ type: "UPLOAD_OUTPAINT_START" });
 
-    dispatch({ type: "DEWATERMARK_START" });
-
-    removeWatermark(file, controller.signal)
-      .then((result) => {
-        const url = URL.createObjectURL(result.blob);
-        const img = new Image();
-        img.onload = () => {
-          URL.revokeObjectURL(url);
-          dispatch({ type: "DEWATERMARK_COMPLETE", payload: img });
-        };
-        /* v8 ignore start */
-        img.onerror = () => {
-          URL.revokeObjectURL(url);
-          dispatch({
-            type: "DEWATERMARK_ERROR",
-            payload: "Failed to load dewatermarked image",
-          });
-        };
-        /* v8 ignore stop */
-        img.src = url;
-      })
-      .catch((err) => {
-        if (err instanceof DOMException && err.name === "AbortError") return;
-        dispatch({
-          type: "DEWATERMARK_ERROR",
-          payload: err instanceof Error ? err.message : "Watermark removal failed",
-        });
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      dispatch({ type: "UPLOAD_OUTPAINT_COMPLETE", payload: img });
+    };
+    /* v8 ignore start */
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      dispatch({
+        type: "UPLOAD_OUTPAINT_ERROR",
+        payload: "Failed to load outpaint image",
       });
+    };
+    /* v8 ignore stop */
+    img.src = url;
   }, []);
 
   // Stage 6: Auto-merge effect
@@ -358,13 +340,13 @@ export function useDesignWorkflow() {
       state.mergePhase !== "processing" ||
       !state.originalImage ||
       !state.grayBorderDataUrl ||
-      !state.dewatermarkedImage
+      !state.outpaintImage
     ) {
       return;
     }
 
     const ogImage = state.originalImage;
-    const dewatermarkedImage = state.dewatermarkedImage;
+    const outpaintImage = state.outpaintImage;
     const grayBorderDataUrl = state.grayBorderDataUrl;
     let cancelled = false;
 
@@ -381,7 +363,7 @@ export function useDesignWorkflow() {
       /* v8 ignore start */
       if (!gCtx) {
         dispatch({
-          type: "DEWATERMARK_ERROR",
+          type: "UPLOAD_OUTPAINT_ERROR",
           payload: "Failed to create canvas context",
         });
         return;
@@ -397,7 +379,7 @@ export function useDesignWorkflow() {
 
       if (!analysis) {
         dispatch({
-          type: "DEWATERMARK_ERROR",
+          type: "UPLOAD_OUTPAINT_ERROR",
           payload: "Could not analyze guide image",
         });
         return;
@@ -405,7 +387,7 @@ export function useDesignWorkflow() {
 
       const mergerState = buildMergerState(
         ogImage,
-        dewatermarkedImage,
+        outpaintImage,
         analysis.canvasW,
         analysis.canvasH,
         analysis.ogX,
@@ -419,7 +401,7 @@ export function useDesignWorkflow() {
       /* v8 ignore start */
       if (!rCtx) {
         dispatch({
-          type: "DEWATERMARK_ERROR",
+          type: "UPLOAD_OUTPAINT_ERROR",
           payload: "Failed to create result canvas context",
         });
         return;
@@ -451,14 +433,14 @@ export function useDesignWorkflow() {
     state.mergePhase,
     state.originalImage,
     state.grayBorderDataUrl,
-    state.dewatermarkedImage,
+    state.outpaintImage,
   ]);
 
   const exportPsd = useCallback(
     (fileName: string) => {
       if (
         !state.originalImage ||
-        !state.dewatermarkedImage ||
+        !state.outpaintImage ||
         !state.mergeAnalysis
       )
         return;
@@ -466,7 +448,7 @@ export function useDesignWorkflow() {
       downloadPsd(
         {
           ogImage: state.originalImage,
-          outpaintImage: state.dewatermarkedImage,
+          outpaintImage: state.outpaintImage,
           ogPosition: state.mergeAnalysis.ogPosition,
           canvasW: state.mergeAnalysis.canvasW,
           canvasH: state.mergeAnalysis.canvasH,
@@ -480,7 +462,7 @@ export function useDesignWorkflow() {
         fileName,
       );
     },
-    [state.originalImage, state.dewatermarkedImage, state.mergeAnalysis],
+    [state.originalImage, state.outpaintImage, state.mergeAnalysis],
   );
 
   const downloadResult = useCallback(
@@ -498,20 +480,7 @@ export function useDesignWorkflow() {
   );
 
   const reset = useCallback(() => {
-    if (abortRef.current) {
-      abortRef.current.abort();
-      abortRef.current = null;
-    }
     dispatch({ type: "RESET" });
-  }, []);
-
-  // Cleanup abort controller on unmount
-  useEffect(() => {
-    return () => {
-      if (abortRef.current) {
-        abortRef.current.abort();
-      }
-    };
   }, []);
 
   return {

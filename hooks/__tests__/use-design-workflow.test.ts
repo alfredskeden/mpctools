@@ -8,11 +8,6 @@ vi.mock("@/lib/prep-renderer", () => ({
     mockExportFullResolution(...args),
 }));
 
-const mockRemoveWatermark = vi.fn();
-vi.mock("@/lib/watermark-api", () => ({
-  removeWatermark: (...args: unknown[]) => mockRemoveWatermark(...args),
-}));
-
 const mockAnalyzeGuide = vi.fn();
 vi.mock("@/lib/merger-utils", () => ({
   analyzeGuide: (...args: unknown[]) => mockAnalyzeGuide(...args),
@@ -270,45 +265,45 @@ describe("designReducer", () => {
     expect(result.grayBorderDataUrl).toBe("data:image/png;base64,result");
   });
 
-  it("handles DEWATERMARK_START", () => {
+  it("handles UPLOAD_OUTPAINT_START", () => {
     // When
     const result = designReducer(initialDesignState, {
-      type: "DEWATERMARK_START",
+      type: "UPLOAD_OUTPAINT_START",
     });
 
     // Then
-    expect(result.dewatermarkPhase).toBe("processing");
-    expect(result.dewatermarkedImage).toBeNull();
-    expect(result.dewatermarkError).toBeNull();
+    expect(result.outpaintPhase).toBe("processing");
+    expect(result.outpaintImage).toBeNull();
+    expect(result.outpaintError).toBeNull();
   });
 
-  it("handles DEWATERMARK_COMPLETE", () => {
+  it("handles UPLOAD_OUTPAINT_COMPLETE", () => {
     // Given
     const img = makeImage();
 
     // When
     const result = designReducer(
-      { ...initialDesignState, stage: 5, dewatermarkPhase: "processing" },
-      { type: "DEWATERMARK_COMPLETE", payload: img },
+      { ...initialDesignState, stage: 5, outpaintPhase: "processing" },
+      { type: "UPLOAD_OUTPAINT_COMPLETE", payload: img },
     );
 
     // Then
     expect(result.stage).toBe(6);
-    expect(result.dewatermarkPhase).toBe("done");
-    expect(result.dewatermarkedImage).toBe(img);
+    expect(result.outpaintPhase).toBe("done");
+    expect(result.outpaintImage).toBe(img);
     expect(result.mergePhase).toBe("processing");
   });
 
-  it("handles DEWATERMARK_ERROR", () => {
+  it("handles UPLOAD_OUTPAINT_ERROR", () => {
     // When
     const result = designReducer(initialDesignState, {
-      type: "DEWATERMARK_ERROR",
+      type: "UPLOAD_OUTPAINT_ERROR",
       payload: "Something went wrong",
     });
 
     // Then
-    expect(result.dewatermarkPhase).toBe("error");
-    expect(result.dewatermarkError).toBe("Something went wrong");
+    expect(result.outpaintPhase).toBe("error");
+    expect(result.outpaintError).toBe("Something went wrong");
   });
 
   it("handles START_MERGE", () => {
@@ -605,20 +600,9 @@ describe("useDesignWorkflow", () => {
     );
   });
 
-  it("uploadOutpaint triggers dewatermark and advances on success", async () => {
+  it("uploadOutpaint loads image directly and advances on success", async () => {
     // Given
     mockImageAutoLoad();
-
-    mockRemoveWatermark.mockResolvedValue({
-      blob: new Blob(["pixels"], { type: "image/png" }),
-      metadata: {
-        corner: "bottom-right",
-        confidence: 0.9,
-        alphaGain: 1.0,
-        source: "default",
-      },
-      pixelData: { pixels: new Uint8ClampedArray([]), width: 1, height: 1 },
-    });
 
     const { result } = renderHook(() => useDesignWorkflow());
     const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
@@ -629,19 +613,35 @@ describe("useDesignWorkflow", () => {
     });
 
     // Then
-    expect(mockRemoveWatermark).toHaveBeenCalledOnce();
-    expect(result.current.state.dewatermarkPhase).toBe("done");
+    expect(result.current.state.outpaintPhase).toBe("done");
     expect(result.current.state.stage).toBe(6);
+    expect(result.current.state.outpaintImage).not.toBeNull();
     expect(mockRevokeObjectURL).toHaveBeenCalledOnce();
 
     vi.restoreAllMocks();
   });
 
-  it("uploadOutpaint dispatches error on removeWatermark failure", async () => {
+  it("uploadOutpaint dispatches error on Image load failure", async () => {
     // Given
-    mockRemoveWatermark.mockRejectedValue(new Error("Decode failed"));
+    const FakeErrorImage = function (this: Record<string, unknown>) {
+      this.onload = null;
+      this.onerror = null;
+      let _src = "";
+      Object.defineProperty(this, "src", {
+        set(val: string) {
+          _src = val;
+          const onerror = this.onerror as (() => void) | null;
+          if (onerror) onerror();
+        },
+        get() {
+          return _src;
+        },
+      });
+    } as unknown as typeof globalThis.Image;
+    vi.stubGlobal("Image", FakeErrorImage);
+
     const { result } = renderHook(() => useDesignWorkflow());
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
+    const file = new File(["invalid"], "corrupt.png", { type: "image/png" });
 
     // When
     await act(async () => {
@@ -649,43 +649,11 @@ describe("useDesignWorkflow", () => {
     });
 
     // Then
-    expect(result.current.state.dewatermarkPhase).toBe("error");
-    expect(result.current.state.dewatermarkError).toBe("Decode failed");
-  });
+    expect(result.current.state.outpaintPhase).toBe("error");
+    expect(result.current.state.outpaintError).toBe("Failed to load outpaint image");
+    expect(mockRevokeObjectURL).toHaveBeenCalledOnce();
 
-  it("uploadOutpaint ignores AbortError", async () => {
-    // Given
-    mockRemoveWatermark.mockRejectedValue(
-      new DOMException("Aborted", "AbortError"),
-    );
-    const { result } = renderHook(() => useDesignWorkflow());
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
-
-    // When
-    await act(async () => {
-      result.current.uploadOutpaint(file);
-    });
-
-    // Then
-    expect(result.current.state.dewatermarkPhase).toBe("processing");
-  });
-
-  it("uploadOutpaint handles non-Error rejection", async () => {
-    // Given
-    mockRemoveWatermark.mockRejectedValue("string error");
-    const { result } = renderHook(() => useDesignWorkflow());
-    const file = new File(["pixels"], "outpaint.png", { type: "image/png" });
-
-    // When
-    await act(async () => {
-      result.current.uploadOutpaint(file);
-    });
-
-    // Then
-    expect(result.current.state.dewatermarkPhase).toBe("error");
-    expect(result.current.state.dewatermarkError).toBe(
-      "Watermark removal failed",
-    );
+    vi.restoreAllMocks();
   });
 
   it("downloadResult does nothing without mergedCanvasDataUrl", () => {
@@ -718,17 +686,6 @@ describe("useDesignWorkflow", () => {
     // Given
     mockImageAutoLoad();
     mockCanvasElement();
-
-    mockRemoveWatermark.mockResolvedValue({
-      blob: new Blob(["px"], { type: "image/png" }),
-      metadata: {
-        corner: "bottom-right",
-        confidence: 0.9,
-        alphaGain: 1.0,
-        source: "default",
-      },
-      pixelData: { pixels: new Uint8ClampedArray([]), width: 1, height: 1 },
-    });
 
     mockAnalyzeGuide.mockReturnValue({
       canvasW: 3520,
@@ -801,17 +758,6 @@ describe("useDesignWorkflow", () => {
     mockImageAutoLoad();
     mockCanvasElement();
 
-    mockRemoveWatermark.mockResolvedValue({
-      blob: new Blob(["px"], { type: "image/png" }),
-      metadata: {
-        corner: "bottom-right",
-        confidence: 0.9,
-        alphaGain: 1.0,
-        source: "default",
-      },
-      pixelData: { pixels: new Uint8ClampedArray([]), width: 1, height: 1 },
-    });
-
     mockAnalyzeGuide.mockReturnValue({
       canvasW: 3520,
       canvasH: 4800,
@@ -843,7 +789,7 @@ describe("useDesignWorkflow", () => {
     });
     expect(result.current.state.stage).toBe(5);
 
-    // Stage 5 -> 6 -> 7 (dewatermark + auto-merge)
+    // Stage 5 -> 6 -> 7 (outpaint upload + auto-merge)
     const file = new File(["px"], "outpaint.png", { type: "image/png" });
     await act(async () => {
       result.current.uploadOutpaint(file);
@@ -865,17 +811,6 @@ describe("useDesignWorkflow", () => {
     mockImageAutoLoad();
     mockCanvasElement();
     mockAnalyzeGuide.mockReturnValue(null);
-
-    mockRemoveWatermark.mockResolvedValue({
-      blob: new Blob(["px"], { type: "image/png" }),
-      metadata: {
-        corner: "bottom-right",
-        confidence: 0.9,
-        alphaGain: 1.0,
-        source: "default",
-      },
-      pixelData: { pixels: new Uint8ClampedArray([]), width: 1, height: 1 },
-    });
 
     const { result } = renderHook(() => useDesignWorkflow());
 
@@ -900,78 +835,17 @@ describe("useDesignWorkflow", () => {
     });
 
     // Then
-    expect(result.current.state.dewatermarkError).toBe(
+    expect(result.current.state.outpaintError).toBe(
       "Could not analyze guide image",
     );
 
     vi.restoreAllMocks();
   });
 
-  it("uploadOutpaint aborts previous request", async () => {
-    // Given
-    const abortSpy = vi.fn();
-    let callCount = 0;
-    mockRemoveWatermark.mockImplementation(
-      (_file: File, signal?: AbortSignal) => {
-        callCount++;
-        if (signal) {
-          signal.addEventListener("abort", abortSpy);
-        }
-        if (callCount === 1) {
-          return new Promise(() => {}); // never resolves
-        }
-        return Promise.resolve({
-          blob: new Blob(["px"], { type: "image/png" }),
-          metadata: {
-            corner: "bottom-right",
-            confidence: 0.9,
-            alphaGain: 1.0,
-            source: "default",
-          },
-          pixelData: {
-            pixels: new Uint8ClampedArray([]),
-            width: 1,
-            height: 1,
-          },
-        });
-      },
-    );
-
-    const { result } = renderHook(() => useDesignWorkflow());
-
-    // When - first upload
-    act(() => {
-      result.current.uploadOutpaint(
-        new File(["a"], "first.png", { type: "image/png" }),
-      );
-    });
-
-    // When - second upload should abort first
-    act(() => {
-      result.current.uploadOutpaint(
-        new File(["b"], "second.png", { type: "image/png" }),
-      );
-    });
-
-    // Then
-    expect(abortSpy).toHaveBeenCalledOnce();
-  });
-
   it("downloadResult creates and clicks a download link when data exists", async () => {
     // Given - full flow to reach stage 7
     mockImageAutoLoad();
     mockCanvasElement();
-
-    mockRemoveWatermark.mockResolvedValue({
-      blob: new Blob(["px"], { type: "image/png" }),
-      metadata: {
-        corner: "bottom-right",
-        confidence: 0.9,
-        alphaGain: 1.0,
-        source: "default",
-      },
-      pixelData: { pixels: new Uint8ClampedArray([]), width: 1, height: 1 },
-    });
 
     mockAnalyzeGuide.mockReturnValue({
       canvasW: 3520,
@@ -1009,30 +883,5 @@ describe("useDesignWorkflow", () => {
     expect(result.current.state.isDownloaded).toBe(true);
 
     vi.restoreAllMocks();
-  });
-
-  it("reset aborts active upload when called during processing", () => {
-    // Given
-    let aborted = false;
-    mockRemoveWatermark.mockImplementation(
-      (_file: File, signal?: AbortSignal) => {
-        signal?.addEventListener("abort", () => { aborted = true; });
-        return new Promise(() => {}); // never resolves
-      },
-    );
-
-    const { result } = renderHook(() => useDesignWorkflow());
-    act(() => {
-      result.current.uploadOutpaint(new File(["a"], "out.png", { type: "image/png" }));
-    });
-
-    // When
-    act(() => {
-      result.current.reset();
-    });
-
-    // Then
-    expect(aborted).toBe(true);
-    expect(result.current.state).toEqual(initialDesignState);
   });
 });

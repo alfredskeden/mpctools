@@ -148,8 +148,8 @@ export default function DesignPage() {
               handshakePrompt={handshakePrompt}
               outpaintCommand={outpaintCommand}
               grayBorderDataUrl={state.grayBorderDataUrl}
-              dewatermarkPhase={state.dewatermarkPhase}
-              dewatermarkError={state.dewatermarkError}
+              outpaintPhase={state.outpaintPhase}
+              outpaintError={state.outpaintError}
               onUploadOutpaint={uploadOutpaint}
             />
           </section>
