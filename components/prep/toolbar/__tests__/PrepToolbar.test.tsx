@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { PrepToolbar } from "../PrepToolbar";
 import type { PrepState } from "@/hooks/use-prep-workflow";
@@ -23,6 +23,7 @@ const makeState = (overrides: Partial<PrepState> = {}): PrepState => ({
   keepAspectRatio: true,
   algorithm: "detail-preserving",
   overlayNativeDimensions: null,
+  canvasSizingMode: "scale-image",
   ...overrides,
 });
 
@@ -37,6 +38,8 @@ const defaultProps = {
   onToggleOverlay: noop,
   onSetOverlayOpacity: noop,
   onSetCanvasSize: noop,
+  onSetCanvasSizingMode: noop,
+  onSetCanvasSizeStep: noop,
   onSetDpiOverride: noop,
   onSetKeepAspectRatio: noop,
   onSetAlgorithm: noop,
@@ -145,5 +148,76 @@ describe("PrepToolbar", () => {
     expect(
       screen.queryByText("Image Controls", { selector: "h3" }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("PrepToolbar canvas sizing plumbing", () => {
+  it("passes the sizing mode callbacks to the Canvas Size panel", async () => {
+    // Given
+    const onSetCanvasSizingMode = vi.fn();
+    render(
+      <PrepToolbar
+        {...defaultProps}
+        onSetCanvasSizingMode={onSetCanvasSizingMode}
+      />,
+    );
+
+    // When
+    await userEvent.click(screen.getByLabelText("Canvas Size"));
+    const modes = within(
+      screen.getByRole("group", { name: "Canvas sizing mode" }),
+    ).getAllByRole("button");
+    await userEvent.click(modes[1]);
+
+    // Then
+    expect(onSetCanvasSizingMode).toHaveBeenCalledWith("native-image");
+  });
+
+  it("passes the step callback to the Canvas Size panel", async () => {
+    // Given
+    const onSetCanvasSizeStep = vi.fn();
+    render(
+      <PrepToolbar
+        {...defaultProps}
+        state={makeState({ canvasSizingMode: "native-image" })}
+        onSetCanvasSizeStep={onSetCanvasSizeStep}
+      />,
+    );
+
+    // When
+    await userEvent.click(screen.getByLabelText("Canvas Size"));
+    fireEvent.change(screen.getByLabelText("Canvas size step"), {
+      target: { value: "410" },
+    });
+
+    // Then
+    expect(onSetCanvasSizeStep).toHaveBeenCalledWith(410);
+  });
+
+  it("disables the DPI panel while native-image sizing is active", async () => {
+    // Given
+    render(
+      <PrepToolbar
+        {...defaultProps}
+        state={makeState({ canvasSizingMode: "native-image" })}
+      />,
+    );
+
+    // When
+    await userEvent.click(screen.getByLabelText("DPI Override"));
+
+    // Then
+    expect(screen.getByLabelText("DPI value")).toBeDisabled();
+  });
+
+  it("leaves the DPI panel enabled in the default mode", async () => {
+    // Given
+    render(<PrepToolbar {...defaultProps} />);
+
+    // When
+    await userEvent.click(screen.getByLabelText("DPI Override"));
+
+    // Then
+    expect(screen.getByLabelText("DPI value")).toBeEnabled();
   });
 });

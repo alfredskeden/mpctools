@@ -3,6 +3,8 @@
 import { useReducer, useCallback, useEffect } from "react";
 import {
   calculateInitialScale,
+  canvasSizeForStep,
+  nearestCanvasStep,
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
 } from "@/lib/canvas-utils";
@@ -32,6 +34,8 @@ export type { StepStatus } from "@/lib/step-types";
 export type Algorithm = "detail-preserving" | "standard";
 
 export type VerticalPreset = "short" | "medium" | "normal" | "tall";
+
+export type CanvasSizingMode = "scale-image" | "native-image";
 
 export const VERTICAL_PRESET_CENTERS: Record<VerticalPreset, number> = {
   short: 2836,
@@ -69,6 +73,7 @@ export type PrepState = {
   keepAspectRatio: boolean;
   algorithm: Algorithm;
   overlayNativeDimensions: { width: number; height: number } | null;
+  canvasSizingMode: CanvasSizingMode;
 };
 
 type PrepAction =
@@ -99,7 +104,9 @@ type PrepAction =
   | {
       type: "SET_OVERLAY_NATIVE_DIMENSIONS";
       payload: { width: number; height: number };
-    };
+    }
+  | { type: "SET_CANVAS_SIZING_MODE"; payload: CanvasSizingMode }
+  | { type: "SET_CANVAS_SIZE_STEP"; payload: number };
 
 const initialState: PrepState = {
   currentStep: 1,
@@ -120,6 +127,7 @@ const initialState: PrepState = {
   keepAspectRatio: true,
   algorithm: "detail-preserving",
   overlayNativeDimensions: null,
+  canvasSizingMode: "scale-image",
 };
 
 export function prepReducer(state: PrepState, action: PrepAction): PrepState {
@@ -131,10 +139,13 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         opacities[id] = 100;
       }
       const el = action.payload.element;
-      const newScale = calculateInitialScale(el, {
-        width: state.canvasWidth,
-        height: state.canvasHeight,
-      });
+      const newScale =
+        state.canvasSizingMode === "native-image"
+          ? 1
+          : calculateInitialScale(el, {
+              width: state.canvasWidth,
+              height: state.canvasHeight,
+            });
       return {
         ...state,
         currentStep: 2,
@@ -351,6 +362,31 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         ...state,
         overlayNativeDimensions: action.payload,
       };
+    case "SET_CANVAS_SIZING_MODE": {
+      if (action.payload !== "native-image") {
+        return { ...state, canvasSizingMode: action.payload };
+      }
+      const snapped = canvasSizeForStep(nearestCanvasStep(state.canvasWidth));
+      return {
+        ...state,
+        canvasSizingMode: action.payload,
+        canvasWidth: snapped.width,
+        canvasHeight: snapped.height,
+        scale: 1,
+      };
+    }
+    case "SET_CANVAS_SIZE_STEP": {
+      const next = canvasSizeForStep(action.payload);
+      return {
+        ...state,
+        canvasWidth: next.width,
+        canvasHeight: next.height,
+        position: {
+          x: state.position.x + (next.width - state.canvasWidth) / 2,
+          y: state.position.y + (next.height - state.canvasHeight) / 2,
+        },
+      };
+    }
     default:
       return state;
   }
@@ -489,6 +525,16 @@ export function usePrepWorkflow() {
     [],
   );
 
+  const setCanvasSizingMode = useCallback((mode: CanvasSizingMode) => {
+    dispatch({ type: "SET_CANVAS_SIZING_MODE", payload: mode });
+    track("prep_canvas_sizing_mode_set", { mode });
+  }, []);
+
+  const setCanvasSizeStep = useCallback((step: number) => {
+    dispatch({ type: "SET_CANVAS_SIZE_STEP", payload: step });
+    track("prep_canvas_size_step_set", { step });
+  }, []);
+
   const canDownload = state.isPositioned;
   const canContinue = state.isDownloaded;
   const stepStatuses = getStepStatuses(state.currentStep);
@@ -517,6 +563,8 @@ export function usePrepWorkflow() {
     fitHeight,
     setVerticalPreset,
     setOverlayNativeDimensions,
+    setCanvasSizingMode,
+    setCanvasSizeStep,
     canDownload,
     canContinue,
     stepStatuses,

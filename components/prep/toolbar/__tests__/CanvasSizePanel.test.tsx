@@ -1,15 +1,29 @@
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { CanvasSizePanel, computeAspectRatio } from "../panels/CanvasSizePanel";
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
+import {
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
+  MIN_CANVAS_STEP,
+  MAX_CANVAS_STEP,
+} from "@/lib/canvas-utils";
+import type { CanvasSizingMode } from "@/hooks/use-prep-workflow";
 
 const noop = () => {};
 
 const defaultProps = {
   canvasWidth: CANVAS_WIDTH,
   canvasHeight: CANVAS_HEIGHT,
+  canvasSizingMode: "scale-image" as CanvasSizingMode,
   onSetCanvasSize: noop,
+  onSetCanvasSizingMode: noop,
+  onSetCanvasSizeStep: noop,
 };
+
+const modeButtons = () =>
+  within(
+    screen.getByRole("group", { name: "Canvas sizing mode" }),
+  ).getAllByRole("button");
 
 describe("CanvasSizePanel", () => {
   it("renders width and height inputs with current values", () => {
@@ -109,5 +123,128 @@ describe("computeAspectRatio", () => {
 
   it("computes 4:3 for 3264x2448", () => {
     expect(computeAspectRatio(3264, 2448)).toBe("4:3");
+  });
+});
+
+describe("CanvasSizePanel canvas sizing mode", () => {
+  it("renders one toggle button per sizing mode", () => {
+    // When
+    render(<CanvasSizePanel {...defaultProps} />);
+
+    // Then
+    expect(modeButtons()).toHaveLength(2);
+  });
+
+  it("reflects the active mode through a state attribute", () => {
+    // When
+    render(
+      <CanvasSizePanel {...defaultProps} canvasSizingMode="native-image" />,
+    );
+
+    // Then
+    const [scaleMode, nativeMode] = modeButtons();
+    expect(scaleMode.getAttribute("aria-pressed")).toBe("false");
+    expect(scaleMode.getAttribute("data-active")).toBe("false");
+    expect(nativeMode.getAttribute("aria-pressed")).toBe("true");
+    expect(nativeMode.getAttribute("data-active")).toBe("true");
+  });
+
+  it("invokes the mode callback when a mode is picked", async () => {
+    // Given
+    const onSetCanvasSizingMode = vi.fn();
+    render(
+      <CanvasSizePanel
+        {...defaultProps}
+        onSetCanvasSizingMode={onSetCanvasSizingMode}
+      />,
+    );
+
+    // When
+    await userEvent.click(modeButtons()[1]);
+
+    // Then
+    expect(onSetCanvasSizingMode).toHaveBeenCalledWith("native-image");
+  });
+
+  it("renders the dimension inputs and presets without the step slider in the default mode", () => {
+    // When
+    render(<CanvasSizePanel {...defaultProps} />);
+
+    // Then
+    expect(screen.getByLabelText("Canvas width")).toBeInTheDocument();
+    expect(screen.getByLabelText("Canvas height")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /classic borderless/i }),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("Canvas size step")).toBeNull();
+  });
+
+  it("renders the step slider without dimension inputs or presets in the native mode", () => {
+    // When
+    render(
+      <CanvasSizePanel {...defaultProps} canvasSizingMode="native-image" />,
+    );
+
+    // Then
+    expect(screen.getByLabelText("Canvas size step")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Canvas width")).toBeNull();
+    expect(screen.queryByLabelText("Canvas height")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /classic borderless/i }),
+    ).toBeNull();
+    expect(modeButtons()).toHaveLength(2);
+  });
+
+  it("takes the slider value from the current canvas width and bounds from the step limits", () => {
+    // When
+    render(
+      <CanvasSizePanel {...defaultProps} canvasSizingMode="native-image" />,
+    );
+
+    // Then
+    const slider = screen.getByLabelText("Canvas size step");
+    expect(slider).toHaveValue("320");
+    expect(slider.getAttribute("min")).toBe(String(MIN_CANVAS_STEP));
+    expect(slider.getAttribute("max")).toBe(String(MAX_CANVAS_STEP));
+  });
+
+  it("invokes the step callback when the slider moves", () => {
+    // Given
+    const onSetCanvasSizeStep = vi.fn();
+    render(
+      <CanvasSizePanel
+        {...defaultProps}
+        canvasSizingMode="native-image"
+        onSetCanvasSizeStep={onSetCanvasSizeStep}
+      />,
+    );
+
+    // When
+    fireEvent.change(screen.getByLabelText("Canvas size step"), {
+      target: { value: "450" },
+    });
+
+    // Then
+    expect(onSetCanvasSizeStep).toHaveBeenCalledWith(450);
+  });
+
+  it("shows the resulting canvas dimensions for the current step", () => {
+    // When
+    render(
+      <CanvasSizePanel
+        {...defaultProps}
+        canvasSizingMode="native-image"
+        canvasWidth={2200}
+        canvasHeight={3000}
+      />,
+    );
+
+    // Then
+    expect(screen.getByTestId("canvas-step-size").textContent).toContain(
+      "2200",
+    );
+    expect(screen.getByTestId("canvas-step-size").textContent).toContain(
+      "3000",
+    );
   });
 });

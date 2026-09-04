@@ -10,6 +10,8 @@ export type AnalyticsEvent =
   | "prep_image_uploaded"
   | "prep_algorithm_set"
   | "prep_canvas_size_set"
+  | "prep_canvas_sizing_mode_set"
+  | "prep_canvas_size_step_set"
   | "prep_dpi_override_set"
   | "prep_overlay_toggled"
   | "prep_alignment_used"

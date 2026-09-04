@@ -11,6 +11,7 @@ import type {
   PrepState,
   Algorithm,
   VerticalPreset,
+  CanvasSizingMode,
 } from "@/hooks/use-prep-workflow";
 
 type MobileAdvancedOptionsProps = {
@@ -21,6 +22,8 @@ type MobileAdvancedOptionsProps = {
   onToggleOverlay: (overlay: string) => void;
   onSetOverlayOpacity: (id: string, opacity: number) => void;
   onSetCanvasSize: (width: number, height: number) => void;
+  onSetCanvasSizingMode: (mode: CanvasSizingMode) => void;
+  onSetCanvasSizeStep: (step: number) => void;
   onSetDpiOverride: (dpi: number | null) => void;
   onSetKeepAspectRatio: (keep: boolean) => void;
   onSetAlgorithm: (algorithm: Algorithm) => void;
@@ -49,6 +52,8 @@ export function MobileAdvancedOptions({
   onToggleOverlay,
   onSetOverlayOpacity,
   onSetCanvasSize,
+  onSetCanvasSizingMode,
+  onSetCanvasSizeStep,
   onSetDpiOverride,
   onSetKeepAspectRatio,
   onSetAlgorithm,
@@ -142,13 +147,17 @@ export function MobileAdvancedOptions({
                     <CanvasSizePanel
                       canvasWidth={state.canvasWidth}
                       canvasHeight={state.canvasHeight}
+                      canvasSizingMode={state.canvasSizingMode}
                       onSetCanvasSize={onSetCanvasSize}
+                      onSetCanvasSizingMode={onSetCanvasSizingMode}
+                      onSetCanvasSizeStep={onSetCanvasSizeStep}
                     />
                   )}
                   {section.id === "dpi" && (
                     <DpiOverridePanel
                       dpiOverride={state.dpiOverride}
                       onSetDpiOverride={onSetDpiOverride}
+                      disabled={state.canvasSizingMode === "native-image"}
                     />
                   )}
                 </div>

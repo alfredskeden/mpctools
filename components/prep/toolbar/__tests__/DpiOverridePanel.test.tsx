@@ -113,3 +113,27 @@ describe("DpiOverridePanel", () => {
     expect(button.getAttribute("data-active")).toBe("true");
   });
 });
+
+describe("DpiOverridePanel disabled state", () => {
+  it("disables every control when the disabled flag is given", () => {
+    // When
+    render(<DpiOverridePanel {...defaultProps} disabled />);
+
+    // Then
+    expect(screen.getByLabelText("DPI value")).toBeDisabled();
+    for (const button of screen.getAllByRole("button")) {
+      expect(button).toBeDisabled();
+    }
+  });
+
+  it("keeps every control enabled without the disabled flag", () => {
+    // When
+    render(<DpiOverridePanel {...defaultProps} />);
+
+    // Then
+    expect(screen.getByLabelText("DPI value")).toBeEnabled();
+    for (const button of screen.getAllByRole("button")) {
+      expect(button).toBeEnabled();
+    }
+  });
+});

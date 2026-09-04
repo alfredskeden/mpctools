@@ -23,6 +23,7 @@ const makeState = (overrides: Partial<PrepState> = {}): PrepState => ({
   keepAspectRatio: true,
   algorithm: "detail-preserving",
   overlayNativeDimensions: null,
+  canvasSizingMode: "scale-image",
   ...overrides,
 });
 
@@ -332,5 +333,53 @@ describe("ImageControlsPanel", () => {
       target: { value: "600" },
     });
     expect(onSetImageDimensions).toHaveBeenCalledWith(300, 600);
+  });
+});
+
+describe("ImageControlsPanel in native-image mode", () => {
+  const nativeProps = {
+    ...defaultProps,
+    state: makeState({ canvasSizingMode: "native-image", scale: 1 }),
+  };
+
+  it("disables the scale-changing controls", () => {
+    // When
+    render(<ImageControlsPanel {...nativeProps} />);
+
+    // Then
+    expect(screen.getByLabelText("Width")).toBeDisabled();
+    expect(screen.getByLabelText("Height")).toBeDisabled();
+    expect(screen.getByLabelText("Scale up")).toBeDisabled();
+    expect(screen.getByLabelText("Scale down")).toBeDisabled();
+    expect(screen.getByRole("button", { name: /fit w/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /fit h/i })).toBeDisabled();
+  });
+
+  it("keeps the scale-changing controls enabled in the default mode", () => {
+    // When
+    render(<ImageControlsPanel {...defaultProps} />);
+
+    // Then
+    expect(screen.getByLabelText("Width")).toBeEnabled();
+    expect(screen.getByLabelText("Height")).toBeEnabled();
+    expect(screen.getByLabelText("Scale up")).toBeEnabled();
+    expect(screen.getByLabelText("Scale down")).toBeEnabled();
+    expect(screen.getByRole("button", { name: /fit w/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /fit h/i })).toBeEnabled();
+  });
+
+  it("keeps position and appearance controls enabled in native-image mode", () => {
+    // When
+    render(<ImageControlsPanel {...nativeProps} />);
+
+    // Then
+    expect(screen.getByLabelText("Position X")).toBeEnabled();
+    expect(screen.getByLabelText("Position Y")).toBeEnabled();
+    expect(screen.getByLabelText("Rotation")).toBeEnabled();
+    expect(screen.getByLabelText("Algorithm")).toBeEnabled();
+    expect(screen.getByRole("checkbox")).toBeEnabled();
+    expect(screen.getByRole("button", { name: /center h/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /center v/i })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /^tall$/i })).toBeEnabled();
   });
 });

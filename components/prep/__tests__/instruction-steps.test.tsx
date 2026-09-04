@@ -22,6 +22,7 @@ const defaultState: PrepState = {
   keepAspectRatio: true,
   algorithm: "detail-preserving",
   overlayNativeDimensions: null,
+  canvasSizingMode: "scale-image",
 };
 
 const noop = () => {};
@@ -39,6 +40,8 @@ const defaultProps = {
   onUpdatePosition: noop,
   onSetOverlayOpacity: noop,
   onSetCanvasSize: noop,
+  onSetCanvasSizingMode: noop,
+  onSetCanvasSizeStep: noop,
   onSetDpiOverride: noop,
   onSetKeepAspectRatio: noop,
   onSetAlgorithm: noop,

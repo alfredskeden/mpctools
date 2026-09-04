@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MobileAdvancedOptions } from "../MobileAdvancedOptions";
 import type { PrepState } from "@/hooks/use-prep-workflow";
@@ -25,6 +25,7 @@ const defaultState: PrepState = {
   keepAspectRatio: true,
   algorithm: "detail-preserving",
   overlayNativeDimensions: null,
+  canvasSizingMode: "scale-image",
 };
 
 const defaultProps = {
@@ -35,6 +36,8 @@ const defaultProps = {
   onToggleOverlay: noop,
   onSetOverlayOpacity: noop,
   onSetCanvasSize: noop,
+  onSetCanvasSizingMode: noop,
+  onSetCanvasSizeStep: noop,
   onSetDpiOverride: noop,
   onSetKeepAspectRatio: noop,
   onSetAlgorithm: noop,
@@ -207,5 +210,83 @@ describe("MobileAdvancedOptions", () => {
       "button[aria-expanded='true'] svg",
     );
     expect(updatedChevron?.classList.contains("rotate-180")).toBe(true);
+  });
+});
+
+describe("MobileAdvancedOptions canvas sizing plumbing", () => {
+  const openSection = async (name: RegExp) => {
+    await userEvent.click(
+      screen.getByRole("button", { name: /advanced options/i }),
+    );
+    await userEvent.click(screen.getByRole("button", { name }));
+  };
+
+  it("passes the sizing mode callback to the Canvas Size section", async () => {
+    // Given
+    const onSetCanvasSizingMode = vi.fn();
+    render(
+      <MobileAdvancedOptions
+        {...defaultProps}
+        onSetCanvasSizingMode={onSetCanvasSizingMode}
+      />,
+    );
+
+    // When
+    await openSection(/canvas size/i);
+    const modes = within(
+      screen.getByRole("group", { name: "Canvas sizing mode" }),
+    ).getAllByRole("button");
+    await userEvent.click(modes[1]);
+
+    // Then
+    expect(onSetCanvasSizingMode).toHaveBeenCalledWith("native-image");
+  });
+
+  it("passes the step callback to the Canvas Size section", async () => {
+    // Given
+    const onSetCanvasSizeStep = vi.fn();
+    render(
+      <MobileAdvancedOptions
+        {...defaultProps}
+        state={{ ...defaultProps.state, canvasSizingMode: "native-image" }}
+        onSetCanvasSizeStep={onSetCanvasSizeStep}
+      />,
+    );
+
+    // When
+    await openSection(/canvas size/i);
+    fireEvent.change(screen.getByLabelText("Canvas size step"), {
+      target: { value: "260" },
+    });
+
+    // Then
+    expect(onSetCanvasSizeStep).toHaveBeenCalledWith(260);
+  });
+
+  it("disables the DPI section while native-image sizing is active", async () => {
+    // Given
+    render(
+      <MobileAdvancedOptions
+        {...defaultProps}
+        state={{ ...defaultProps.state, canvasSizingMode: "native-image" }}
+      />,
+    );
+
+    // When
+    await openSection(/dpi override/i);
+
+    // Then
+    expect(screen.getByLabelText("DPI value")).toBeDisabled();
+  });
+
+  it("leaves the DPI section enabled in the default mode", async () => {
+    // Given
+    render(<MobileAdvancedOptions {...defaultProps} />);
+
+    // When
+    await openSection(/dpi override/i);
+
+    // Then
+    expect(screen.getByLabelText("DPI value")).toBeEnabled();
   });
 });

@@ -8,6 +8,7 @@ import type {
   PrepState,
   Algorithm,
   VerticalPreset,
+  CanvasSizingMode,
 } from "@/hooks/use-prep-workflow";
 import { StepCircle } from "@/components/ui/StepCircle";
 import {
@@ -34,6 +35,8 @@ type InstructionStepsProps = {
   onUpdatePosition: (x: number, y: number) => void;
   onSetOverlayOpacity: (id: string, opacity: number) => void;
   onSetCanvasSize: (width: number, height: number) => void;
+  onSetCanvasSizingMode: (mode: CanvasSizingMode) => void;
+  onSetCanvasSizeStep: (step: number) => void;
   onSetDpiOverride: (dpi: number | null) => void;
   onSetKeepAspectRatio: (keep: boolean) => void;
   onSetAlgorithm: (algorithm: Algorithm) => void;
@@ -58,6 +61,8 @@ export const InstructionSteps = ({
   onUpdatePosition,
   onSetOverlayOpacity,
   onSetCanvasSize,
+  onSetCanvasSizingMode,
+  onSetCanvasSizeStep,
   onSetDpiOverride,
   onSetKeepAspectRatio,
   onSetAlgorithm,
@@ -169,6 +174,8 @@ export const InstructionSteps = ({
                 onToggleOverlay={onToggleOverlay}
                 onSetOverlayOpacity={onSetOverlayOpacity}
                 onSetCanvasSize={onSetCanvasSize}
+                onSetCanvasSizingMode={onSetCanvasSizingMode}
+                onSetCanvasSizeStep={onSetCanvasSizeStep}
                 onSetDpiOverride={onSetDpiOverride}
                 onSetKeepAspectRatio={onSetKeepAspectRatio}
                 onSetAlgorithm={onSetAlgorithm}

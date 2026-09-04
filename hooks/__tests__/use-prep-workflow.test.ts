@@ -9,7 +9,13 @@ import {
   PREP_CANVAS_SIZE_KEY,
   type PrepState,
 } from "../use-prep-workflow";
-import { CANVAS_WIDTH, CANVAS_HEIGHT } from "@/lib/canvas-utils";
+import {
+  CANVAS_WIDTH,
+  CANVAS_HEIGHT,
+  MIN_CANVAS_STEP,
+  MAX_CANVAS_STEP,
+  canvasSizeForStep,
+} from "@/lib/canvas-utils";
 import { track } from "@/lib/analytics";
 
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
@@ -35,6 +41,12 @@ const initialState: PrepState = {
   keepAspectRatio: true,
   algorithm: "detail-preserving",
   overlayNativeDimensions: null,
+  canvasSizingMode: "scale-image",
+};
+
+const nativeState: PrepState = {
+  ...initialState,
+  canvasSizingMode: "native-image",
 };
 
 describe("prepReducer", () => {
@@ -273,6 +285,7 @@ describe("prepReducer", () => {
       keepAspectRatio: true,
       algorithm: "detail-preserving",
       overlayNativeDimensions: null,
+      canvasSizingMode: "scale-image",
     };
 
     const result = prepReducer(state, { type: "REPOSITION" });
@@ -310,6 +323,7 @@ describe("prepReducer", () => {
       keepAspectRatio: false,
       algorithm: "standard",
       overlayNativeDimensions: { width: 3072, height: 4096 },
+      canvasSizingMode: "scale-image",
     };
 
     const result = prepReducer(state, { type: "RESET" });
@@ -1087,5 +1101,231 @@ describe("usePrepWorkflow", () => {
     // Then
     const stored = sessionStorage.getItem(PREP_CANVAS_SIZE_KEY);
     expect(JSON.parse(stored!)).toEqual({ width: 3264, height: 2448 });
+  });
+
+  it("fires analytics when the canvas sizing mode is set", () => {
+    // Given
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    // When
+    act(() => {
+      result.current.setCanvasSizingMode("native-image");
+    });
+
+    // Then
+    expect(result.current.state.canvasSizingMode).toBe("native-image");
+    expect(track).toHaveBeenCalledWith("prep_canvas_sizing_mode_set", {
+      mode: "native-image",
+    });
+  });
+
+  it("fires analytics when the canvas size step is set", () => {
+    // Given
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    // When
+    act(() => {
+      result.current.setCanvasSizeStep(200);
+    });
+
+    // Then
+    expect(result.current.state.canvasWidth).toBe(2200);
+    expect(track).toHaveBeenCalledWith("prep_canvas_size_step_set", {
+      step: 200,
+    });
+  });
+});
+
+describe("prepReducer canvas sizing mode", () => {
+  it("starts in the scaled-image mode", () => {
+    // Then
+    expect(initialState.canvasSizingMode).toBe("scale-image");
+  });
+
+  it("locks image scale to exactly 1 when entering native-image mode", () => {
+    // Given
+    const state: PrepState = { ...initialState, scale: 4 };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZING_MODE",
+      payload: "native-image",
+    });
+
+    // Then
+    expect(result.scale).toBe(1);
+    expect(result.canvasSizingMode).toBe("native-image");
+  });
+
+  it("leaves the image position untouched when entering native-image mode", () => {
+    // Given
+    const state: PrepState = {
+      ...initialState,
+      scale: 4,
+      position: { x: -900, y: 12345 },
+    };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZING_MODE",
+      payload: "native-image",
+    });
+
+    // Then
+    expect(result.position).toEqual({ x: -900, y: 12345 });
+  });
+
+  it("snaps a non-11:15 canvas to the nearest legal size when entering native-image mode", () => {
+    // Given
+    const state: PrepState = {
+      ...initialState,
+      canvasWidth: 3712,
+      canvasHeight: 4608,
+    };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZING_MODE",
+      payload: "native-image",
+    });
+
+    // Then
+    expect(result.canvasWidth).toBe(3707);
+    expect(result.canvasHeight).toBe(5055);
+  });
+
+  it("leaves the default canvas unchanged when entering native-image mode", () => {
+    // When
+    const result = prepReducer(initialState, {
+      type: "SET_CANVAS_SIZING_MODE",
+      payload: "native-image",
+    });
+
+    // Then
+    expect(result.canvasWidth).toBe(CANVAS_WIDTH);
+    expect(result.canvasHeight).toBe(CANVAS_HEIGHT);
+  });
+
+  it("keeps canvas size and scale when switching back to scale-image mode", () => {
+    // Given
+    const state: PrepState = {
+      ...nativeState,
+      canvasWidth: 2200,
+      canvasHeight: 3000,
+      scale: 1,
+    };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZING_MODE",
+      payload: "scale-image",
+    });
+
+    // Then
+    expect(result.canvasSizingMode).toBe("scale-image");
+    expect(result.canvasWidth).toBe(2200);
+    expect(result.canvasHeight).toBe(3000);
+    expect(result.scale).toBe(1);
+  });
+});
+
+describe("prepReducer SET_CANVAS_SIZE_STEP", () => {
+  it("sets the canvas to the 11:15 size for the step", () => {
+    // When
+    const result = prepReducer(nativeState, {
+      type: "SET_CANVAS_SIZE_STEP",
+      payload: MIN_CANVAS_STEP,
+    });
+
+    // Then
+    expect({ width: result.canvasWidth, height: result.canvasHeight }).toEqual(
+      canvasSizeForStep(MIN_CANVAS_STEP),
+    );
+  });
+
+  it("keeps the image offset from the canvas centre when growing", () => {
+    // Given
+    const image = makeImage();
+    const state: PrepState = {
+      ...nativeState,
+      imageElement: image,
+      position: { x: 1710, y: 2350 },
+    };
+    const offsetBefore = {
+      x: state.position.x + image.width / 2 - state.canvasWidth / 2,
+      y: state.position.y + image.height / 2 - state.canvasHeight / 2,
+    };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZE_STEP",
+      payload: MAX_CANVAS_STEP,
+    });
+
+    // Then
+    expect({
+      x: result.position.x + image.width / 2 - result.canvasWidth / 2,
+      y: result.position.y + image.height / 2 - result.canvasHeight / 2,
+    }).toEqual(offsetBefore);
+  });
+
+  it("keeps the image offset from the canvas centre when shrinking a dragged image", () => {
+    // Given
+    const image = makeImage();
+    const state: PrepState = {
+      ...nativeState,
+      imageElement: image,
+      position: { x: -400, y: 90 },
+    };
+    const offsetBefore = {
+      x: state.position.x + image.width / 2 - state.canvasWidth / 2,
+      y: state.position.y + image.height / 2 - state.canvasHeight / 2,
+    };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZE_STEP",
+      payload: MIN_CANVAS_STEP,
+    });
+
+    // Then
+    expect({
+      x: result.position.x + image.width / 2 - result.canvasWidth / 2,
+      y: result.position.y + image.height / 2 - result.canvasHeight / 2,
+    }).toEqual(offsetBefore);
+  });
+
+  it("never alters the image scale", () => {
+    // Given
+    const state: PrepState = { ...nativeState, scale: 1 };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZE_STEP",
+      payload: 500,
+    });
+
+    // Then
+    expect(result.scale).toBe(1);
+  });
+});
+
+describe("prepReducer UPLOAD_IMAGE in native-image mode", () => {
+  it("keeps scale at 1 and centres the image in the current canvas", () => {
+    // Given
+    const element = makeImage();
+
+    // When
+    const result = prepReducer(nativeState, {
+      type: "UPLOAD_IMAGE",
+      payload: { dataUrl: "data:image/png;base64,abc", element, fileName: "c.png" },
+    });
+
+    // Then
+    expect(result.scale).toBe(1);
+    expect(result.position).toEqual({
+      x: (CANVAS_WIDTH - element.width) / 2,
+      y: (CANVAS_HEIGHT - element.height) / 2,
+    });
   });
 });

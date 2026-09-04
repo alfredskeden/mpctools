@@ -224,3 +224,26 @@ export function clampPosition(
     y: clampAxis(position.y, scaledHeight, canvas.height),
   };
 }
+
+export const CANVAS_ASPECT_W = 11;
+export const CANVAS_ASPECT_H = 15;
+export const MIN_CANVAS_STEP = 100;
+export const MAX_CANVAS_STEP = 700;
+
+/**
+ * Map a step count to the matching 11:15 canvas size.
+ */
+export function canvasSizeForStep(step: number): Dimensions {
+  return {
+    width: step * CANVAS_ASPECT_W,
+    height: step * CANVAS_ASPECT_H,
+  };
+}
+
+/**
+ * Map a canvas width back to the nearest legal step, clamped to the bounds.
+ */
+export function nearestCanvasStep(width: number): number {
+  const step = Math.round(width / CANVAS_ASPECT_W);
+  return Math.max(MIN_CANVAS_STEP, Math.min(MAX_CANVAS_STEP, step));
+}

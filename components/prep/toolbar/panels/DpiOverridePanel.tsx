@@ -3,11 +3,13 @@
 type DpiOverridePanelProps = {
   dpiOverride: number | null;
   onSetDpiOverride: (dpi: number | null) => void;
+  disabled?: boolean;
 };
 
 export function DpiOverridePanel({
   dpiOverride,
   onSetDpiOverride,
+  disabled = false,
 }: DpiOverridePanelProps) {
   const scaleFactor = dpiOverride ? 1200 / dpiOverride : null;
   const scalePercent = scaleFactor ? Math.round(scaleFactor * 100) : null;
@@ -19,6 +21,13 @@ export function DpiOverridePanel({
         <br />
         Formula: Scale = 1200 / DPI.
       </p>
+
+      {disabled && (
+        <p className="text-xs text-text-tertiary">
+          Unavailable while the canvas uses native image sizing, which locks
+          image scale.
+        </p>
+      )}
 
       <div className="h-px bg-surface-border" />
 
@@ -34,6 +43,7 @@ export function DpiOverridePanel({
             step={1}
             value={dpiOverride ?? ""}
             placeholder="300"
+            disabled={disabled}
             onChange={(e) => {
               const val = e.target.value;
               onSetDpiOverride(val === "" ? null : Number(val));
@@ -65,6 +75,7 @@ export function DpiOverridePanel({
           <button
             type="button"
             data-active={String(dpiOverride === 270)}
+            disabled={disabled}
             onClick={() => onSetDpiOverride(270)}
             className={`flex items-center justify-between rounded px-3 py-1.5 text-xs ${
               dpiOverride === 270
@@ -78,6 +89,7 @@ export function DpiOverridePanel({
           <button
             type="button"
             data-active={String(dpiOverride === 300)}
+            disabled={disabled}
             onClick={() => onSetDpiOverride(300)}
             className={`flex items-center justify-between rounded px-3 py-1.5 text-xs ${
               dpiOverride === 300
@@ -90,8 +102,9 @@ export function DpiOverridePanel({
           </button>
           <button
             type="button"
+            disabled={disabled}
             onClick={() => onSetDpiOverride(null)}
-            className="rounded border border-surface-border bg-surface-ground px-3 py-1.5 text-xs text-text-primary hover:bg-surface-overlay"
+            className="rounded border border-surface-border bg-surface-ground px-3 py-1.5 text-xs text-text-primary hover:bg-surface-overlay disabled:text-text-disabled"
           >
             Clear Override
           </button>

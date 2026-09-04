@@ -55,7 +55,10 @@ export function ImageControlsPanel({
     imageElement,
     keepAspectRatio,
     algorithm,
+    canvasSizingMode,
   } = state;
+
+  const scaleLocked = canvasSizingMode === "native-image";
 
   const imageWidth = imageElement ? Math.round(imageElement.width * scale) : 0;
   const imageHeight = imageElement
@@ -151,8 +154,9 @@ export function ImageControlsPanel({
             <input
               type="number"
               value={imageWidth}
+              disabled={scaleLocked}
               onChange={(e) => handleWidthChange(Number(e.target.value))}
-              className="w-full rounded border border-surface-border bg-surface-ground px-2 py-1.5 font-mono text-xs text-text-primary"
+              className="w-full rounded border border-surface-border bg-surface-ground px-2 py-1.5 font-mono text-xs text-text-primary disabled:text-text-disabled"
               aria-label="Width"
             />
           </label>
@@ -161,8 +165,9 @@ export function ImageControlsPanel({
             <input
               type="number"
               value={imageHeight}
+              disabled={scaleLocked}
               onChange={(e) => handleHeightChange(Number(e.target.value))}
-              className="w-full rounded border border-surface-border bg-surface-ground px-2 py-1.5 font-mono text-xs text-text-primary"
+              className="w-full rounded border border-surface-border bg-surface-ground px-2 py-1.5 font-mono text-xs text-text-primary disabled:text-text-disabled"
               aria-label="Height"
             />
           </label>
@@ -210,18 +215,26 @@ export function ImageControlsPanel({
         <legend className="mb-2 text-xs font-medium uppercase tracking-label text-text-tertiary">
           Scale & Fit
         </legend>
+        {scaleLocked && (
+          <p className="mb-2 text-xs text-text-tertiary">
+            Native image sizing locks image scale. Use the canvas size slider
+            instead.
+          </p>
+        )}
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
             onClick={onFitWidth}
-            className="rounded bg-accent-blue/20 px-3 py-1.5 text-xs font-medium text-accent-blue hover:bg-accent-blue/30"
+            disabled={scaleLocked}
+            className="rounded bg-accent-blue/20 px-3 py-1.5 text-xs font-medium text-accent-blue hover:bg-accent-blue/30 disabled:text-text-disabled"
           >
             Fit W
           </button>
           <button
             type="button"
             onClick={onFitHeight}
-            className="rounded bg-accent-blue/20 px-3 py-1.5 text-xs font-medium text-accent-blue hover:bg-accent-blue/30"
+            disabled={scaleLocked}
+            className="rounded bg-accent-blue/20 px-3 py-1.5 text-xs font-medium text-accent-blue hover:bg-accent-blue/30 disabled:text-text-disabled"
           >
             Fit H
           </button>
@@ -230,7 +243,7 @@ export function ImageControlsPanel({
           </span>
           <button
             type="button"
-            disabled={scale <= MIN_SCALE}
+            disabled={scaleLocked || scale <= MIN_SCALE}
             className="rounded border border-surface-border bg-surface-ground px-3 py-1.5 text-xs text-text-primary hover:bg-surface-overlay disabled:text-text-disabled"
             aria-label="Scale down"
             {...scaleDownHold}
@@ -240,6 +253,7 @@ export function ImageControlsPanel({
           <button
             type="button"
             className="rounded border border-surface-border bg-surface-ground px-3 py-1.5 text-xs text-text-primary hover:bg-surface-overlay disabled:text-text-disabled"
+            disabled={scaleLocked}
             aria-label="Scale up"
             {...scaleUpHold}
           >
