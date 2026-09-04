@@ -24,6 +24,7 @@ const makeState = (overrides: Partial<PrepState> = {}): PrepState => ({
   algorithm: "detail-preserving",
   overlayNativeDimensions: null,
   canvasSizingMode: "scale-image",
+  canvasAspect: { w: 11, h: 15 },
   ...overrides,
 });
 

@@ -4,8 +4,7 @@ import { CanvasSizePanel, computeAspectRatio } from "../panels/CanvasSizePanel";
 import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
-  MIN_CANVAS_STEP,
-  MAX_CANVAS_STEP,
+  canvasStepBounds,
 } from "@/lib/canvas-utils";
 import type { CanvasSizingMode } from "@/hooks/use-prep-workflow";
 
@@ -15,9 +14,11 @@ const defaultProps = {
   canvasWidth: CANVAS_WIDTH,
   canvasHeight: CANVAS_HEIGHT,
   canvasSizingMode: "scale-image" as CanvasSizingMode,
+  canvasAspect: { w: 11, h: 15 },
   onSetCanvasSize: noop,
   onSetCanvasSizingMode: noop,
   onSetCanvasSizeStep: noop,
+  onSetNativeCanvasDimension: noop,
 };
 
 const modeButtons = () =>
@@ -187,8 +188,8 @@ describe("CanvasSizePanel canvas sizing mode", () => {
 
     // Then
     expect(screen.getByLabelText("Canvas size step")).toBeInTheDocument();
-    expect(screen.queryByLabelText("Canvas width")).toBeNull();
-    expect(screen.queryByLabelText("Canvas height")).toBeNull();
+    expect(screen.getByLabelText("Canvas width")).toBeInTheDocument();
+    expect(screen.getByLabelText("Canvas height")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /classic borderless/i }),
     ).toBeNull();
@@ -203,9 +204,10 @@ describe("CanvasSizePanel canvas sizing mode", () => {
 
     // Then
     const slider = screen.getByLabelText("Canvas size step");
+    const bounds = canvasStepBounds({ w: 11, h: 15 });
     expect(slider).toHaveValue("320");
-    expect(slider.getAttribute("min")).toBe(String(MIN_CANVAS_STEP));
-    expect(slider.getAttribute("max")).toBe(String(MAX_CANVAS_STEP));
+    expect(slider.getAttribute("min")).toBe(String(bounds.min));
+    expect(slider.getAttribute("max")).toBe(String(bounds.max));
   });
 
   it("invokes the step callback when the slider moves", () => {
@@ -228,7 +230,7 @@ describe("CanvasSizePanel canvas sizing mode", () => {
     expect(onSetCanvasSizeStep).toHaveBeenCalledWith(450);
   });
 
-  it("shows the resulting canvas dimensions for the current step", () => {
+  it("shows the current canvas dimensions in the native inputs", () => {
     // When
     render(
       <CanvasSizePanel
@@ -240,11 +242,83 @@ describe("CanvasSizePanel canvas sizing mode", () => {
     );
 
     // Then
-    expect(screen.getByTestId("canvas-step-size").textContent).toContain(
-      "2200",
+    expect(screen.getByLabelText("Canvas width")).toHaveValue(2200);
+    expect(screen.getByLabelText("Canvas height")).toHaveValue(3000);
+  });
+
+  it("invokes the dimension callback with a typed height", () => {
+    // Given
+    const onSetNativeCanvasDimension = vi.fn();
+    render(
+      <CanvasSizePanel
+        {...defaultProps}
+        canvasSizingMode="native-image"
+        onSetNativeCanvasDimension={onSetNativeCanvasDimension}
+      />,
     );
-    expect(screen.getByTestId("canvas-step-size").textContent).toContain(
-      "3000",
+
+    // When
+    fireEvent.change(screen.getByLabelText("Canvas height"), {
+      target: { value: "4600" },
+    });
+
+    // Then
+    expect(onSetNativeCanvasDimension).toHaveBeenCalledWith("height", 4600);
+  });
+
+  it("invokes the dimension callback with a typed width", () => {
+    // Given
+    const onSetNativeCanvasDimension = vi.fn();
+    render(
+      <CanvasSizePanel
+        {...defaultProps}
+        canvasSizingMode="native-image"
+        onSetNativeCanvasDimension={onSetNativeCanvasDimension}
+      />,
     );
+
+    // When
+    fireEvent.change(screen.getByLabelText("Canvas width"), {
+      target: { value: "2900" },
+    });
+
+    // Then
+    expect(onSetNativeCanvasDimension).toHaveBeenCalledWith("width", 2900);
+  });
+
+  it("shows the locked ratio rather than one recomputed from an off-grid canvas", () => {
+    // When
+    render(
+      <CanvasSizePanel
+        {...defaultProps}
+        canvasSizingMode="native-image"
+        canvasAspect={{ w: 29, h: 36 }}
+        canvasWidth={3706}
+        canvasHeight={4600}
+      />,
+    );
+
+    // Then
+    expect(screen.getByTestId("canvas-aspect").textContent).toContain("29:36");
+  });
+
+  it("derives the slider bounds from the locked ratio", () => {
+    // When
+    render(
+      <CanvasSizePanel
+        {...defaultProps}
+        canvasSizingMode="native-image"
+        canvasAspect={{ w: 29, h: 36 }}
+        canvasWidth={3712}
+        canvasHeight={4608}
+      />,
+    );
+
+    // Then
+    const bounds = canvasStepBounds({ w: 29, h: 36 });
+    const slider = screen.getByLabelText("Canvas size step");
+    expect(slider.getAttribute("min")).toBe(String(bounds.min));
+    expect(slider.getAttribute("max")).toBe(String(bounds.max));
+    expect(slider).toHaveValue("128");
   });
 });

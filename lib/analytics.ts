@@ -12,6 +12,7 @@ export type AnalyticsEvent =
   | "prep_canvas_size_set"
   | "prep_canvas_sizing_mode_set"
   | "prep_canvas_size_step_set"
+  | "prep_native_canvas_dimension_set"
   | "prep_dpi_override_set"
   | "prep_overlay_toggled"
   | "prep_alignment_used"

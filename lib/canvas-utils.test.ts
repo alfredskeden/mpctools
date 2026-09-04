@@ -12,11 +12,12 @@ import {
   applyUnsharpMaskAsync,
   detailPreservingResize,
   canvasSizeForStep,
+  canvasSizeForDimension,
+  canvasStepBounds,
   nearestCanvasStep,
-  CANVAS_ASPECT_W,
-  CANVAS_ASPECT_H,
-  MIN_CANVAS_STEP,
-  MAX_CANVAS_STEP,
+  reduceRatio,
+  MIN_CANVAS_WIDTH,
+  MAX_CANVAS_WIDTH,
 } from "./canvas-utils";
 
 describe("calculateFitDimensions", () => {
@@ -494,52 +495,103 @@ describe("detailPreservingResize", () => {
   });
 });
 
+const RATIO_11_15 = { w: 11, h: 15 };
+const RATIO_29_36 = { w: 29, h: 36 };
+
+describe("reduceRatio", () => {
+  it("reduces the default canvas to 11:15", () => {
+    // When
+    const ratio = reduceRatio(CANVAS_WIDTH, CANVAS_HEIGHT);
+
+    // Then
+    expect(ratio).toEqual(RATIO_11_15);
+  });
+
+  it("reduces the classic borderless canvas to 29:36", () => {
+    // When
+    const ratio = reduceRatio(3712, 4608);
+
+    // Then
+    expect(ratio).toEqual(RATIO_29_36);
+  });
+
+  it("reduces a square canvas to 1:1", () => {
+    // When
+    const ratio = reduceRatio(2048, 2048);
+
+    // Then
+    expect(ratio).toEqual({ w: 1, h: 1 });
+  });
+});
+
 describe("canvasSizeForStep", () => {
   it("maps the default step to the default canvas size", () => {
-    // Given
-    const step = 320;
-
     // When
-    const size = canvasSizeForStep(step);
+    const size = canvasSizeForStep(320, RATIO_11_15);
 
     // Then
     expect(size).toEqual({ width: CANVAS_WIDTH, height: CANVAS_HEIGHT });
   });
 
-  it("maps the minimum step to the smallest legal size", () => {
+  it("maps a step on the 29:36 grid to the classic borderless size", () => {
     // When
-    const size = canvasSizeForStep(MIN_CANVAS_STEP);
+    const size = canvasSizeForStep(128, RATIO_29_36);
 
     // Then
-    expect(size).toEqual({ width: 1100, height: 1500 });
+    expect(size).toEqual({ width: 3712, height: 4608 });
   });
 
-  it("maps the maximum step to the largest legal size", () => {
-    // When
-    const size = canvasSizeForStep(MAX_CANVAS_STEP);
-
-    // Then
-    expect(size).toEqual({ width: 7700, height: 10500 });
-  });
-
-  it("produces sizes that hold the exact 11:15 ratio", () => {
+  it("produces sizes that hold the ratio exactly", () => {
     // Given
-    const steps = [MIN_CANVAS_STEP, 137, 320, 499, MAX_CANVAS_STEP];
+    const steps = [1, 37, 128, 320, 500];
 
     // When
-    const sizes = steps.map(canvasSizeForStep);
+    const sizes = steps.map((step) => canvasSizeForStep(step, RATIO_29_36));
 
     // Then
     for (const size of sizes) {
-      expect(size.width / CANVAS_ASPECT_W).toBe(size.height / CANVAS_ASPECT_H);
+      expect(size.width / RATIO_29_36.w).toBe(size.height / RATIO_29_36.h);
     }
+  });
+});
+
+describe("canvasStepBounds", () => {
+  it("derives the 11:15 bounds from the canvas width limits", () => {
+    // When
+    const bounds = canvasStepBounds(RATIO_11_15);
+
+    // Then
+    expect(bounds).toEqual({
+      min: MIN_CANVAS_WIDTH / 11,
+      max: MAX_CANVAS_WIDTH / 11,
+    });
+  });
+
+  it("derives narrower bounds for a wider ratio unit", () => {
+    // When
+    const bounds = canvasStepBounds(RATIO_29_36);
+
+    // Then
+    expect(bounds).toEqual({ min: 38, max: 265 });
+    expect(bounds.min * RATIO_29_36.w).toBeGreaterThanOrEqual(
+      MIN_CANVAS_WIDTH,
+    );
+    expect(bounds.max * RATIO_29_36.w).toBeLessThanOrEqual(MAX_CANVAS_WIDTH);
+  });
+
+  it("yields at least one legal step for a ratio unit wider than the limit", () => {
+    // When
+    const bounds = canvasStepBounds({ w: 20000, h: 1 });
+
+    // Then
+    expect(bounds).toEqual({ min: 1, max: 1 });
   });
 });
 
 describe("nearestCanvasStep", () => {
   it("maps a width already on the grid back to its own step", () => {
     // When
-    const step = nearestCanvasStep(CANVAS_WIDTH);
+    const step = nearestCanvasStep(CANVAS_WIDTH, RATIO_11_15);
 
     // Then
     expect(step).toBe(320);
@@ -547,7 +599,7 @@ describe("nearestCanvasStep", () => {
 
   it("maps a width off the grid to the nearest step", () => {
     // When
-    const step = nearestCanvasStep(3712);
+    const step = nearestCanvasStep(3712, RATIO_11_15);
 
     // Then
     expect(step).toBe(337);
@@ -555,17 +607,35 @@ describe("nearestCanvasStep", () => {
 
   it("clamps a width below the range to the minimum step", () => {
     // When
-    const step = nearestCanvasStep(10);
+    const step = nearestCanvasStep(10, RATIO_29_36);
 
     // Then
-    expect(step).toBe(MIN_CANVAS_STEP);
+    expect(step).toBe(canvasStepBounds(RATIO_29_36).min);
   });
 
   it("clamps a width above the range to the maximum step", () => {
     // When
-    const step = nearestCanvasStep(20000);
+    const step = nearestCanvasStep(20000, RATIO_29_36);
 
     // Then
-    expect(step).toBe(MAX_CANVAS_STEP);
+    expect(step).toBe(canvasStepBounds(RATIO_29_36).max);
+  });
+});
+
+describe("canvasSizeForDimension", () => {
+  it("keeps a typed height exactly and derives the width", () => {
+    // When
+    const size = canvasSizeForDimension("height", 4600, RATIO_29_36);
+
+    // Then
+    expect(size).toEqual({ width: 3706, height: 4600 });
+  });
+
+  it("keeps a typed width exactly and derives the height", () => {
+    // When
+    const size = canvasSizeForDimension("width", 3520, RATIO_11_15);
+
+    // Then
+    expect(size).toEqual({ width: 3520, height: 4800 });
   });
 });

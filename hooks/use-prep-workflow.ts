@@ -4,10 +4,13 @@ import { useReducer, useCallback, useEffect } from "react";
 import {
   calculateInitialScale,
   canvasSizeForStep,
+  canvasSizeForDimension,
   nearestCanvasStep,
+  reduceRatio,
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
 } from "@/lib/canvas-utils";
+import type { AspectRatio, Dimensions } from "@/lib/canvas-utils";
 import { track } from "@/lib/analytics";
 import { StepStatus } from "./use-merger-workflow";
 
@@ -74,6 +77,7 @@ export type PrepState = {
   algorithm: Algorithm;
   overlayNativeDimensions: { width: number; height: number } | null;
   canvasSizingMode: CanvasSizingMode;
+  canvasAspect: AspectRatio;
 };
 
 type PrepAction =
@@ -106,7 +110,11 @@ type PrepAction =
       payload: { width: number; height: number };
     }
   | { type: "SET_CANVAS_SIZING_MODE"; payload: CanvasSizingMode }
-  | { type: "SET_CANVAS_SIZE_STEP"; payload: number };
+  | { type: "SET_CANVAS_SIZE_STEP"; payload: number }
+  | {
+      type: "SET_NATIVE_CANVAS_DIMENSION";
+      payload: { axis: "width" | "height"; value: number };
+    };
 
 const initialState: PrepState = {
   currentStep: 1,
@@ -128,7 +136,27 @@ const initialState: PrepState = {
   algorithm: "detail-preserving",
   overlayNativeDimensions: null,
   canvasSizingMode: "scale-image",
+  canvasAspect: reduceRatio(CANVAS_WIDTH, CANVAS_HEIGHT),
 };
+
+/**
+ * Resize the canvas while keeping the image's offset from the canvas centre,
+ * so the border around it grows evenly on all sides.
+ */
+function resizeCanvasAroundImage(
+  state: PrepState,
+  next: Dimensions,
+): PrepState {
+  return {
+    ...state,
+    canvasWidth: next.width,
+    canvasHeight: next.height,
+    position: {
+      x: state.position.x + (next.width - state.canvasWidth) / 2,
+      y: state.position.y + (next.height - state.canvasHeight) / 2,
+    },
+  };
+}
 
 export function prepReducer(state: PrepState, action: PrepAction): PrepState {
   switch (action.type) {
@@ -233,12 +261,27 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
         isPositioned: false,
         isDownloaded: false,
       };
-    case "SET_CANVAS_SIZE":
+    case "SET_CANVAS_SIZE": {
+      const next = {
+        width: action.payload.width,
+        height: action.payload.height,
+      };
+      // A size set from outside the native panel re-locks the ratio, so the
+      // step slider and the native W/H inputs follow the user's new choice.
+      const canvasAspect =
+        next.width > 0 && next.height > 0
+          ? reduceRatio(next.width, next.height)
+          : state.canvasAspect;
+      if (state.canvasSizingMode === "native-image") {
+        return { ...resizeCanvasAroundImage(state, next), canvasAspect };
+      }
       return {
         ...state,
-        canvasWidth: action.payload.width,
-        canvasHeight: action.payload.height,
+        canvasWidth: next.width,
+        canvasHeight: next.height,
+        canvasAspect,
       };
+    }
     case "SET_DPI_OVERRIDE": {
       const newDpi = action.payload;
       if (!newDpi || !state.imageElement) {
@@ -366,26 +409,35 @@ export function prepReducer(state: PrepState, action: PrepAction): PrepState {
       if (action.payload !== "native-image") {
         return { ...state, canvasSizingMode: action.payload };
       }
-      const snapped = canvasSizeForStep(nearestCanvasStep(state.canvasWidth));
+      const ratio = reduceRatio(state.canvasWidth, state.canvasHeight);
+      const snapped = canvasSizeForStep(
+        nearestCanvasStep(state.canvasWidth, ratio),
+        ratio,
+      );
       return {
         ...state,
         canvasSizingMode: action.payload,
+        canvasAspect: ratio,
         canvasWidth: snapped.width,
         canvasHeight: snapped.height,
         scale: 1,
       };
     }
-    case "SET_CANVAS_SIZE_STEP": {
-      const next = canvasSizeForStep(action.payload);
-      return {
-        ...state,
-        canvasWidth: next.width,
-        canvasHeight: next.height,
-        position: {
-          x: state.position.x + (next.width - state.canvasWidth) / 2,
-          y: state.position.y + (next.height - state.canvasHeight) / 2,
-        },
-      };
+    case "SET_CANVAS_SIZE_STEP":
+      return resizeCanvasAroundImage(
+        state,
+        canvasSizeForStep(action.payload, state.canvasAspect),
+      );
+    case "SET_NATIVE_CANVAS_DIMENSION": {
+      if (action.payload.value <= 0) return state;
+      return resizeCanvasAroundImage(
+        state,
+        canvasSizeForDimension(
+          action.payload.axis,
+          action.payload.value,
+          state.canvasAspect,
+        ),
+      );
     }
     default:
       return state;
@@ -535,6 +587,14 @@ export function usePrepWorkflow() {
     track("prep_canvas_size_step_set", { step });
   }, []);
 
+  const setNativeCanvasDimension = useCallback(
+    (axis: "width" | "height", value: number) => {
+      dispatch({ type: "SET_NATIVE_CANVAS_DIMENSION", payload: { axis, value } });
+      track("prep_native_canvas_dimension_set", { axis, value });
+    },
+    [],
+  );
+
   const canDownload = state.isPositioned;
   const canContinue = state.isDownloaded;
   const stepStatuses = getStepStatuses(state.currentStep);
@@ -565,6 +625,7 @@ export function usePrepWorkflow() {
     setOverlayNativeDimensions,
     setCanvasSizingMode,
     setCanvasSizeStep,
+    setNativeCanvasDimension,
     canDownload,
     canContinue,
     stepStatuses,

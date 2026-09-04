@@ -225,25 +225,67 @@ export function clampPosition(
   };
 }
 
-export const CANVAS_ASPECT_W = 11;
-export const CANVAS_ASPECT_H = 15;
-export const MIN_CANVAS_STEP = 100;
-export const MAX_CANVAS_STEP = 700;
+export type AspectRatio = {
+  w: number;
+  h: number;
+};
+
+export const MIN_CANVAS_WIDTH = 1100;
+export const MAX_CANVAS_WIDTH = 7700;
+
+function greatestCommonDivisor(a: number, b: number): number {
+  return b === 0 ? a : greatestCommonDivisor(b, a % b);
+}
 
 /**
- * Map a step count to the matching 11:15 canvas size.
+ * Reduce a canvas size to its smallest integer aspect ratio.
  */
-export function canvasSizeForStep(step: number): Dimensions {
+export function reduceRatio(width: number, height: number): AspectRatio {
+  const divisor = greatestCommonDivisor(width, height);
+  return { w: width / divisor, h: height / divisor };
+}
+
+/**
+ * Map a step count to the matching canvas size for an aspect ratio.
+ */
+export function canvasSizeForStep(step: number, ratio: AspectRatio): Dimensions {
   return {
-    width: step * CANVAS_ASPECT_W,
-    height: step * CANVAS_ASPECT_H,
+    width: step * ratio.w,
+    height: step * ratio.h,
   };
 }
 
 /**
- * Map a canvas width back to the nearest legal step, clamped to the bounds.
+ * The legal step range for an aspect ratio, derived from the canvas width
+ * bounds. Always yields at least one step.
  */
-export function nearestCanvasStep(width: number): number {
-  const step = Math.round(width / CANVAS_ASPECT_W);
-  return Math.max(MIN_CANVAS_STEP, Math.min(MAX_CANVAS_STEP, step));
+export function canvasStepBounds(ratio: AspectRatio): {
+  min: number;
+  max: number;
+} {
+  const min = Math.max(1, Math.ceil(MIN_CANVAS_WIDTH / ratio.w));
+  return { min, max: Math.max(min, Math.floor(MAX_CANVAS_WIDTH / ratio.w)) };
+}
+
+/**
+ * Map a canvas width back to the nearest legal step for an aspect ratio,
+ * clamped to that ratio's step bounds.
+ */
+export function nearestCanvasStep(width: number, ratio: AspectRatio): number {
+  const { min, max } = canvasStepBounds(ratio);
+  return Math.max(min, Math.min(max, Math.round(width / ratio.w)));
+}
+
+/**
+ * Size a canvas from one typed dimension, deriving the other from the aspect
+ * ratio. The typed value is kept exactly; the derived one is rounded.
+ */
+export function canvasSizeForDimension(
+  axis: "width" | "height",
+  value: number,
+  ratio: AspectRatio,
+): Dimensions {
+  return axis === "width"
+    ? { width: value, height: Math.round((value * ratio.h) / ratio.w) }
+    : { width: Math.round((value * ratio.w) / ratio.h), height: value };
 }

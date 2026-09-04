@@ -22,6 +22,7 @@ export function PrepPageContent() {
     setCanvasSize,
     setCanvasSizingMode,
     setCanvasSizeStep,
+    setNativeCanvasDimension,
     setDpiOverride,
     setOverlayOpacity,
     setKeepAspectRatio,
@@ -89,6 +90,7 @@ export function PrepPageContent() {
           onSetCanvasSize={setCanvasSize}
           onSetCanvasSizingMode={setCanvasSizingMode}
           onSetCanvasSizeStep={setCanvasSizeStep}
+          onSetNativeCanvasDimension={setNativeCanvasDimension}
           onSetDpiOverride={setDpiOverride}
           onSetKeepAspectRatio={setKeepAspectRatio}
           onSetAlgorithm={setAlgorithm}
@@ -135,6 +137,7 @@ export function PrepPageContent() {
             onSetCanvasSize={setCanvasSize}
             onSetCanvasSizingMode={setCanvasSizingMode}
             onSetCanvasSizeStep={setCanvasSizeStep}
+            onSetNativeCanvasDimension={setNativeCanvasDimension}
             onSetDpiOverride={setDpiOverride}
             onSetKeepAspectRatio={setKeepAspectRatio}
             onSetAlgorithm={setAlgorithm}

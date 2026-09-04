@@ -12,9 +12,9 @@ import {
 import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
-  MIN_CANVAS_STEP,
-  MAX_CANVAS_STEP,
   canvasSizeForStep,
+  canvasStepBounds,
+  reduceRatio,
 } from "@/lib/canvas-utils";
 import { track } from "@/lib/analytics";
 
@@ -42,12 +42,16 @@ const initialState: PrepState = {
   algorithm: "detail-preserving",
   overlayNativeDimensions: null,
   canvasSizingMode: "scale-image",
+  canvasAspect: { w: 11, h: 15 },
 };
 
 const nativeState: PrepState = {
   ...initialState,
   canvasSizingMode: "native-image",
 };
+
+const RATIO_11_15 = { w: 11, h: 15 };
+const STEP_BOUNDS = canvasStepBounds(RATIO_11_15);
 
 describe("prepReducer", () => {
   it("returns initial state for unknown action", () => {
@@ -286,6 +290,7 @@ describe("prepReducer", () => {
       algorithm: "detail-preserving",
       overlayNativeDimensions: null,
       canvasSizingMode: "scale-image",
+      canvasAspect: { w: 11, h: 15 },
     };
 
     const result = prepReducer(state, { type: "REPOSITION" });
@@ -324,6 +329,7 @@ describe("prepReducer", () => {
       algorithm: "standard",
       overlayNativeDimensions: { width: 3072, height: 4096 },
       canvasSizingMode: "scale-image",
+      canvasAspect: { w: 11, h: 15 },
     };
 
     const result = prepReducer(state, { type: "RESET" });
@@ -1119,6 +1125,23 @@ describe("usePrepWorkflow", () => {
     });
   });
 
+  it("fires analytics when a native canvas dimension is typed", () => {
+    // Given
+    const { result } = renderHook(() => usePrepWorkflow());
+
+    // When
+    act(() => {
+      result.current.setNativeCanvasDimension("height", 4800);
+    });
+
+    // Then
+    expect(result.current.state.canvasHeight).toBe(4800);
+    expect(track).toHaveBeenCalledWith("prep_native_canvas_dimension_set", {
+      axis: "height",
+      value: 4800,
+    });
+  });
+
   it("fires analytics when the canvas size step is set", () => {
     // Given
     const { result } = renderHook(() => usePrepWorkflow());
@@ -1175,7 +1198,7 @@ describe("prepReducer canvas sizing mode", () => {
     expect(result.position).toEqual({ x: -900, y: 12345 });
   });
 
-  it("snaps a non-11:15 canvas to the nearest legal size when entering native-image mode", () => {
+  it("locks the ratio of the canvas the user already chose", () => {
     // Given
     const state: PrepState = {
       ...initialState,
@@ -1190,8 +1213,39 @@ describe("prepReducer canvas sizing mode", () => {
     });
 
     // Then
-    expect(result.canvasWidth).toBe(3707);
-    expect(result.canvasHeight).toBe(5055);
+    expect(result.canvasAspect).toEqual({ w: 29, h: 36 });
+    expect(result.canvasWidth).toBe(3712);
+    expect(result.canvasHeight).toBe(4608);
+  });
+
+  it("locks the default 11:15 ratio when entering from the default canvas", () => {
+    // When
+    const result = prepReducer(initialState, {
+      type: "SET_CANVAS_SIZING_MODE",
+      payload: "native-image",
+    });
+
+    // Then
+    expect(result.canvasAspect).toEqual(RATIO_11_15);
+  });
+
+  it("clamps a canvas wider than the legal range when entering native-image mode", () => {
+    // Given
+    const state: PrepState = {
+      ...initialState,
+      canvasWidth: 20000,
+      canvasHeight: 20000,
+    };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZING_MODE",
+      payload: "native-image",
+    });
+
+    // Then
+    expect(result.canvasAspect).toEqual({ w: 1, h: 1 });
+    expect(result.canvasWidth).toBe(canvasStepBounds({ w: 1, h: 1 }).max);
   });
 
   it("leaves the default canvas unchanged when entering native-image mode", () => {
@@ -1230,16 +1284,16 @@ describe("prepReducer canvas sizing mode", () => {
 });
 
 describe("prepReducer SET_CANVAS_SIZE_STEP", () => {
-  it("sets the canvas to the 11:15 size for the step", () => {
+  it("sets the canvas to the locked ratio's size for the step", () => {
     // When
     const result = prepReducer(nativeState, {
       type: "SET_CANVAS_SIZE_STEP",
-      payload: MIN_CANVAS_STEP,
+      payload: STEP_BOUNDS.min,
     });
 
     // Then
     expect({ width: result.canvasWidth, height: result.canvasHeight }).toEqual(
-      canvasSizeForStep(MIN_CANVAS_STEP),
+      canvasSizeForStep(STEP_BOUNDS.min, RATIO_11_15),
     );
   });
 
@@ -1259,7 +1313,7 @@ describe("prepReducer SET_CANVAS_SIZE_STEP", () => {
     // When
     const result = prepReducer(state, {
       type: "SET_CANVAS_SIZE_STEP",
-      payload: MAX_CANVAS_STEP,
+      payload: STEP_BOUNDS.max,
     });
 
     // Then
@@ -1285,7 +1339,7 @@ describe("prepReducer SET_CANVAS_SIZE_STEP", () => {
     // When
     const result = prepReducer(state, {
       type: "SET_CANVAS_SIZE_STEP",
-      payload: MIN_CANVAS_STEP,
+      payload: STEP_BOUNDS.min,
     });
 
     // Then
@@ -1327,5 +1381,207 @@ describe("prepReducer UPLOAD_IMAGE in native-image mode", () => {
       x: (CANVAS_WIDTH - element.width) / 2,
       y: (CANVAS_HEIGHT - element.height) / 2,
     });
+  });
+});
+
+describe("prepReducer SET_CANVAS_SIZE_STEP with a non-default ratio", () => {
+  it("steps along the locked ratio, not the default one", () => {
+    // Given
+    const state: PrepState = {
+      ...nativeState,
+      canvasAspect: { w: 29, h: 36 },
+      canvasWidth: 3712,
+      canvasHeight: 4608,
+    };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZE_STEP",
+      payload: 100,
+    });
+
+    // Then
+    expect(result.canvasWidth).toBe(2900);
+    expect(result.canvasHeight).toBe(3600);
+  });
+});
+
+describe("prepReducer SET_NATIVE_CANVAS_DIMENSION", () => {
+  const state: PrepState = {
+    ...nativeState,
+    canvasAspect: { w: 29, h: 36 },
+    canvasWidth: 3712,
+    canvasHeight: 4608,
+    imageElement: makeImage(),
+    position: { x: 120, y: -40 },
+  };
+
+  it("keeps a typed height exactly and derives the width from the locked ratio", () => {
+    // When
+    const result = prepReducer(state, {
+      type: "SET_NATIVE_CANVAS_DIMENSION",
+      payload: { axis: "height", value: 4600 },
+    });
+
+    // Then
+    expect(result.canvasHeight).toBe(4600);
+    expect(result.canvasWidth).toBe(3706);
+  });
+
+  it("keeps a typed width exactly and derives the height from the locked ratio", () => {
+    // When
+    const result = prepReducer(state, {
+      type: "SET_NATIVE_CANVAS_DIMENSION",
+      payload: { axis: "width", value: 2900 },
+    });
+
+    // Then
+    expect(result.canvasWidth).toBe(2900);
+    expect(result.canvasHeight).toBe(3600);
+  });
+
+  it("keeps the image offset from the canvas centre", () => {
+    // Given
+    const image = state.imageElement!;
+    const offsetBefore = {
+      x: state.position.x + image.width / 2 - state.canvasWidth / 2,
+      y: state.position.y + image.height / 2 - state.canvasHeight / 2,
+    };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_NATIVE_CANVAS_DIMENSION",
+      payload: { axis: "height", value: 4600 },
+    });
+
+    // Then
+    expect({
+      x: result.position.x + image.width / 2 - result.canvasWidth / 2,
+      y: result.position.y + image.height / 2 - result.canvasHeight / 2,
+    }).toEqual(offsetBefore);
+  });
+
+  it("never alters the image scale", () => {
+    // When
+    const result = prepReducer(state, {
+      type: "SET_NATIVE_CANVAS_DIMENSION",
+      payload: { axis: "width", value: 2900 },
+    });
+
+    // Then
+    expect(result.scale).toBe(state.scale);
+  });
+
+  it("ignores a cleared or non-positive dimension", () => {
+    // When
+    const result = prepReducer(state, {
+      type: "SET_NATIVE_CANVAS_DIMENSION",
+      payload: { axis: "height", value: 0 },
+    });
+
+    // Then
+    expect(result).toBe(state);
+  });
+});
+
+describe("reduceRatio in prep state", () => {
+  it("starts with the default canvas ratio", () => {
+    // Then
+    expect(initialState.canvasAspect).toEqual(
+      reduceRatio(CANVAS_WIDTH, CANVAS_HEIGHT),
+    );
+  });
+});
+
+describe("prepReducer SET_CANVAS_SIZE and the locked ratio", () => {
+  it("re-locks the ratio when the size is set from outside the native panel", () => {
+    // Given
+    const state: PrepState = { ...nativeState, imageElement: makeImage() };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZE",
+      payload: { width: 3712, height: 4608 },
+    });
+
+    // Then
+    expect(result.canvasAspect).toEqual({ w: 29, h: 36 });
+    expect(result.canvasWidth).toBe(3712);
+    expect(result.canvasHeight).toBe(4608);
+  });
+
+  it("steps along the re-locked ratio afterwards", () => {
+    // Given
+    const resized = prepReducer(nativeState, {
+      type: "SET_CANVAS_SIZE",
+      payload: { width: 3712, height: 4608 },
+    });
+
+    // When
+    const result = prepReducer(resized, {
+      type: "SET_CANVAS_SIZE_STEP",
+      payload: 100,
+    });
+
+    // Then
+    expect(result.canvasWidth).toBe(2900);
+    expect(result.canvasHeight).toBe(3600);
+  });
+
+  it("keeps the image offset from the canvas centre in native-image mode", () => {
+    // Given
+    const image = makeImage();
+    const state: PrepState = {
+      ...nativeState,
+      imageElement: image,
+      position: { x: 300, y: -50 },
+    };
+    const offsetBefore = {
+      x: state.position.x + image.width / 2 - state.canvasWidth / 2,
+      y: state.position.y + image.height / 2 - state.canvasHeight / 2,
+    };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZE",
+      payload: { width: 3712, height: 4608 },
+    });
+
+    // Then
+    expect({
+      x: result.position.x + image.width / 2 - result.canvasWidth / 2,
+      y: result.position.y + image.height / 2 - result.canvasHeight / 2,
+    }).toEqual(offsetBefore);
+  });
+
+  it("leaves the image position untouched in the default mode", () => {
+    // Given
+    const state: PrepState = {
+      ...initialState,
+      imageElement: makeImage(),
+      position: { x: 300, y: -50 },
+    };
+
+    // When
+    const result = prepReducer(state, {
+      type: "SET_CANVAS_SIZE",
+      payload: { width: 3712, height: 4608 },
+    });
+
+    // Then
+    expect(result.position).toEqual({ x: 300, y: -50 });
+    expect(result.canvasAspect).toEqual({ w: 29, h: 36 });
+  });
+
+  it("keeps the previous ratio when a dimension is cleared", () => {
+    // When
+    const result = prepReducer(initialState, {
+      type: "SET_CANVAS_SIZE",
+      payload: { width: 0, height: 4800 },
+    });
+
+    // Then
+    expect(result.canvasAspect).toEqual(RATIO_11_15);
+    expect(result.canvasWidth).toBe(0);
   });
 });

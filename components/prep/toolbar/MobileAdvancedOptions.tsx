@@ -24,6 +24,10 @@ type MobileAdvancedOptionsProps = {
   onSetCanvasSize: (width: number, height: number) => void;
   onSetCanvasSizingMode: (mode: CanvasSizingMode) => void;
   onSetCanvasSizeStep: (step: number) => void;
+  onSetNativeCanvasDimension: (
+    axis: "width" | "height",
+    value: number,
+  ) => void;
   onSetDpiOverride: (dpi: number | null) => void;
   onSetKeepAspectRatio: (keep: boolean) => void;
   onSetAlgorithm: (algorithm: Algorithm) => void;
@@ -54,6 +58,7 @@ export function MobileAdvancedOptions({
   onSetCanvasSize,
   onSetCanvasSizingMode,
   onSetCanvasSizeStep,
+  onSetNativeCanvasDimension,
   onSetDpiOverride,
   onSetKeepAspectRatio,
   onSetAlgorithm,
@@ -148,9 +153,11 @@ export function MobileAdvancedOptions({
                       canvasWidth={state.canvasWidth}
                       canvasHeight={state.canvasHeight}
                       canvasSizingMode={state.canvasSizingMode}
+                      canvasAspect={state.canvasAspect}
                       onSetCanvasSize={onSetCanvasSize}
                       onSetCanvasSizingMode={onSetCanvasSizingMode}
                       onSetCanvasSizeStep={onSetCanvasSizeStep}
+                      onSetNativeCanvasDimension={onSetNativeCanvasDimension}
                     />
                   )}
                   {section.id === "dpi" && (
