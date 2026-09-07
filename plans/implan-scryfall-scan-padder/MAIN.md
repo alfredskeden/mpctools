@@ -127,6 +127,7 @@ New files, each with tests per the project's placement rules:
 | `lib/padder-renderer.ts` (+ inline `.test.ts`) | `renderPadScene(ctx, image, layout)`, `exportPaddedCanvas(image, layout)` |
 | `lib/padder-prompts.ts` (+ inline `.test.ts`) | handshake + command builders, alternate command, `PADDER_TARGET_KEY` |
 | `hooks/use-padder-workflow.ts` (+ `hooks/__tests__/`) | reducer, upload, target select, downloaded flag, derived layout, error state |
+| `hooks/use-paste-image.ts` (+ `hooks/__tests__/`) | window paste listener handing the first clipboard image to a callback |
 | `components/padder/padder-page-content.tsx` | orchestrator: drop zone, target toggle, preview, actions |
 | `components/padder/PadderCanvas.tsx` | preview canvas, scaled to fit its container |
 | `components/padder/target-selector.tsx` | two-way target toggle + resulting `W x H` read-out + crop note |
@@ -151,7 +152,8 @@ Not touched: `/prep`, `/outpaint`, `/merger`, `/design`, `lib/prep-renderer.ts`,
   whatever resolution Scryfall served. There is no upper size limit. Landscape or square input
   is handled by the not-a-portrait-scan error, not by rotation logic.
 - Image files are the same formats the rest of the app already accepts; reuse whatever upload
-  handling `/prep` uses rather than inventing new validation.
+  handling `/prep` uses rather than inventing new validation. A scan can also arrive by paste —
+  the same load path, so a Scryfall image copied in the browser never has to be downloaded first.
 - Only PNG export is needed. No PSD, no JPEG, no clipboard copy.
 - The two pad targets are the whole set. Adding a third later means one entry in `PAD_TARGETS`.
 

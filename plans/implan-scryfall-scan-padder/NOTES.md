@@ -26,6 +26,12 @@
 - Landing hero gets a third link ("Scryfall scan padder") below "Automatic building",
   same secondary-link styling.
 
+## Input
+
+- A scan can arrive by upload **or** by paste (`hooks/use-paste-image.ts`), so an image copied
+  straight from Scryfall skips the download-then-upload trip. Both paths share one load path,
+  and paste works whether or not a scan is already loaded — it replaces it.
+
 ## Naming
 
 - The second route is **Scrub**, not Outpaint: `/padder-scrub`, and the header lets the

@@ -3,6 +3,7 @@
 import { useCallback, useRef } from "react";
 import { Upload } from "lucide-react";
 import { usePadderWorkflow } from "@/hooks/use-padder-workflow";
+import { usePasteImage } from "@/hooks/use-paste-image";
 import { exportPaddedCanvas, paddedFileName } from "@/lib/padder-renderer";
 import { downloadCanvasAsBlob } from "@/lib/merger-utils";
 import { PadderCanvas } from "./PadderCanvas";
@@ -22,12 +23,12 @@ export function PadderPageContent() {
   } = usePadderWorkflow();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file || !file.type.startsWith("image/")) return;
+  const loadImageFile = useCallback(
+    (file: File) => {
+      if (!file.type.startsWith("image/")) return;
 
-      const fileName = file.name;
+      // A pasted file often carries no name of its own.
+      const fileName = file.name || "pasted-scan.png";
       const reader = new FileReader();
       reader.onload = (ev) => {
         const dataUrl = ev.target?.result as string;
@@ -39,6 +40,17 @@ export function PadderPageContent() {
     },
     [uploadImage],
   );
+
+  const handleFileChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      loadImageFile(file);
+    },
+    [loadImageFile],
+  );
+
+  usePasteImage(loadImageFile);
 
   const handleUploadClick = useCallback(() => {
     inputRef.current?.click();
@@ -83,6 +95,7 @@ export function PadderPageContent() {
               <Upload className="size-3.5" />
               Upload scan
             </button>
+            <p className="text-xs text-text-tertiary">or paste an image</p>
           </div>
         )}
       </div>

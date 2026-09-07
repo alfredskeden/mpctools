@@ -41,6 +41,39 @@ async function uploadScan(width: number, height: number, name = "scan.png") {
   window.Image = originalImage;
 }
 
+/** Paste an image file the way a browser would, with the same stub Image. */
+async function pasteScan(width: number, height: number, name = "clip.png") {
+  const file = new File(["scan"], name, { type: "image/png" });
+  const originalImage = window.Image;
+  window.Image = function StubImage() {
+    const element = document.createElement("canvas") as HTMLCanvasElement & {
+      onload: (() => void) | null;
+      src: string;
+    };
+    element.width = width;
+    element.height = height;
+    element.onload = null;
+    Object.defineProperty(element, "src", {
+      set() {
+        queueMicrotask(() => element.onload?.());
+      },
+    });
+    return element;
+  } as unknown as typeof Image;
+
+  const event = new Event("paste", { bubbles: true, cancelable: true });
+  Object.defineProperty(event, "clipboardData", {
+    value: { items: [{ type: "image/png", getAsFile: () => file }] },
+    configurable: true,
+  });
+  window.dispatchEvent(event);
+
+  await waitFor(() =>
+    expect(screen.queryByTestId("padder-canvas")).toBeTruthy(),
+  );
+  window.Image = originalImage;
+}
+
 describe("PadderPageContent", () => {
   beforeEach(() => {
     sessionStorage.clear();
@@ -148,6 +181,33 @@ describe("PadderPageContent", () => {
     ).toEqual({ width: 816, height: 1110, ratioLabel: "11:15" });
   });
 
+  it("pads an image pasted from the clipboard", async () => {
+    // Given
+    render(<PadderPageContent />);
+
+    // When
+    await pasteScan(672, 936);
+
+    // Then
+    expect(screen.getByTestId("target-width").textContent).toBe("736");
+    expect(screen.getByTestId("target-height").textContent).toBe("1001");
+  });
+
+  it("names the download after a pasted image that has no file name", async () => {
+    // Given
+    render(<PadderPageContent />);
+    await pasteScan(745, 1040, "");
+
+    // When
+    await userEvent.click(screen.getByTestId("padder-download-btn"));
+
+    // Then
+    expect(mergerUtils.downloadCanvasAsBlob).toHaveBeenCalledWith(
+      expect.anything(),
+      "padded_pasted-scan.png",
+    );
+  });
+
   it("ignores a change event that carries no file", () => {
     // Given
     render(<PadderPageContent />);
@@ -161,13 +221,15 @@ describe("PadderPageContent", () => {
     expect(screen.queryByTestId("padder-canvas")).toBeNull();
   });
 
-  it("ignores a non-image file", async () => {
+  it("ignores a non-image file forced past the picker's filter", () => {
     // Given
     render(<PadderPageContent />);
+    const input = screen.getByTestId("padder-file-input");
     const file = new File(["nope"], "notes.txt", { type: "text/plain" });
+    Object.defineProperty(input, "files", { value: [file], configurable: true });
 
     // When
-    await userEvent.upload(screen.getByTestId("padder-file-input"), file);
+    fireEvent.change(input);
 
     // Then
     expect(screen.queryByTestId("padder-canvas")).toBeNull();

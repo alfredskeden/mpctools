@@ -54,6 +54,9 @@ The work is done when every item below holds.
 ## Route behaviour (automated)
 
 17. `/padder` before upload shows the upload affordance and offers no download.
+17b. Pasting an image onto `/padder` pads it exactly as an uploaded file would, and a pasted file
+    with no name of its own still yields a sensible download filename. A paste carrying no image,
+    no clipboard data, or an image entry that yields no file is ignored.
 18. After upload, the resulting canvas dimensions and the selected ratio label are both readable
     from the page.
 19. Switching the target toggle changes the reported canvas dimensions and ratio label, with the
