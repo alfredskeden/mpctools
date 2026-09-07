@@ -22,7 +22,7 @@ export type PadTarget = {
 };
 
 export const PAD_TARGETS: readonly PadTarget[] = [
-  { id: "mpc-default", label: "MPC default", ratioLabel: "11:15" },
+  { id: "mpc-default", label: "Default", ratioLabel: "11:15" },
   {
     id: "classic-borderless",
     label: "Classic borderless",

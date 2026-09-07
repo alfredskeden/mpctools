@@ -11,7 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteUrl}/merger`, lastModified: new Date(), priority: 0.8 },
     { url: `${siteUrl}/padder`, lastModified: new Date(), priority: 0.8 },
     {
-      url: `${siteUrl}/padder-outpaint`,
+      url: `${siteUrl}/padder-scrub`,
       lastModified: new Date(),
       priority: 0.8,
     },

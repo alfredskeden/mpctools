@@ -22,10 +22,10 @@ export function TargetSelector({
   return (
     <div className="flex flex-col gap-3">
       <h2 className="text-micro font-bold tracking-extra-wide uppercase text-text-secondary">
-        Print target
+        Select aspect ratio
       </h2>
 
-      <div role="radiogroup" aria-label="Print target" className="flex gap-2">
+      <div role="radiogroup" aria-label="Select aspect ratio" className="flex gap-2">
         {PAD_TARGETS.map((target) => {
           const selected = target.id === selectedId;
           return (

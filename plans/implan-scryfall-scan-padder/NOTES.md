@@ -18,16 +18,20 @@
 - 29:36 is produced by cropping the default canvas **from the bottom only**. This cuts
   real card art (62px off a 745x1040 Scryfall scan). Called out as a tradeoff and
   confirmed anyway — the reference output image shows exactly that bottom cut.
-- Routes: `/padder` (tool) and `/padder-outpaint` (static prompt-instruction page).
-- `/padder-outpaint` prompt copy is deliberately a placeholder. Final wording will be
-  pasted in later; do not invent it.
+- Routes: `/padder` (tool) and `/padder-scrub` (static prompt-instruction page).
+- `/padder-scrub` prompt copy is final, supplied verbatim: a "Digital TCG Restorer &
+  Atmospheric Extender" handshake, a "Neutral Extension" command, and a short one-line
+  alternative offered under an "or" divider. The aspect ratio inside both the handshake
+  and the command is substituted from the target chosen on `/padder`.
 - Landing hero gets a third link ("Scryfall scan padder") below "Automatic building",
   same secondary-link styling.
 
-## Open question still owed
+## Naming
 
-- Final prompt text for `/padder-outpaint` (handshake + command). Placeholder constants
-  ship with a clearly marked TODO.
+- The second route is **Scrub**, not Outpaint: `/padder-scrub`, and the header lets the
+  user move between Pad and Scrub directly.
+- The default target is labelled just "Default" (not "MPC default"), and the toggle's
+  heading is "Select aspect ratio" (not "Print target").
 
 ## Observations from reading the code
 

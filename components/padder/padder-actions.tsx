@@ -37,7 +37,7 @@ export function PadderActions({
       </button>
 
       <Link
-        href="/padder-outpaint"
+        href="/padder-scrub"
         data-testid="padder-continue-link"
         aria-disabled={canContinue ? "false" : "true"}
         className={cn(
@@ -47,7 +47,7 @@ export function PadderActions({
             : "opacity-40 pointer-events-none",
         )}
       >
-        Continue to Outpaint
+        Continue to Scrub
       </Link>
     </footer>
   );

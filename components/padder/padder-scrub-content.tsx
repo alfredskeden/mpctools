@@ -5,8 +5,9 @@ import Link from "next/link";
 import { useCopyToClipboard } from "@/hooks/use-clipboard";
 import {
   buildPadderHandshakePrompt,
+  buildPadderCommand,
   readStoredPadderTarget,
-  PADDER_COMMAND,
+  PADDER_ALTERNATE_COMMAND,
 } from "@/lib/padder-prompts";
 
 type PromptStepProps = {
@@ -50,7 +51,7 @@ function PromptStep({ stepNumber, testId, title, prompt }: PromptStepProps) {
   );
 }
 
-export function PadderOutpaintContent() {
+export function PadderScrubContent() {
   // Read once, lazily — sessionStorage is never touched during SSR.
   const [target] = useState(() => readStoredPadderTarget());
 
@@ -62,8 +63,8 @@ export function PadderOutpaintContent() {
             Prompt Guide
           </h1>
           <p className="text-sm text-text-secondary">
-            Feed your padded scan to Gemini with these prompts. The grey border
-            is the only area it should fill.
+            Feed your padded scan to Gemini with these prompts to start
+            scrubbing.
           </p>
           <dl className="flex gap-4 text-xs text-text-secondary">
             <div className="flex gap-2">
@@ -97,7 +98,22 @@ export function PadderOutpaintContent() {
           stepNumber={2}
           testId="padder-copy-command"
           title="The command"
-          prompt={PADDER_COMMAND}
+          prompt={buildPadderCommand(target)}
+        />
+
+        <div className="flex items-center gap-3" aria-hidden="true">
+          <span className="h-px flex-1 bg-surface-border" />
+          <span className="text-micro font-bold tracking-extra-wide uppercase text-text-tertiary">
+            or
+          </span>
+          <span className="h-px flex-1 bg-surface-border" />
+        </div>
+
+        <PromptStep
+          stepNumber={2}
+          testId="padder-copy-alternate"
+          title="The short command"
+          prompt={PADDER_ALTERNATE_COMMAND}
         />
 
         <Link

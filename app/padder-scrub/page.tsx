@@ -1,5 +1,5 @@
-import { PadderOutpaintContent } from "@/components/padder/padder-outpaint-content";
+import { PadderScrubContent } from "@/components/padder/padder-scrub-content";
 
-export default function PadderOutpaintPage() {
-  return <PadderOutpaintContent />;
+export default function PadderScrubPage() {
+  return <PadderScrubContent />;
 }

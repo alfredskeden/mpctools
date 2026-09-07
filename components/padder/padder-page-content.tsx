@@ -74,11 +74,6 @@ export function PadderPageContent() {
           <PadderCanvas image={state.imageElement} layout={layout} />
         ) : (
           <div className="flex flex-col items-center gap-3 text-center">
-            <p className="max-w-sm text-sm text-text-secondary">
-              Upload a card scan downloaded from Scryfall, at any resolution. It
-              keeps its exact pixel size — only the MPC bleed is added as grey
-              around it.
-            </p>
             <button
               type="button"
               data-testid="padder-upload-btn"

@@ -1,12 +1,12 @@
 import { render, screen } from "@testing-library/react";
-import PadderOutpaintPage from "./page";
+import PadderScrubPage from "./page";
 
-describe("PadderOutpaintPage", () => {
-  it("renders the padder prompt guide", () => {
+describe("PadderScrubPage", () => {
+  it("renders the padder scrub prompt guide", () => {
     // Given / When
-    render(<PadderOutpaintPage />);
+    render(<PadderScrubPage />);
 
     // Then
-    expect(screen.getAllByTestId(/^padder-copy-/)).toHaveLength(2);
+    expect(screen.getAllByTestId(/^padder-copy-/)).toHaveLength(3);
   });
 });

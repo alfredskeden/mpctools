@@ -67,7 +67,7 @@ export function usePadderWorkflow() {
     );
   }, [state.imageElement, target]);
 
-  // Hand the resulting canvas to /padder-outpaint.
+  // Hand the resulting canvas to /padder-scrub.
   useEffect(() => {
     if (!layout) return;
     sessionStorage.setItem(

@@ -36,7 +36,7 @@ flowchart TD
   B --> R
   R --> DL["Download full-res PNG"]
   R --> H["Store {width, height, ratioLabel}"]
-  H --> O["/padder-outpaint reads it<br/>into the Gemini prompt"]
+  H --> O["/padder-scrub reads it<br/>into the Gemini prompt"]
 ```
 
 ## The bleed ratio
@@ -116,11 +116,11 @@ UI read-out. Never reduce pixel dimensions for display.
 ```mermaid
 flowchart LR
   L["Landing hero<br/>3rd link"] --> PA["/padder<br/>upload, toggle, download"]
-  PA -->|"sessionStorage target"| PO["/padder-outpaint<br/>static prompt instructions"]
+  PA -->|"sessionStorage target"| PO["/padder-scrub<br/>static prompt instructions"]
 ```
 
 Both sit outside the `(steps)` route group and share one small header component; the 3-step
-Prep/Outpaint/Merge header does not apply. `/padder-outpaint` ships with **placeholder** prompt
+Prep/Outpaint/Merge header does not apply. `/padder-scrub` ships with **placeholder** prompt
 text carrying a TODO — the size and ratio substitution is real, the prose is not final.
 
 ## Ways this goes wrong

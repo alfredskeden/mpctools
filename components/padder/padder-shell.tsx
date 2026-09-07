@@ -2,12 +2,12 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const PADDER_STEPS = [
-  { id: "pad", label: "Pad" },
-  { id: "outpaint", label: "Outpaint" },
+  { id: "pad", label: "Pad", href: "/padder" },
+  { id: "scrub", label: "Scrub", href: "/padder-scrub" },
 ] as const;
 
 type PadderShellProps = {
-  /** 1 = /padder, 2 = /padder-outpaint. */
+  /** 1 = /padder, 2 = /padder-scrub. */
   currentStep: 1 | 2;
   children: React.ReactNode;
 };
@@ -28,17 +28,20 @@ export function PadderShell({ currentStep, children }: PadderShellProps) {
             const stepNumber = index + 1;
             const isCurrent = stepNumber === currentStep;
             return (
-              <span
+              <Link
                 key={step.id}
+                href={step.href}
                 data-testid={`padder-step-${step.id}`}
                 aria-current={isCurrent ? "step" : "false"}
                 className={cn(
-                  "text-caption font-medium",
-                  isCurrent ? "text-accent-blue" : "text-text-secondary",
+                  "text-caption font-medium transition-colors",
+                  isCurrent
+                    ? "text-accent-blue"
+                    : "text-text-secondary hover:text-text-primary",
                 )}
               >
                 {step.label}
-              </span>
+              </Link>
             );
           })}
         </nav>

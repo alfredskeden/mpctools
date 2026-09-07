@@ -8,7 +8,7 @@ PNG in which the scan sits at its **exact original pixel size**, centered, on a 
 canvas sized to the MPC print target. There are no transform controls — no drag, no zoom, no
 canvas inputs. The correct padding is computed, not configured.
 
-A companion static page `/padder-outpaint` tells the user which prompts to feed Gemini for a
+A companion static page `/padder-scrub` tells the user which prompts to feed Gemini for a
 padded scan, mirroring how `/outpaint` does it for the Prep flow.
 
 ## Why
@@ -97,20 +97,19 @@ only the amount of grey changes. Input that is not a portrait card scan (landsca
 square, zero-sized) is refused with an error and offers no download — it is never
 rotated or scaled to fit.
 
-**Handoff to `/padder-outpaint` via its own sessionStorage key.** `/padder` writes
-`{ width, height, ratioLabel }` under a new `PADDER_TARGET_KEY`. `/padder-outpaint` reads it to
+**Handoff to `/padder-scrub` via its own sessionStorage key.** `/padder` writes
+`{ width, height, ratioLabel }` under a new `PADDER_TARGET_KEY`. `/padder-scrub` reads it to
 fill the prompt's size and ratio, falling back to the 300 DPI default target when absent. Read it
 in an effect or a lazy `useState` initialiser guarded by try/catch — never during SSR — following
 how `components/outpaint/outpaint-page-content.tsx` already does it.
 
-**`/padder-outpaint` prompt copy is a placeholder.** Two exported constants in
-`lib/padder-prompts.ts` (a handshake builder and a command string), each carrying a `TODO`
-comment saying the final wording is owed. Wire the copy buttons, the step cards, and the size/ratio
-substitution for real; the prose is filler until replaced. Do not copy `/outpaint`'s prompts across
-and present them as final.
+**`/padder-scrub` ships three prompts, all final copy.** `lib/padder-prompts.ts` exports
+`buildPadderHandshakePrompt` and `buildPadderCommand` — both substituting the selected target's
+declared ratio label — plus `PADDER_ALTERNATE_COMMAND`, a short one-line alternative offered
+under an "or" divider. The prompts do not reuse `/outpaint`'s wording.
 
 **Chrome is shared between the two padder routes.** One `PadderShell` component with a small
-header (link home, route title, a two-step "Pad -> Outpaint" indicator) used by both routes'
+header (link home, route title, a two-step "Pad -> Scrub" indicator) used by both routes'
 layouts, modelled on `app/design/layout.tsx`. The 3-step `Header` from the `(steps)` group does not
 apply and `/padder` must stay outside that route group.
 
@@ -126,22 +125,22 @@ New files, each with tests per the project's placement rules:
 | --- | --- |
 | `lib/padder-math.ts` (+ inline `.test.ts`) | `CARD_REFERENCE`, `BLEED_REFERENCE`, `PAD_TARGETS`, types, `computePadLayout` |
 | `lib/padder-renderer.ts` (+ inline `.test.ts`) | `renderPadScene(ctx, image, layout)`, `exportPaddedCanvas(image, layout)` |
-| `lib/padder-prompts.ts` (+ inline `.test.ts`) | placeholder handshake builder + command, `PADDER_TARGET_KEY` |
+| `lib/padder-prompts.ts` (+ inline `.test.ts`) | handshake + command builders, alternate command, `PADDER_TARGET_KEY` |
 | `hooks/use-padder-workflow.ts` (+ `hooks/__tests__/`) | reducer, upload, target select, downloaded flag, derived layout, error state |
 | `components/padder/padder-page-content.tsx` | orchestrator: drop zone, target toggle, preview, actions |
 | `components/padder/PadderCanvas.tsx` | preview canvas, scaled to fit its container |
 | `components/padder/target-selector.tsx` | two-way target toggle + resulting `W x H` read-out + crop note |
-| `components/padder/padder-actions.tsx` | download PNG, continue to `/padder-outpaint` |
+| `components/padder/padder-actions.tsx` | download PNG, continue to `/padder-scrub` |
 | `components/padder/padder-shell.tsx` | shared header chrome for both routes |
-| `components/padder/padder-outpaint-content.tsx` | static prompt page: step cards with copy buttons |
+| `components/padder/padder-scrub-content.tsx` | static prompt page: step cards with copy buttons |
 | `app/padder/page.tsx`, `app/padder/layout.tsx` | route + metadata |
-| `app/padder-outpaint/page.tsx`, `app/padder-outpaint/layout.tsx` | route + metadata |
+| `app/padder-scrub/page.tsx`, `app/padder-scrub/layout.tsx` | route + metadata |
 
 Touched existing files:
 
 - `components/HeroSection.tsx` — third secondary link to `/padder`, styled like the existing
   "Automatic building" link, stacked below it.
-- `app/sitemap.ts` — entries for `/padder` and `/padder-outpaint` at priority 0.8.
+- `app/sitemap.ts` — entries for `/padder` and `/padder-scrub` at priority 0.8.
 
 Not touched: `/prep`, `/outpaint`, `/merger`, `/design`, `lib/prep-renderer.ts`,
 `hooks/use-prep-workflow.ts`, the watermark pipeline, PSD export.
@@ -164,14 +163,14 @@ Each step is a full RED -> GREEN -> REFACTOR cycle, tests first, per the project
    the bottom-crop numbers and the reported cropped-pixel count.
 2. **Renderer** — grey fill plus native-size image draw at the computed offset; full-resolution
    export canvas.
-3. **Prompts module** — `PADDER_TARGET_KEY`, placeholder handshake builder taking width, height
-   and ratio label, placeholder command.
+3. **Prompts module** — `PADDER_TARGET_KEY`, handshake and command builders taking the target's
+   declared ratio label, plus the short alternate command.
 4. **Workflow hook** — upload, target select, derived layout, error state, downloaded flag,
    analytics `track` calls in line with the neighbouring hooks, sessionStorage write of the target.
 5. **Preview + selector components** — `PadderCanvas`, `target-selector` with the size read-out
    and crop note.
 6. **Page assembly** — `padder-page-content`, `padder-actions`, `padder-shell`, `app/padder/*`.
-7. **Prompt page** — `padder-outpaint-content` reading the stored target, `app/padder-outpaint/*`.
+7. **Prompt page** — `padder-scrub-content` reading the stored target, `app/padder-scrub/*`.
 8. **Entry points** — hero link and sitemap entries.
 
 ## Conventions that apply

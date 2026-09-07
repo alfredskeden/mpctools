@@ -33,6 +33,18 @@ describe("PadderShell", () => {
     expect(steps).toHaveLength(2);
   });
 
+  it("lets the user move between the two padder routes from the header", () => {
+    // Given / When
+    render(<PadderShell currentStep={1}>{null}</PadderShell>);
+
+    // Then
+    const steps = screen.getAllByTestId(/^padder-step-/);
+    expect(steps.map((step) => step.getAttribute("href"))).toEqual([
+      "/padder",
+      "/padder-scrub",
+    ]);
+  });
+
   it("marks the current step through an ARIA state attribute", () => {
     // Given / When
     render(<PadderShell currentStep={2}>{null}</PadderShell>);

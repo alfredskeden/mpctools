@@ -31,7 +31,7 @@ describe("sitemap", () => {
     const entries = sitemap();
     const paths = entries.map((e) => new URL(e.url).pathname);
     expect(paths).toContain("/padder");
-    expect(paths).toContain("/padder-outpaint");
+    expect(paths).toContain("/padder-scrub");
   });
 
   it("assigns /design a higher priority than other workflow routes", () => {

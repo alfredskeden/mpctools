@@ -2,8 +2,10 @@ import {
   PADDER_TARGET_KEY,
   DEFAULT_PADDER_TARGET,
   buildPadderHandshakePrompt,
+  buildPadderCommand,
   PADDER_HANDSHAKE_PROMPT,
   PADDER_COMMAND,
+  PADDER_ALTERNATE_COMMAND,
   readStoredPadderTarget,
 } from "./padder-prompts";
 import { BLEED_REFERENCE, PAD_TARGETS } from "./padder-math";
@@ -27,7 +29,7 @@ describe("DEFAULT_PADDER_TARGET", () => {
 });
 
 describe("buildPadderHandshakePrompt", () => {
-  it("substitutes the canvas dimensions", () => {
+  it("substitutes the selected aspect ratio", () => {
     // Given / When
     const prompt = buildPadderHandshakePrompt({
       width: 816,
@@ -36,8 +38,8 @@ describe("buildPadderHandshakePrompt", () => {
     });
 
     // Then
-    expect(prompt).toContain("816");
-    expect(prompt).toContain("1013");
+    expect(prompt).toContain("29:36");
+    expect(prompt).not.toContain("11:15");
   });
 
   it("uses the declared ratio label rather than a reduced one", () => {
@@ -63,10 +65,33 @@ describe("PADDER_HANDSHAKE_PROMPT", () => {
   });
 });
 
+describe("buildPadderCommand", () => {
+  it("substitutes the selected aspect ratio", () => {
+    // Given / When
+    const command = buildPadderCommand({
+      width: 816,
+      height: 1013,
+      ratioLabel: "29:36",
+    });
+
+    // Then
+    expect(command).toContain("29:36");
+    expect(command).not.toContain("11:15");
+  });
+});
+
 describe("PADDER_COMMAND", () => {
-  it("is a non-empty command string", () => {
+  it("is the command for the default target", () => {
     // Given / When / Then
-    expect(PADDER_COMMAND.length).toBeGreaterThan(0);
+    expect(PADDER_COMMAND).toBe(buildPadderCommand(DEFAULT_PADDER_TARGET));
+  });
+});
+
+describe("PADDER_ALTERNATE_COMMAND", () => {
+  it("carries no aspect ratio of its own", () => {
+    // Given / When / Then
+    expect(PADDER_ALTERNATE_COMMAND.length).toBeGreaterThan(0);
+    expect(PADDER_ALTERNATE_COMMAND).not.toContain("11:15");
   });
 });
 

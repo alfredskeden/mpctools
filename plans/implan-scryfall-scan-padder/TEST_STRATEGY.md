@@ -62,18 +62,19 @@ The work is done when every item below holds.
     and does not surface it when it is zero.
 21. A non-portrait image surfaces the error state and keeps the download disabled.
 22. Triggering the download calls the shared download helper and marks the workflow downloaded;
-    the continue-to-outpaint affordance becomes available.
+    the continue-to-scrub affordance becomes available.
 23. `/padder` contains no control that changes image scale, position or canvas size — asserted by
     the absence of those affordances, so a future accidental reintroduction fails the suite.
 24. Downloading writes the target's width, height and ratio label to session storage.
-25. `/padder-outpaint` builds its prompt from the stored target when present, and from the 300 DPI
+25. `/padder-scrub` builds its prompt from the stored target when present, and from the 300 DPI
     default target when session storage is empty or unparsable.
-26. `/padder-outpaint` prompts reach the clipboard through the copy affordances, and its prompt
-    text carries the declared ratio label — never a gcd-reduced one such as `136:185`.
+26. `/padder-scrub` offers three copy affordances — handshake, command, and the short
+    alternative — and each reaches the clipboard. The handshake and command carry the declared
+    ratio label, never a gcd-reduced one such as `136:185`; the alternate carries no ratio.
 27. Neither padder page renders the 3-step Prep/Outpaint/Merge indicator.
 28. The landing hero exposes a link to `/padder` alongside the existing `/prep` and `/design`
     links, verified by `href`.
-29. The sitemap includes `/padder` and `/padder-outpaint`.
+29. The sitemap includes `/padder` and `/padder-scrub`.
 
 ## Whole-suite gates
 
@@ -92,6 +93,5 @@ The work is done when every item below holds.
     grey border looks proportionally identical — this is the case the fixed-size design got wrong.
 35. The same scan at classic borderless produces an 816x1013 PNG matching the reference output:
     grey on three sides, card cut at the bottom.
-36. Both PNGs, fed to Gemini with the `/padder-outpaint` prompts, are accepted and the grey zone
-    is what gets filled. Prompt wording may still be the placeholder at this point; note the
-    result rather than blocking on it.
+36. Both PNGs, fed to Gemini with the `/padder-scrub` prompts, are accepted and the grey zone
+    is what gets filled, with the card's frame and text scrubbed away.

@@ -75,7 +75,7 @@ describe("PadderActions", () => {
     ).toBe("true");
   });
 
-  it("links on to the padder outpaint page once downloaded", () => {
+  it("links on to the padder scrub page once downloaded", () => {
     // Given / When
     render(
       <PadderActions
@@ -88,7 +88,7 @@ describe("PadderActions", () => {
 
     // Then
     const link = screen.getByTestId("padder-continue-link");
-    expect(link.getAttribute("href")).toBe("/padder-outpaint");
+    expect(link.getAttribute("href")).toBe("/padder-scrub");
     expect(link.getAttribute("aria-disabled")).toBe("false");
   });
 });

@@ -135,7 +135,7 @@ describe("PadderPageContent", () => {
     ).toBe("false");
   });
 
-  it("stores the padded target for the outpaint page", async () => {
+  it("stores the padded target for the scrub page", async () => {
     // Given
     render(<PadderPageContent />);
 

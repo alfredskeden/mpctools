@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { PadderOutpaintContent } from "../padder-outpaint-content";
+import { PadderScrubContent } from "../padder-scrub-content";
 import { PADDER_TARGET_KEY } from "@/lib/padder-prompts";
 
 const writeText = vi.fn();
@@ -12,55 +12,64 @@ beforeAll(() => {
   });
 });
 
-describe("PadderOutpaintContent", () => {
+describe("PadderScrubContent", () => {
   beforeEach(() => {
     sessionStorage.clear();
     writeText.mockClear();
   });
 
-  it("renders one copyable step per prompt", () => {
+  it("renders one copyable step per prompt, including the alternate", () => {
     // Given / When
-    render(<PadderOutpaintContent />);
+    render(<PadderScrubContent />);
 
     // Then
-    expect(screen.getAllByTestId(/^padder-copy-/)).toHaveLength(2);
+    expect(screen.getAllByTestId(/^padder-copy-/)).toHaveLength(3);
   });
 
-  it("builds the prompt from the stored target", async () => {
+  it("builds the handshake from the stored target's ratio", async () => {
     // Given
     sessionStorage.setItem(
       PADDER_TARGET_KEY,
-      JSON.stringify({ width: 1632, height: 2026, ratioLabel: "29:36" }),
+      JSON.stringify({ width: 736, height: 914, ratioLabel: "29:36" }),
     );
-    render(<PadderOutpaintContent />);
+    render(<PadderScrubContent />);
 
     // When
     await userEvent.click(screen.getByTestId("padder-copy-handshake"));
 
     // Then
-    const copied = writeText.mock.calls[0][0] as string;
-    expect(copied).toContain("1632");
-    expect(copied).toContain("2026");
-    expect(copied).toContain("29:36");
+    expect(writeText.mock.calls[0][0]).toContain("29:36");
   });
 
-  it("falls back to the 300 DPI default target when storage is empty", async () => {
+  it("builds the command from the stored target's ratio", async () => {
     // Given
-    render(<PadderOutpaintContent />);
+    sessionStorage.setItem(
+      PADDER_TARGET_KEY,
+      JSON.stringify({ width: 736, height: 914, ratioLabel: "29:36" }),
+    );
+    render(<PadderScrubContent />);
+
+    // When
+    await userEvent.click(screen.getByTestId("padder-copy-command"));
+
+    // Then
+    expect(writeText.mock.calls[0][0]).toContain("29:36");
+  });
+
+  it("falls back to the default target's ratio when storage is empty", async () => {
+    // Given
+    render(<PadderScrubContent />);
 
     // When
     await userEvent.click(screen.getByTestId("padder-copy-handshake"));
 
     // Then
-    const copied = writeText.mock.calls[0][0] as string;
-    expect(copied).toContain("816");
-    expect(copied).toContain("1110");
-    expect(copied).toContain("11:15");
+    expect(writeText.mock.calls[0][0]).toContain("11:15");
   });
 
   it("never uses a gcd-reduced ratio in the prompt", async () => {
     // Given
-    render(<PadderOutpaintContent />);
+    render(<PadderScrubContent />);
 
     // When
     await userEvent.click(screen.getByTestId("padder-copy-handshake"));
@@ -69,16 +78,16 @@ describe("PadderOutpaintContent", () => {
     expect(writeText.mock.calls[0][0]).not.toContain("136:185");
   });
 
-  it("copies the outpaint command", async () => {
+  it("copies the alternate command, which carries no ratio of its own", async () => {
     // Given
-    render(<PadderOutpaintContent />);
+    render(<PadderScrubContent />);
 
     // When
-    await userEvent.click(screen.getByTestId("padder-copy-command"));
+    await userEvent.click(screen.getByTestId("padder-copy-alternate"));
 
     // Then
     expect(writeText).toHaveBeenCalledOnce();
-    expect(writeText.mock.calls[0][0]).toContain("MEMORY FLUSH");
+    expect(writeText.mock.calls[0][0]).not.toContain("11:15");
   });
 
   it("reports the target dimensions on the page", () => {
@@ -89,7 +98,7 @@ describe("PadderOutpaintContent", () => {
     );
 
     // When
-    render(<PadderOutpaintContent />);
+    render(<PadderScrubContent />);
 
     // Then
     expect(screen.getByTestId("padder-target-width").textContent).toBe("2176");
@@ -99,7 +108,7 @@ describe("PadderOutpaintContent", () => {
 
   it("links back to the padder tool", () => {
     // Given / When
-    render(<PadderOutpaintContent />);
+    render(<PadderScrubContent />);
 
     // Then
     expect(screen.getByTestId("padder-back-link").getAttribute("href")).toBe(

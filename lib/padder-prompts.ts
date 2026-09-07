@@ -1,6 +1,6 @@
 import { BLEED_REFERENCE, PAD_TARGETS } from "./padder-math";
 
-/** sessionStorage key handing the padded target from `/padder` to `/padder-outpaint`. */
+/** sessionStorage key handing the padded target from `/padder` to `/padder-scrub`. */
 export const PADDER_TARGET_KEY = "padder-target";
 
 export type PadderTarget = {
@@ -17,33 +17,40 @@ export const DEFAULT_PADDER_TARGET: PadderTarget = {
   ratioLabel: PAD_TARGETS[0].ratioLabel,
 };
 
-// TODO: placeholder wording — the final handshake prompt is still owed by the
-// person who asked for this feature. The size and ratio substitution is real.
 export function buildPadderHandshakePrompt(target: PadderTarget): string {
-  return `System Role: High-Fidelity Neutral Photo Extender.
-Objective: Seamlessly fill the #808080 Grey Zone surrounding the card scan by logically continuing existing textures and geometry.
-The Master Rules:
-1. Sacred Core Firewall: The card scan pixels are PERMANENTLY LOCKED. Do not alter colors, lighting, or content inside.
-2. The #808080 Work Zone: The grey border is the only area for new generation.
-3. Contextual Edge Analysis: Extend the trajectories of existing lines, shapes and textures into the Work Zone.
-4. Anti-Mirror/Anti-Tile: Do not mirror or repeat the core image.
-5. Output Size: ${target.width}x${target.height} pixels, ${target.ratioLabel} aspect ratio, portrait orientation.
+  return `System Role: Digital TCG Restorer & Atmospheric Extender.
+Objective: Take flat card images and create full-bleed ${target.ratioLabel} art by filling borders with neutral, high-fidelity background extensions.
 
-Confirmation: Respond only with: "Universal Neutral Extension Mode Locked. Ready for any input."`;
+The Rules:
+1. UI & Border Purge: Treat all text, frames, and solid-color borders (black, grey, etc.) as area to be replaced.
+2. Neutral Atmospheric Extension: You must fill the border areas by seamlessly extending the existing background textures, colors, and lighting (e.g., more sky, fog, ground texture).
+3. Negative Constraint (Crucial): Do NOT add any new subjects, objects, buildings, characters, or complex details in the extended areas. The extension must remain atmospheric and "quiet" so focus remains on the original art.
+4. Sacred Core & Quality: The original central artwork must remain untouched. The new extension must match its exact fidelity and texture.
+5. Aspect Ratio: The final result must be a vertical ${target.ratioLabel} rectangle, full-bleed.
+
+Confirmation: Respond only with: "Neutral TCG Extender Locked. Ready for atmospheric expansion."`;
 }
 
 export const PADDER_HANDSHAKE_PROMPT = buildPadderHandshakePrompt(
   DEFAULT_PADDER_TARGET,
 );
 
-// TODO: placeholder wording — final command copy is still owed.
-export const PADDER_COMMAND = `NEW PROJECT / MEMORY FLUSH: Apply Universal Neutral Rules to this padded card scan.
+/** Sent together with the padded image. */
+export function buildPadderCommand(target: PadderTarget): string {
+  return `NEW PROJECT: Execute Neutral Extension.
 
-Strict Directives:
-- ANALYZE EDGES: Look at where the card scan meets the grey border.
-- LOGICAL EXTEND: Continue the existing artwork naturally into the grey.
-- PROTECT CORE: Keep the scan pristine — it is already at print resolution.
-- HIGH FIDELITY: Seamless, high-resolution output.`;
+Directives:
+- REMOVE UI: Erase all interior card text and frames.
+- EXTEND NEUTRALLY: Replace solid borders by continuing the background atmosphere outwards (sky/ground textures only).
+- NO NEW OBJECTS: Do not invent new complex details in the bleed area. Keep it clean.
+- RATIO: Force a ${target.ratioLabel} Portrait aspect ratio.
+- PRESERVE CORE: Keep the original art's identity and style 100% intact.`;
+}
+
+export const PADDER_COMMAND = buildPadderCommand(DEFAULT_PADDER_TARGET);
+
+/** A shorter alternative to the command, offered alongside it. */
+export const PADDER_ALTERNATE_COMMAND = `Remove the frame, text, and symbols plus extend the image seamlessly through the grey border to the edge of the image. Change nothing of the original composition`;
 
 /**
  * Read the target written by `/padder`, falling back to the 300 DPI default
