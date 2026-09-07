@@ -1,4 +1,4 @@
-import { MPC_TIERS, PAD_TARGETS } from "./padder-math";
+import { BLEED_REFERENCE, PAD_TARGETS } from "./padder-math";
 
 /** sessionStorage key handing the padded target from `/padder` to `/padder-outpaint`. */
 export const PADDER_TARGET_KEY = "padder-target";
@@ -12,8 +12,8 @@ export type PadderTarget = {
 
 /** 300 DPI MPC default — used when session storage holds nothing usable. */
 export const DEFAULT_PADDER_TARGET: PadderTarget = {
-  width: MPC_TIERS[0].width,
-  height: MPC_TIERS[0].height,
+  width: BLEED_REFERENCE.width,
+  height: BLEED_REFERENCE.height,
   ratioLabel: PAD_TARGETS[0].ratioLabel,
 };
 

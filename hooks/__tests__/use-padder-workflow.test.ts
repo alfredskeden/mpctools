@@ -100,12 +100,12 @@ describe("usePadderWorkflow", () => {
     expect(result.current.layout?.canvas).toEqual({ width: 816, height: 1110 });
   });
 
-  it("surfaces an error and blocks download for an oversized image", () => {
+  it("surfaces an error and blocks download for a non-portrait image", () => {
     // Given
     const { result } = renderHook(() => usePadderWorkflow());
 
     // When
-    act(() => result.current.uploadImage(makeImage(4000, 5000), "huge.png"));
+    act(() => result.current.uploadImage(makeImage(1040, 745), "landscape.png"));
 
     // Then
     expect(result.current.hasError).toBe(true);

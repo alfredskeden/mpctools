@@ -22,43 +22,57 @@ fighting the scale controls to land on numbers the app could just compute.
 
 ## The pad math
 
-**MPC print size.** MPC prints at 800 DPI, 2.48in x 3.46in, bleed included. The same physical
-card at each common DPI:
+**The bleed is a ratio, not a fixed size.** A Scryfall scan is a trimmed card at
+*some* resolution; MPC needs that same card with print bleed around it. Those two
+sizes are related by a fixed ratio, taken from the confirmed 300 DPI reference pair:
 
-| DPI | Pixels |
-| --- | --- |
-| 300 | 816 x 1110 |
-| 600 | 1632 x 2220 |
-| 800 | 2176 x 2960 |
-| 1200 | 3264 x 4440 |
+| | Width | Height |
+| --- | --- | --- |
+| `CARD_REFERENCE` — card, no bleed | 745 | 1040 |
+| `BLEED_REFERENCE` — same card, with bleed | 816 | 1110 |
 
-These four are the **tiers**. All share the ratio 816/1110 (0.7351), which is what the app
-labels `11:15` for prompt purposes even though it is not exactly 11:15.
+**Canvas derivation.** The canvas is the scan grown by that ratio, never a fixed
+target the scan is padded up to:
 
-**Tier selection.** Pick the smallest tier whose width >= image width **and** height >= image
-height. A 745x1040 Scryfall png and a 672x936 Scryfall "large" jpg both land on 816x1110. An
-image larger than 3264x4440 fits no tier — that is an error state (see below), never a scale-down.
+```
+canvasW = max(round(imgW * 816 / 745), round(imgH * 816 / 1040), imgW)
+canvasH = round(canvasW * 1110 / 816)
+```
 
-**Target: MPC default (11:15).** Canvas = the selected tier, unchanged. Image drawn at native
-size, centered: `x = floor((tierW - imgW) / 2)`, `y = floor((tierH - imgH) / 2)`. For 745x1040
-in 816x1110 that is `x = 35`, `y = 35` — a 35px grey margin all round.
+Taking the max of both axes means neither edge is ever clipped. The image is then
+centred at native size: `x = floor((canvasW - imgW) / 2)`, `y = floor((canvasH - imgH) / 2)`.
 
-**Target: Classic borderless (29:36).** Same tier, same image position, but the canvas is
-**cropped from the bottom** to hit the ratio: `canvasW = tierW`, `canvasH = round(tierW * 36 / 29)`.
+| Scan | Canvas | Grey pad |
+| --- | --- | --- |
+| 745 x 1040 (Scryfall png) | 816 x 1110 | 35 / 35 |
+| 672 x 936 (Scryfall large) | 736 x 1001 | 32 / 32 |
+| 1490 x 2080 (600 DPI card) | 1632 x 2220 | 71 / 70 |
+| 1200 x 1680 (between DPI tiers) | 1318 x 1793 | 59 / 56 |
 
-| Tier | 29:36 canvas |
+Scans that sit at a standard DPI still land exactly on the MPC print sizes
+(816x1110, 1632x2220, ...); those sizes are an *outcome* of the ratio, not an input
+to it. Everything else gets the same proportional bleed instead of being inflated
+to the next size up.
+
+**Target: MPC default (11:15).** Canvas as derived above, unchanged.
+
+**Target: Classic borderless (29:36).** Same width, same image position, but the
+canvas is **cropped from the bottom**: `canvasH = round(canvasW * 36 / 29)`.
+
+| Canvas | 29:36 canvas |
 | --- | --- |
 | 816 x 1110 | 816 x 1013 |
+| 736 x 1001 | 736 x 914 |
 | 1632 x 2220 | 1632 x 2026 |
-| 2176 x 2960 | 2176 x 2701 |
-| 3264 x 4440 | 3264 x 4052 |
 
-The image keeps the `x`/`y` it had in the default layout. Nothing is re-centered vertically.
+The image keeps the `x`/`y` it had in the default layout. Nothing is re-centered
+vertically.
 
-**Bottom crop cuts card art, on purpose.** For a 745x1040 scan the image spans y 35..1075 while
-the canvas ends at 1013, so the bottom 62px of the card is cut off. This is the confirmed,
-intended behaviour and matches the reference output. Report the number in the UI (see below) so
-it is never a surprise, but do not clamp, warn-block, or shift the image up to avoid it.
+**Bottom crop cuts card art, on purpose.** For a 745x1040 scan the image spans y
+35..1075 while the canvas ends at 1013, so the bottom 62px of the card is cut off.
+This is the confirmed, intended behaviour and matches the reference output. Report
+the number in the UI (see below) so it is never a surprise, but do not clamp,
+warn-block, or shift the image up to avoid it.
 
 ## Decisions
 
@@ -78,8 +92,10 @@ the whole feature testable without a DOM.
 `"29:36"`). Never gcd-reduce the pixel dimensions for display or for prompts — `816x1110`
 reduces to `136:185`.
 
-**Too-large images are refused, not resized.** If no tier fits, the page shows an error telling
-the user to download a smaller Scryfall export, and offers no download. Never scale the image.
+**Nothing is ever resampled.** The scan's own resolution sets the output resolution;
+only the amount of grey changes. Input that is not a portrait card scan (landscape,
+square, zero-sized) is refused with an error and offers no download — it is never
+rotated or scaled to fit.
 
 **Handoff to `/padder-outpaint` via its own sessionStorage key.** `/padder` writes
 `{ width, height, ratioLabel }` under a new `PADDER_TARGET_KEY`. `/padder-outpaint` reads it to
@@ -108,7 +124,7 @@ New files, each with tests per the project's placement rules:
 
 | File | Contents |
 | --- | --- |
-| `lib/padder-math.ts` (+ inline `.test.ts`) | `MPC_TIERS`, `PAD_TARGETS`, types, `selectTier`, `computePadLayout` |
+| `lib/padder-math.ts` (+ inline `.test.ts`) | `CARD_REFERENCE`, `BLEED_REFERENCE`, `PAD_TARGETS`, types, `computePadLayout` |
 | `lib/padder-renderer.ts` (+ inline `.test.ts`) | `renderPadScene(ctx, image, layout)`, `exportPaddedCanvas(image, layout)` |
 | `lib/padder-prompts.ts` (+ inline `.test.ts`) | placeholder handshake builder + command, `PADDER_TARGET_KEY` |
 | `hooks/use-padder-workflow.ts` (+ `hooks/__tests__/`) | reducer, upload, target select, downloaded flag, derived layout, error state |
@@ -132,8 +148,9 @@ Not touched: `/prep`, `/outpaint`, `/merger`, `/design`, `lib/prep-renderer.ts`,
 
 ## Assumptions you should hold
 
-- Users arrive with a Scryfall download, so the input is portrait and no larger than the 1200 DPI
-  tier. Landscape or oversized input is handled by the no-tier-fits error, not by rotation logic.
+- Users always arrive with a Scryfall card scan at the standard MTG card aspect ratio, at
+  whatever resolution Scryfall served. There is no upper size limit. Landscape or square input
+  is handled by the not-a-portrait-scan error, not by rotation logic.
 - Image files are the same formats the rest of the app already accepts; reuse whatever upload
   handling `/prep` uses rather than inventing new validation.
 - Only PNG export is needed. No PSD, no JPEG, no clipboard copy.
@@ -143,8 +160,8 @@ Not touched: `/prep`, `/outpaint`, `/merger`, `/design`, `lib/prep-renderer.ts`,
 
 Each step is a full RED -> GREEN -> REFACTOR cycle, tests first, per the project's TDD rules.
 
-1. **Pad math** — tiers, targets, `selectTier` (including no-fit), `computePadLayout` for both
-   targets including the bottom-crop numbers and the reported cropped-pixel count.
+1. **Pad math** — bleed reference pair, targets, `computePadLayout` for both targets including
+   the bottom-crop numbers and the reported cropped-pixel count.
 2. **Renderer** — grey fill plus native-size image draw at the computed offset; full-resolution
    export canvas.
 3. **Prompts module** — `PADDER_TARGET_KEY`, placeholder handshake builder taking width, height

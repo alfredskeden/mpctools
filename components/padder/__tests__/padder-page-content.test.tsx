@@ -103,12 +103,12 @@ describe("PadderPageContent", () => {
     expect(screen.getByTestId("crop-note").textContent).toContain("62");
   });
 
-  it("surfaces the error state and blocks download for an oversized scan", async () => {
+  it("surfaces the error state and blocks download for a non-portrait scan", async () => {
     // Given
     render(<PadderPageContent />);
 
     // When
-    await uploadScan(4000, 5000, "huge.png");
+    await uploadScan(1040, 745, "landscape.png");
 
     // Then
     expect(screen.getByTestId("padder-error")).toBeDefined();

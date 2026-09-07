@@ -2,8 +2,8 @@
 
 ## The one-sentence version
 
-Keep every pixel of the scan; add exactly enough grey around it to make an MPC print-size
-canvas — computed, never configured.
+Keep every pixel of the scan; grow it by the MPC bleed *ratio* to get the canvas —
+computed from the scan itself, never configured, never a fixed target size.
 
 ## Why it is not just a `/prep` preset
 
@@ -25,12 +25,13 @@ Every control that exists to scale or move the image is therefore absent, not me
 
 ```mermaid
 flowchart TD
-  U["Upload scan"] --> T{"Smallest MPC tier<br/>that contains it?"}
-  T -- none --> E["Error: image too large.<br/>No download offered."]
-  T -- "tier W x H" --> C["Center image in tier<br/>x = floor((tierW - imgW)/2)<br/>y = floor((tierH - imgH)/2)"]
-  C --> S{"Selected target"}
-  S -- "MPC default 11:15" --> A["Canvas = tier, as-is"]
-  S -- "Classic borderless 29:36" --> B["Canvas = tierW x round(tierW*36/29)<br/>cropped from the bottom only"]
+  U["Upload scan"] --> T{"Portrait card scan?"}
+  T -- no --> E["Error: not a card scan.<br/>No download offered."]
+  T -- yes --> C["Grow by the bleed ratio<br/>canvasW = max(imgW x 816/745,<br/>imgH x 816/1040, imgW)<br/>canvasH = canvasW x 1110/816"]
+  C --> P["Center image at native size<br/>x = floor((canvasW - imgW)/2)<br/>y = floor((canvasH - imgH)/2)"]
+  P --> S{"Selected target"}
+  S -- "MPC default 11:15" --> A["Canvas as derived"]
+  S -- "Classic borderless 29:36" --> B["Canvas = canvasW x round(canvasW x 36/29)<br/>cropped from the bottom only"]
   A --> R["Render #808080 + image at (x, y)"]
   B --> R
   R --> DL["Download full-res PNG"]
@@ -38,19 +39,30 @@ flowchart TD
   H --> O["/padder-outpaint reads it<br/>into the Gemini prompt"]
 ```
 
-## The tiers
+## The bleed ratio
 
-Same physical MPC card (2.48in x 3.46in, bleed included) at four resolutions:
+One reference pair fixes everything — the same card at 300 DPI, trimmed and with bleed:
 
-| DPI | Tier |
-| --- | --- |
-| 300 | 816 x 1110 |
-| 600 | 1632 x 2220 |
-| 800 | 2176 x 2960 |
-| 1200 | 3264 x 4440 |
+| | Width | Height |
+| --- | --- | --- |
+| `CARD_REFERENCE` | 745 | 1040 |
+| `BLEED_REFERENCE` | 816 | 1110 |
 
-Selection rule: the smallest tier that is at least as wide **and** as tall as the image. A
-745x1040 Scryfall png and a 672x936 Scryfall large jpg both pick 816x1110.
+Every canvas is the scan grown by that ratio, so the grey border is proportionally
+identical at any resolution:
+
+| Scan | Canvas | Grey pad |
+| --- | --- | --- |
+| 745 x 1040 | 816 x 1110 | 35 / 35 |
+| 672 x 936 | 736 x 1001 | 32 / 32 |
+| 1490 x 2080 | 1632 x 2220 | 71 / 70 |
+| 1200 x 1680 | 1318 x 1793 | 59 / 56 |
+
+**Why not a list of fixed MPC print sizes?** That was the first design, and it broke on
+any scan that did not sit at one of them. A 672x936 Scryfall "large" jpg is a ~268 DPI
+card; padding it up to the 300 DPI 816x1110 canvas gave 72px/87px of grey instead of a
+bleed. The standard print sizes still fall out of the ratio on their own when the scan
+is at a standard DPI — they just are not inputs any more.
 
 ## The 300 DPI case, concretely
 
@@ -66,7 +78,7 @@ flowchart LR
   end
 ```
 
-**The bottom cut is intentional.** 29:36 is wider than the tier ratio, and the crop is
+**The bottom cut is intentional.** 29:36 is wider than the bleed ratio, and the crop is
 specified to come off the bottom. On a 745x1040 scan that removes 62px of real card art. Show
 the number, never work around it.
 
@@ -81,11 +93,11 @@ flowchart LR
     s4["downloaded flag"]
   end
   subgraph DR["Derived every render (pure)"]
-    d1["tier"]
-    d2["canvas W x H"]
+    d1["canvas W x H"]
+    d2["bleed applied"]
     d3["image x, y"]
     d4["cropped-pixel count"]
-    d5["error when no tier fits"]
+    d5["error when not a portrait scan"]
   end
   ST --> DR
 ```
@@ -116,6 +128,9 @@ text carrying a TODO — the size and ratio substitution is real, the prose is n
 - Reaching for `/prep`'s hook or canvas component "to save work" — it drags in scale state the
   feature is defined by not having.
 - Centering the image vertically inside the cropped 29:36 canvas. The image keeps the position it
-  had in the full tier; only the canvas shrinks.
+  had in the full canvas; only the canvas shrinks.
 - Downloading the preview canvas instead of a full-resolution render.
-- Scaling an oversized image down to fit the largest tier instead of erroring.
+- Reintroducing a list of fixed canvas sizes and padding the scan up to the nearest one. That
+  is the bug this design exists to fix: it inflates the grey on any scan that is not already at
+  one of those resolutions.
+- Scaling the scan to match a canvas. The scan's resolution is the output resolution.

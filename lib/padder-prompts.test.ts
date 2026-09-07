@@ -6,7 +6,7 @@ import {
   PADDER_COMMAND,
   readStoredPadderTarget,
 } from "./padder-prompts";
-import { MPC_TIERS, PAD_TARGETS } from "./padder-math";
+import { BLEED_REFERENCE, PAD_TARGETS } from "./padder-math";
 
 describe("PADDER_TARGET_KEY", () => {
   it("does not collide with the prep canvas size key", () => {
@@ -19,8 +19,8 @@ describe("DEFAULT_PADDER_TARGET", () => {
   it("describes the 300 DPI MPC default tier", () => {
     // Given / When / Then
     expect(DEFAULT_PADDER_TARGET).toEqual({
-      width: MPC_TIERS[0].width,
-      height: MPC_TIERS[0].height,
+      width: BLEED_REFERENCE.width,
+      height: BLEED_REFERENCE.height,
       ratioLabel: PAD_TARGETS[0].ratioLabel,
     });
   });

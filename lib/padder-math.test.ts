@@ -1,96 +1,28 @@
 import {
-  selectTier,
   computePadLayout,
-  MPC_TIERS,
+  CARD_REFERENCE,
+  BLEED_REFERENCE,
   PAD_TARGETS,
 } from "./padder-math";
 
 const DEFAULT_TARGET = PAD_TARGETS[0];
 const BORDERLESS_TARGET = PAD_TARGETS[1];
 
-describe("selectTier", () => {
-  it("selects the 300 DPI tier for a 745x1040 Scryfall png", () => {
-    // Given
-    const image = { width: 745, height: 1040 };
-
-    // When
-    const tier = selectTier(image);
-
-    // Then
-    expect(tier).toEqual(MPC_TIERS[0]);
-  });
-
-  it("selects the 300 DPI tier for a 672x936 Scryfall large jpg", () => {
-    // Given
-    const image = { width: 672, height: 936 };
-
-    // When
-    const tier = selectTier(image);
-
-    // Then
-    expect(tier).toEqual(MPC_TIERS[0]);
-  });
-
-  it("selects the matching tier when the image equals its dimensions exactly", () => {
-    // Given
-    const image = { width: 816, height: 1110 };
-
-    // When
-    const tier = selectTier(image);
-
-    // Then
-    expect(tier).toEqual(MPC_TIERS[0]);
-  });
-
-  it("moves up to the next tier that contains both dimensions", () => {
-    // Given
-    const image = { width: 700, height: 1200 };
-
-    // When
-    const tier = selectTier(image);
-
-    // Then
-    expect(tier).toEqual(MPC_TIERS[1]);
-  });
-
-  it("reaches the largest tier for an image only it contains", () => {
-    // Given
-    const image = { width: 2500, height: 4000 };
-
-    // When
-    const tier = selectTier(image);
-
-    // Then
-    expect(tier).toEqual(MPC_TIERS[3]);
-  });
-
-  it("returns null when the image exceeds every tier", () => {
-    // Given
-    const image = { width: 3265, height: 4440 };
-
-    // When
-    const tier = selectTier(image);
-
-    // Then
-    expect(tier).toBeNull();
-  });
-});
-
-describe("computePadLayout", () => {
-  it("uses the tier as-is for the MPC default target", () => {
-    // Given
-    const image = { width: 745, height: 1040 };
+describe("computePadLayout — MPC default target", () => {
+  it("turns the reference card into the reference bleed canvas", () => {
+    // Given a scan at exactly the 300 DPI card size
+    const image = { ...CARD_REFERENCE };
 
     // When
     const layout = computePadLayout(image, DEFAULT_TARGET);
 
     // Then
-    expect(layout?.canvas).toEqual({ width: 816, height: 1110 });
+    expect(layout?.canvas).toEqual(BLEED_REFERENCE);
   });
 
-  it("centers a 745x1040 image at x 35, y 35 for the MPC default target", () => {
+  it("centers the reference card with an even margin", () => {
     // Given
-    const image = { width: 745, height: 1040 };
+    const image = { ...CARD_REFERENCE };
 
     // When
     const layout = computePadLayout(image, DEFAULT_TARGET);
@@ -100,20 +32,112 @@ describe("computePadLayout", () => {
     expect(layout?.y).toBe(35);
   });
 
-  it("keeps the image at its native dimensions", () => {
-    // Given
-    const image = { width: 745, height: 1040 };
+  it("scales the bleed to a lower-resolution scan rather than padding to a fixed size", () => {
+    // Given a Scryfall "large" jpg — the same card at a lower resolution
+    const image = { width: 672, height: 936 };
 
     // When
     const layout = computePadLayout(image, DEFAULT_TARGET);
 
     // Then
-    expect(layout?.image).toEqual({ width: 745, height: 1040 });
+    expect(layout?.canvas).toEqual({ width: 736, height: 1001 });
+    expect(layout?.x).toBe(32);
+    expect(layout?.y).toBe(32);
   });
 
-  it("reports no cropped pixels for the MPC default target", () => {
+  it("scales the bleed to a resolution that sits between the DPI tiers", () => {
     // Given
-    const image = { width: 745, height: 1040 };
+    const image = { width: 1200, height: 1680 };
+
+    // When
+    const layout = computePadLayout(image, DEFAULT_TARGET);
+
+    // Then
+    expect(layout?.canvas).toEqual({ width: 1318, height: 1793 });
+    expect(layout?.x).toBe(59);
+    expect(layout?.y).toBe(56);
+  });
+
+  it("keeps the image at its native dimensions — never resampled", () => {
+    // Given
+    const image = { width: 672, height: 936 };
+
+    // When
+    const layout = computePadLayout(image, DEFAULT_TARGET);
+
+    // Then
+    expect(layout?.image).toEqual(image);
+  });
+
+  it("adds proportionally the same bleed at any resolution", () => {
+    // Given the same card at two resolutions
+    const small = computePadLayout({ width: 745, height: 1040 }, DEFAULT_TARGET);
+    const large = computePadLayout(
+      { width: 1490, height: 2080 },
+      DEFAULT_TARGET,
+    );
+
+    // When
+    const smallShare = small!.x / small!.canvas.width;
+    const largeShare = large!.x / large!.canvas.width;
+
+    // Then
+    expect(largeShare).toBeCloseTo(smallShare, 2);
+  });
+
+  it("holds the MPC bleed aspect ratio for the canvas", () => {
+    // Given
+    const image = { width: 672, height: 936 };
+
+    // When
+    const layout = computePadLayout(image, DEFAULT_TARGET);
+
+    // Then
+    expect(layout!.canvas.width / layout!.canvas.height).toBeCloseTo(
+      BLEED_REFERENCE.width / BLEED_REFERENCE.height,
+      2,
+    );
+  });
+
+  it("never leaves the image wider than its canvas", () => {
+    // Given a scan whose height drives the canvas
+    const image = { width: 700, height: 1100 };
+
+    // When
+    const layout = computePadLayout(image, DEFAULT_TARGET);
+
+    // Then
+    expect(layout!.canvas.width).toBeGreaterThanOrEqual(image.width);
+    expect(layout!.x).toBeGreaterThanOrEqual(0);
+  });
+
+  it("never leaves the image wider than its canvas when width drives it", () => {
+    // Given a scan whose width drives the canvas
+    const image = { width: 900, height: 1040 };
+
+    // When
+    const layout = computePadLayout(image, DEFAULT_TARGET);
+
+    // Then
+    expect(layout!.canvas.width).toBeGreaterThanOrEqual(image.width);
+    expect(layout!.x).toBeGreaterThanOrEqual(0);
+  });
+
+  it("floors odd leftovers so offsets are always integers", () => {
+    // Given
+    const image = { width: 673, height: 936 };
+
+    // When
+    const layout = computePadLayout(image, DEFAULT_TARGET);
+
+    // Then
+    expect(Number.isInteger(layout!.x)).toBe(true);
+    expect(Number.isInteger(layout!.y)).toBe(true);
+  });
+
+  it("reports no cropped pixels", () => {
+    // Given
+    const image = { ...CARD_REFERENCE };
 
     // When
     const layout = computePadLayout(image, DEFAULT_TARGET);
@@ -121,45 +145,47 @@ describe("computePadLayout", () => {
     // Then
     expect(layout?.croppedPixels).toBe(0);
   });
+});
 
-  it.each([
-    [MPC_TIERS[0], 816, 1013],
-    [MPC_TIERS[1], 1632, 2026],
-    [MPC_TIERS[2], 2176, 2701],
-    [MPC_TIERS[3], 3264, 4052],
-  ])(
-    "crops the borderless canvas height at the %o tier",
-    (tier, expectedWidth, expectedHeight) => {
-      // Given an image that exactly fills the tier, forcing that tier's selection
-      const image = { width: tier.width, height: tier.height };
-
-      // When
-      const layout = computePadLayout(image, BORDERLESS_TARGET);
-
-      // Then
-      expect(layout?.canvas).toEqual({
-        width: expectedWidth,
-        height: expectedHeight,
-      });
-    },
-  );
-
-  it("keeps the default image position in the cropped borderless canvas", () => {
+describe("computePadLayout — classic borderless target", () => {
+  it("crops the canvas height to the 29:36 ratio", () => {
     // Given
-    const image = { width: 745, height: 1040 };
+    const image = { ...CARD_REFERENCE };
+
+    // When
+    const layout = computePadLayout(image, BORDERLESS_TARGET);
+
+    // Then
+    expect(layout?.canvas).toEqual({ width: 816, height: 1013 });
+  });
+
+  it("crops proportionally at a lower resolution", () => {
+    // Given
+    const image = { width: 672, height: 936 };
+
+    // When
+    const layout = computePadLayout(image, BORDERLESS_TARGET);
+
+    // Then
+    expect(layout?.canvas).toEqual({ width: 736, height: 914 });
+  });
+
+  it("keeps the default target's image position — no re-centering", () => {
+    // Given
+    const image = { ...CARD_REFERENCE };
 
     // When
     const defaultLayout = computePadLayout(image, DEFAULT_TARGET);
-    const borderlessLayout = computePadLayout(image, BORDERLESS_TARGET);
+    const borderless = computePadLayout(image, BORDERLESS_TARGET);
 
     // Then
-    expect(borderlessLayout?.x).toBe(defaultLayout?.x);
-    expect(borderlessLayout?.y).toBe(defaultLayout?.y);
+    expect(borderless?.x).toBe(defaultLayout?.x);
+    expect(borderless?.y).toBe(defaultLayout?.y);
   });
 
-  it("reports the image pixels cut off below the borderless canvas bottom", () => {
+  it("reports the image pixels cut off below the canvas bottom", () => {
     // Given
-    const image = { width: 745, height: 1040 };
+    const image = { ...CARD_REFERENCE };
 
     // When
     const layout = computePadLayout(image, BORDERLESS_TARGET);
@@ -168,9 +194,9 @@ describe("computePadLayout", () => {
     expect(layout?.croppedPixels).toBe(62);
   });
 
-  it("reports zero cropped pixels when the image fits the borderless canvas", () => {
-    // Given
-    const image = { width: 745, height: 900 };
+  it("reports zero cropped pixels when the image clears the cropped canvas", () => {
+    // Given a portrait scan short enough for the cropped canvas to contain it
+    const image = { width: 745, height: 760 };
 
     // When
     const layout = computePadLayout(image, BORDERLESS_TARGET);
@@ -178,22 +204,34 @@ describe("computePadLayout", () => {
     // Then
     expect(layout?.croppedPixels).toBe(0);
   });
+});
 
-  it("floors odd leftovers so offsets are always integers", () => {
-    // Given an image whose leftover space is odd in both axes
-    const image = { width: 815, height: 1109 };
+describe("computePadLayout — unusable input", () => {
+  it("refuses a landscape image", () => {
+    // Given
+    const image = { width: 1040, height: 745 };
 
     // When
     const layout = computePadLayout(image, DEFAULT_TARGET);
 
     // Then
-    expect(layout?.x).toBe(0);
-    expect(layout?.y).toBe(0);
+    expect(layout).toBeNull();
   });
 
-  it("returns null when no tier fits", () => {
+  it("refuses a square image", () => {
     // Given
-    const image = { width: 4000, height: 5000 };
+    const image = { width: 800, height: 800 };
+
+    // When
+    const layout = computePadLayout(image, DEFAULT_TARGET);
+
+    // Then
+    expect(layout).toBeNull();
+  });
+
+  it("refuses an image with no dimensions", () => {
+    // Given
+    const image = { width: 0, height: 0 };
 
     // When
     const layout = computePadLayout(image, DEFAULT_TARGET);

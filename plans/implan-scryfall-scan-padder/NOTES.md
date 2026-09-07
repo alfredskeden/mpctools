@@ -3,8 +3,17 @@
 ## Confirmed by the person who asked for this work
 
 - Only two pad targets: MPC default (11:15-ish) and Classic borderless (29:36).
-- Padding target sizes come from MPC print specs (800 DPI, 2.48" x 3.46"), expressed
-  per DPI tier: 816x1110 (300), 1632x2220 (600), 2176x2960 (800), 3264x4440 (1200).
+- Padding is derived from a bleed *ratio*, fixed by one reference pair: a 745x1040
+  trimmed card sits inside an 816x1110 canvas with bleed. Superseded the original
+  design, which padded every scan up to the nearest of four fixed sizes
+  (816x1110, 1632x2220, 2176x2960, 3264x4440).
+- Why it changed: a 672x936 Scryfall "large" jpg is a ~268 DPI card. Padded up to the
+  300 DPI 816x1110 canvas it got 72px/87px of grey instead of a bleed. Confirmed by the
+  person who asked for this work: the input is always an MTG card at the Scryfall
+  aspect ratio, so keep the ratio, keep the resolution, and only add the right grey.
+  Those four fixed sizes still fall out of the ratio when a scan is at a standard DPI.
+- No scaling, ever — not up to a reference size, not down to fit. The scan's own
+  resolution is the output resolution.
 - No slider. One computed canvas per target. The user never moves or scales the image.
 - 29:36 is produced by cropping the default canvas **from the bottom only**. This cuts
   real card art (62px off a 745x1040 Scryfall scan). Called out as a tradeoff and

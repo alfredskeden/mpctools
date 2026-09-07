@@ -75,8 +75,9 @@ export function PadderPageContent() {
         ) : (
           <div className="flex flex-col items-center gap-3 text-center">
             <p className="max-w-sm text-sm text-text-secondary">
-              Upload a card scan downloaded from Scryfall. It keeps its exact
-              pixel size — only grey padding is added around it.
+              Upload a card scan downloaded from Scryfall, at any resolution. It
+              keeps its exact pixel size — only the MPC bleed is added as grey
+              around it.
             </p>
             <button
               type="button"
@@ -101,9 +102,9 @@ export function PadderPageContent() {
             data-testid="padder-error"
             className="rounded-lg border border-surface-border bg-surface-raised p-3 text-xs text-text-primary"
           >
-            This scan is larger than the biggest MPC print size (3264 x 4440).
-            Download a smaller export from Scryfall — it is never scaled down
-            here.
+            This does not look like a portrait card scan. Upload the card image
+            itself, at whatever resolution Scryfall gave you — the padder works
+            out the bleed from its size and never resamples it.
           </p>
         )}
 
