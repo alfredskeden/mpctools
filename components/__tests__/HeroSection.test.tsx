@@ -30,4 +30,11 @@ describe("HeroSection", () => {
     const designLink = links.find((l) => l.getAttribute("href") === "/design");
     expect(designLink).not.toBeUndefined();
   });
+
+  it("renders a secondary link to the Scryfall scan padder", () => {
+    render(<HeroSection />);
+    const links = screen.getAllByRole("link");
+    const padderLink = links.find((l) => l.getAttribute("href") === "/padder");
+    expect(padderLink).not.toBeUndefined();
+  });
 });

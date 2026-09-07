@@ -27,6 +27,13 @@ describe("sitemap", () => {
     expect(paths).toContain("/dewatermark");
   });
 
+  it("includes the padder routes", () => {
+    const entries = sitemap();
+    const paths = entries.map((e) => new URL(e.url).pathname);
+    expect(paths).toContain("/padder");
+    expect(paths).toContain("/padder-outpaint");
+  });
+
   it("assigns /design a higher priority than other workflow routes", () => {
     const entries = sitemap();
     const design = entries.find((e) => new URL(e.url).pathname === "/design");

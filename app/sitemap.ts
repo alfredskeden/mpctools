@@ -9,6 +9,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${siteUrl}/prep`, lastModified: new Date(), priority: 0.8 },
     { url: `${siteUrl}/outpaint`, lastModified: new Date(), priority: 0.8 },
     { url: `${siteUrl}/merger`, lastModified: new Date(), priority: 0.8 },
+    { url: `${siteUrl}/padder`, lastModified: new Date(), priority: 0.8 },
+    {
+      url: `${siteUrl}/padder-outpaint`,
+      lastModified: new Date(),
+      priority: 0.8,
+    },
     {
       url: `${siteUrl}/dewatermark`,
       lastModified: new Date(),

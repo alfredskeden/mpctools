@@ -40,6 +40,13 @@ export const HeroSection = () => {
           Automatic building
           <ArrowRight className="size-3.5" />
         </Link>
+        <Link
+          href="/padder"
+          className="flex items-center gap-1.5 text-sm text-text-secondary hover:text-text-primary transition-colors"
+        >
+          Scryfall scan padder
+          <ArrowRight className="size-3.5" />
+        </Link>
       </div>
     </div>
   );
