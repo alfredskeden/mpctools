@@ -234,4 +234,66 @@ describe("PadderPageContent", () => {
     // Then
     expect(screen.queryByTestId("padder-canvas")).toBeNull();
   });
+
+  it("switches to batch mode, replacing the single-scan controls with the batch panel", async () => {
+    // Given
+    render(<PadderPageContent />);
+
+    // When
+    await userEvent.click(screen.getByTestId("mode-batch"));
+
+    // Then
+    expect(screen.getByTestId("batch-drop-zone")).toBeDefined();
+    expect(screen.queryByTestId("padder-upload-btn")).toBeNull();
+    expect(screen.queryByTestId("padder-download-btn")).toBeNull();
+  });
+
+  it("keeps the shared target selector available in batch mode", async () => {
+    // Given
+    render(<PadderPageContent />);
+    await userEvent.click(screen.getByTestId("mode-batch"));
+
+    // When
+    await userEvent.click(screen.getByTestId("target-option-classic-borderless"));
+
+    // Then — the selector is shared, and shows no single-scan canvas read-out.
+    expect(screen.getByTestId("target-option-classic-borderless")).toHaveProperty(
+      "ariaChecked",
+      "true",
+    );
+    expect(screen.queryByTestId("target-width")).toBeNull();
+  });
+
+  it("writes nothing to sessionStorage when a paste lands in batch mode", async () => {
+    // Given
+    render(<PadderPageContent />);
+    await userEvent.click(screen.getByTestId("mode-batch"));
+    const file = new File(["scan"], "clip.png", { type: "image/png" });
+
+    // When
+    const event = new Event("paste", { bubbles: true, cancelable: true });
+    Object.defineProperty(event, "clipboardData", {
+      value: { items: [{ type: "image/png", getAsFile: () => file }] },
+      configurable: true,
+    });
+    window.dispatchEvent(event);
+    await Promise.resolve();
+
+    // Then
+    expect(screen.queryByTestId("padder-canvas")).toBeNull();
+    expect(sessionStorage.getItem(PADDER_TARGET_KEY)).toBeNull();
+  });
+
+  it("returns to single mode after visiting batch mode", async () => {
+    // Given
+    render(<PadderPageContent />);
+    await userEvent.click(screen.getByTestId("mode-batch"));
+
+    // When
+    await userEvent.click(screen.getByTestId("mode-single"));
+
+    // Then
+    expect(screen.getByTestId("padder-upload-btn")).toBeDefined();
+    expect(screen.queryByTestId("batch-drop-zone")).toBeNull();
+  });
 });

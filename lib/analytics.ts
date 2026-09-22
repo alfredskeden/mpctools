@@ -34,7 +34,10 @@ export type AnalyticsEvent =
   | "dewatermark_adaptive_failed"
   | "padder_image_uploaded"
   | "padder_target_selected"
-  | "padder_image_downloaded";
+  | "padder_image_downloaded"
+  | "padder_batch_started"
+  | "padder_batch_completed"
+  | "padder_batch_downloaded";
 
 type EventData = Record<string, string | number | boolean | null | undefined>;
 
